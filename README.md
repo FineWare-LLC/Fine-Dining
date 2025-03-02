@@ -15,10 +15,8 @@ Fine Dining is a web and mobile application that provides personalized meal plan
     - [Installation](#installation)  
 5. [Usage](#usage)  
 6. [Folder Structure](#folder-structure)  
-7. [Testing](#testing)  
-8. [License](#license)  
-9. [Contributing](#contributing)  
-10. [Contact](#contact)  
+7. [Testing](#testing)
+8. [Contact](#contact)
 
 ---
 
@@ -87,3 +85,102 @@ Fine Dining follows a microservices-like architecture:
    ```bash
    git clone https://github.com/<your-org>/fine-dining.git](https://github.com/FineWare-LLC/Fine-Dining.git
    cd fine-dining
+   
+2. Install Dependencies
+
+# For the backend
+cd backend
+npm install
+
+# For the frontend (web)
+cd ../frontend
+npm install
+
+# For the mobile app
+cd ../mobile
+npm install
+
+3. Set Up Environment Variables
+
+Create a .env file in the backend/ directory. Include your MongoDB connection string, Firebase credentials, and any other private keys. Example:
+bash
+Copy
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/fine-dining
+FIREBASE_API_KEY=your_firebase_api_key
+FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+Adjust paths and credentials as needed for your setup.
+
+4. Run the Application
+
+Backend
+bash
+Copy
+cd backend
+npm run dev
+Frontend (Web)
+bash
+Copy
+cd frontend
+npm start
+Mobile (React Native)
+bash
+Copy
+cd mobile
+npm start
+# Then use iOS/Android emulator or physical device to run the app
+
+5. Usage
+Once the services are running, navigate to the frontend URL (e.g., http://localhost:3000). Create a new account, set your dietary preferences, and start exploring features:
+
+   1. Profile Setup: Enter height, weight, allergies, calorie goals, etc.
+   2. Generate Meal Plan: The system will use your preferences (and any budget constraints) to propose a weekly plan.
+    3. Track Meals: Log what you’ve eaten to get real-time statistics on calories and macros.
+    4. Grocery Lists: Generate a shopping list for the week’s recipes.
+    5. Restaurant Search: Look up nearby eateries matching your dietary criteria.
+
+6. Folder Structure
+bash
+Copy
+fine-dining/
+  ├── backend/
+  │   ├── src/
+  │   │   ├── controllers/
+  │   │   ├── models/
+  │   │   ├── routes/
+  │   │   ├── utils/
+  │   │   └── ...
+  │   └── package.json
+  │   └── ...
+  ├── frontend/
+  │   ├── src/
+  │   │   ├── components/
+  │   │   ├── pages/
+  │   │   ├── services/
+  │   │   └── ...
+  │   └── package.json
+  ├── mobile/
+  │   ├── App.js
+  │   ├── screens/
+  │   ├── components/
+  │   └── package.json
+  └── README.md
+
+7. Testing
+Unit Tests: Jest/Mocha for backend logic.
+bash
+Copy
+cd backend
+npm test
+Integration/End-to-End Tests: Cypress or similar for frontend flows.
+bash
+Copy
+cd frontend
+npm run test:e2e
+Acceptance Tests: High-level end-user scenarios (meal plan creation, grocery list generation, etc.).
+Refer to the Unit and Integration Test Plans for detailed procedures.
+
+8. Contact
+For questions or support, please open an issue on GitHub.
+
+Happy Cooking and Planning!
+The Fine Dining Team

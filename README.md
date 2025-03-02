@@ -103,8 +103,7 @@ npm install
 3. Set Up Environment Variables
 
 Create a .env file in the backend/ directory. Include your MongoDB connection string, Firebase credentials, and any other private keys. Example:
-bash
-Copy
+
 MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/fine-dining
 FIREBASE_API_KEY=your_firebase_api_key
 FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
@@ -113,18 +112,15 @@ Adjust paths and credentials as needed for your setup.
 4. Run the Application
 
 Backend
-bash
-Copy
+
 cd backend
 npm run dev
 Frontend (Web)
-bash
-Copy
+
 cd frontend
 npm start
 Mobile (React Native)
-bash
-Copy
+
 cd mobile
 npm start
 # Then use iOS/Android emulator or physical device to run the app
@@ -139,8 +135,7 @@ Once the services are running, navigate to the frontend URL (e.g., http://localh
     5. Restaurant Search: Look up nearby eateries matching your dietary criteria.
 
 6. Folder Structure
-bash
-Copy
+
 fine-dining/
   ├── backend/
   │   ├── src/
@@ -167,13 +162,11 @@ fine-dining/
 
 7. Testing
 Unit Tests: Jest/Mocha for backend logic.
-bash
-Copy
+
 cd backend
 npm test
 Integration/End-to-End Tests: Cypress or similar for frontend flows.
-bash
-Copy
+
 cd frontend
 npm run test:e2e
 Acceptance Tests: High-level end-user scenarios (meal plan creation, grocery list generation, etc.).

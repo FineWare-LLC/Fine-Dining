@@ -1,3 +1,10 @@
+planning docs:
+https://drive.google.com/drive/folders/1t1SxHa2YT07hpVdvWlDYXtR0oEftb9Sp?usp=drive_link
+
+designs:
+ https://www.canva.com/design/DAGb9hD06yg/OBGfzJ5Tc3A1LDYlEH0Msw/view?mode=prototype
+ https://www.canva.com/design/DAGb9gj3T0A/gShpCjKK3pJla-BF_2VNvw/view?mode=prototype
+
 # Fine Dining
 
 > **Elevate your mealtime experience with personalized planning, cost-efficient optimization, and real-time nutritional tracking.**

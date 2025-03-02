@@ -85,5 +85,5 @@ Fine Dining follows a microservices-like architecture:
 
 1. **Clone the Repository**  
    ```bash
-   git clone https://github.com/<your-org>/fine-dining.git
+   git clone https://github.com/<your-org>/fine-dining.git](https://github.com/FineWare-LLC/Fine-Dining.git
    cd fine-dining

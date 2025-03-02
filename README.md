@@ -58,11 +58,11 @@ Fine Dining is a web and mobile application offering:
 Fine Dining uses a microservices-like structure:
 
 1. **Frontend**  
-   - Built with [React.js](https://reactjs.org/) (Web) and [React Native](https://reactnative.dev/) (Mobile).  
+   - Built with [Next.js](https://reactjs.org/)
    - Consumes RESTful APIs; provides a user-friendly interface for meal planning, nutritional stats, etc.
 
 2. **Backend**  
-   - Powered by [Node.js + Express](https://expressjs.com/).  
+   - Powered by [Node.js + Apollo](https://apollo.com/).  
    - Integrates [Google OR-Tools](https://developers.google.com/optimization) for optimization tasks.
 
 3. **Database**  

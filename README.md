@@ -99,15 +99,15 @@ Fine Dining uses a microservices-like structure:
    
 2. Install Dependencies
 
-# Backend
+## Backend
 cd backend
 npm install
 
-# Frontend (Web)
+## Frontend (Web)
 cd ../frontend
 npm install
 
-# Mobile
+## Mobile
 cd ../mobile
 npm install
 
@@ -121,18 +121,18 @@ Adjust paths and credentials as necessary.
 
 4. Run the Application
 
-# Backend
+## Backend
 cd backend
 npm run dev
 
-# Frontend (Web)
+## Frontend (Web)
 cd ../frontend
 npm start
 
-# Mobile (React Native)
+## Mobile (React Native)
 cd ../mobile
 npm start
-# Then run on an emulator or physical device
+## Then run on an emulator or physical device
 Usage
 Once the services are running, visit the frontend (e.g., http://localhost:3000) and:
 

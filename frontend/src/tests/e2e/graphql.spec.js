@@ -1,33 +1,38 @@
-// tests/e2e/graphql.spec.js
+// tests/e2e/fullResolvers.spec.js
 import { test, expect } from '@playwright/test';
+import { faker } from '@faker-js/faker';
 
 /**
- * Utility: Generic GraphQL Post
- * @param {import('@playwright/test').APIRequestContext} request
- * @param {string} query - The GraphQL query/mutation as string
- * @param {object} variables - Variables object
- * @returns {Promise<any>} JSON response
+ * Helper: Post to /api/graphql with a given query/mutation + variables.
  */
 async function gqlPost(request, query, variables = {}) {
     const response = await request.post('/api/graphql', {
+        headers: { 'Content-Type': 'application/json' },
         data: { query, variables },
     });
     return response.json();
 }
 
-test.describe('Fine Dining GraphQL API Tests', () => {
-    let createdUserId;
-    let createdRecipeId;
-    let createdRestaurantId;
-    let createdMealPlanId;
-    let createdStatsId;
+test.describe('Fine Dining GraphQL API (Full Resolvers)', () => {
+    // We will store IDs from "create" tests so we can clean up afterward.
+    let userId;
+    let userEmail;
+    let userPassword;
+    let recipeId;
+    let restaurantId;
+    let mealPlanId;
+    let statsId;
 
-    /* --------------------------------------
-     *  USER
-     * ------------------------------------*/
+    //
+    // --- 1) CREATE USER ---
+    //
     test('createUser', async ({ request }) => {
+        // Generate random user fields with Faker
+        userEmail = faker.internet.email();
+        userPassword = faker.internet.password();
+
         const mutation = `
-      mutation CreateAUser($input: CreateUserInput!) {
+      mutation ($input: CreateUserInput!) {
         createUser(input: $input) {
           id
           name
@@ -37,23 +42,58 @@ test.describe('Fine Dining GraphQL API Tests', () => {
     `;
         const variables = {
             input: {
-                name: "John Doe",
-                email: "john.doe@example.com",
-                gender: "MALE",
-                measurementSystem: "METRIC",
+                name: faker.person.fullName(),
+                email: userEmail,
+                password: userPassword, // Make sure your schema expects this!
+                gender: faker.helpers.arrayElement(['MALE', 'FEMALE', 'OTHER']),
+                measurementSystem: faker.helpers.arrayElement(['METRIC', 'IMPERIAL']),
             },
         };
 
         const { data, errors } = await gqlPost(request, mutation, variables);
+
         expect(errors).toBeUndefined();
         expect(data.createUser).toBeTruthy();
-        expect(data.createUser.id).toBeTruthy();
-        createdUserId = data.createUser.id;
+
+        userId = data.createUser.id;
+        expect(userId).toBeTruthy();
     });
 
+    //
+    // --- 2) LOGIN USER ---
+    //
+    test('loginUser', async ({ request }) => {
+        // Attempt to log in using the same random email/password from createUser
+        const mutation = `
+      mutation ($email: String!, $password: String!) {
+        loginUser(email: $email, password: $password) {
+          token
+          user {
+            id
+            email
+          }
+        }
+      }
+    `;
+        const variables = {
+            email: userEmail,
+            password: userPassword,
+        };
+
+        const { data, errors } = await gqlPost(request, mutation, variables);
+        expect(errors).toBeUndefined();
+
+        // The returned token is also testable, if you want to verify it exists
+        expect(data.loginUser.token).toBeTruthy();
+        expect(data.loginUser.user.email).toBe(userEmail);
+    });
+
+    //
+    // --- 3) GET/UPDATE USER ---
+    //
     test('getUser', async ({ request }) => {
         const query = `
-      query GetUser($id: ID!) {
+      query ($id: ID!) {
         getUser(id: $id) {
           id
           name
@@ -61,17 +101,14 @@ test.describe('Fine Dining GraphQL API Tests', () => {
         }
       }
     `;
-        const variables = { id: createdUserId };
-
-        const { data, errors } = await gqlPost(request, query, variables);
+        const { data, errors } = await gqlPost(request, query, { id: userId });
         expect(errors).toBeUndefined();
-        expect(data.getUser).toBeTruthy();
-        expect(data.getUser.name).toBe("John Doe");
+        expect(data.getUser.email).toBe(userEmail);
     });
 
     test('updateUser', async ({ request }) => {
         const mutation = `
-      mutation UpdateAUser($id: ID!, $input: UpdateUserInput!) {
+      mutation ($id: ID!, $input: UpdateUserInput!) {
         updateUser(id: $id, input: $input) {
           id
           name
@@ -80,26 +117,32 @@ test.describe('Fine Dining GraphQL API Tests', () => {
       }
     `;
         const variables = {
-            id: createdUserId,
+            id: userId,
             input: {
-                name: "John The Updated",
-                dailyCalories: 2100,
+                name: 'Updated Name',
+                dailyCalories: 2400,
             },
         };
-
         const { data, errors } = await gqlPost(request, mutation, variables);
         expect(errors).toBeUndefined();
-        expect(data.updateUser.name).toBe("John The Updated");
-        expect(data.updateUser.dailyCalories).toBe(2100);
+        expect(data.updateUser.name).toBe('Updated Name');
+        expect(data.updateUser.dailyCalories).toBe(2400);
     });
 
-    /* --------------------------------------
-     *  RECIPE
-     * ------------------------------------*/
+    //
+    // --- 4) CREATE/GET/UPDATE/DELETE RECIPE ---
+    //
     test('createRecipe', async ({ request }) => {
         const mutation = `
-      mutation CreateARecipe($recipeName: String!, $ingredients: [String]!, $instructions: String!, $prepTime: Int!, $difficulty: Difficulty, $nutritionFacts: String) {
-        createRecipe(recipeName: $recipeName, ingredients: $ingredients, instructions: $instructions, prepTime: $prepTime, difficulty: $difficulty, nutritionFacts: $nutritionFacts) {
+      mutation ($recipeName: String!, $ingredients: [String]!, $instructions: String!, $prepTime: Int!, $difficulty: Difficulty, $nutritionFacts: String) {
+        createRecipe(
+          recipeName: $recipeName
+          ingredients: $ingredients
+          instructions: $instructions
+          prepTime: $prepTime
+          difficulty: $difficulty
+          nutritionFacts: $nutritionFacts
+        ) {
           id
           recipeName
           instructions
@@ -107,62 +150,86 @@ test.describe('Fine Dining GraphQL API Tests', () => {
       }
     `;
         const variables = {
-            recipeName: "Green Smoothie",
-            ingredients: ["Spinach", "Banana", "Milk"],
-            instructions: "Blend all ingredients",
-            prepTime: 5,
-            difficulty: "EASY",
-            nutritionFacts: "Some facts",
+            recipeName: 'Example Smoothie',
+            ingredients: ['Banana', 'Oats', 'Milk'],
+            instructions: 'Blend thoroughly.',
+            prepTime: 3,
+            difficulty: 'EASY',
+            nutritionFacts: 'Approx 250 kcal',
         };
         const { data, errors } = await gqlPost(request, mutation, variables);
         expect(errors).toBeUndefined();
-        createdRecipeId = data.createRecipe.id;
-        expect(createdRecipeId).toBeTruthy();
+        recipeId = data.createRecipe.id;
+        expect(recipeId).toBeTruthy();
     });
 
     test('getRecipe', async ({ request }) => {
         const query = `
-      query GetRecipe($id: ID!) {
+      query ($id: ID!) {
         getRecipe(id: $id) {
           id
           recipeName
-          ingredients
           instructions
         }
       }
     `;
-        const { data, errors } = await gqlPost(request, query, { id: createdRecipeId });
+        const { data, errors } = await gqlPost(request, query, { id: recipeId });
         expect(errors).toBeUndefined();
-        expect(data.getRecipe.recipeName).toBe("Green Smoothie");
+        expect(data.getRecipe.recipeName).toBe('Example Smoothie');
     });
 
-    /* --------------------------------------
-     *  RESTAURANT
-     * ------------------------------------*/
+    test('updateRecipe', async ({ request }) => {
+        const mutation = `
+      mutation ($id: ID!, $recipeName: String, $instructions: String) {
+        updateRecipe(id: $id, recipeName: $recipeName, instructions: $instructions) {
+          id
+          recipeName
+          instructions
+        }
+      }
+    `;
+        const { data, errors } = await gqlPost(request, mutation, {
+            id: recipeId,
+            recipeName: 'Enhanced Smoothie',
+            instructions: 'Blend with ice. Enjoy!',
+        });
+        expect(errors).toBeUndefined();
+        expect(data.updateRecipe.recipeName).toBe('Enhanced Smoothie');
+        expect(data.updateRecipe.instructions).toContain('ice');
+    });
+
+    //
+    // --- 5) CREATE/GET/DELETE RESTAURANT ---
+    //
     test('createRestaurant', async ({ request }) => {
         const mutation = `
-      mutation CreateARestaurant($restaurantName: String!, $address: String!, $phone: String, $website: String) {
-        createRestaurant(restaurantName: $restaurantName, address: $address, phone: $phone, website: $website) {
+      mutation ($restaurantName: String!, $address: String!, $phone: String, $website: String) {
+        createRestaurant(
+          restaurantName: $restaurantName
+          address: $address
+          phone: $phone
+          website: $website
+        ) {
           id
           restaurantName
         }
       }
     `;
-        const variables = {
-            restaurantName: "The Healthy Spot",
-            address: "123 Wellness Blvd",
-            phone: "5551234567",
-            website: "https://healthyspot.example.com",
+        const vars = {
+            restaurantName: 'Test Cafe',
+            address: '123 Fake Rd.',
+            phone: faker.phone.number('##########'),
+            website: faker.internet.url(),
         };
-        const { data, errors } = await gqlPost(request, mutation, variables);
+        const { data, errors } = await gqlPost(request, mutation, vars);
         expect(errors).toBeUndefined();
-        createdRestaurantId = data.createRestaurant.id;
-        expect(createdRestaurantId).toBeTruthy();
+        restaurantId = data.createRestaurant.id;
+        expect(restaurantId).toBeTruthy();
     });
 
     test('getRestaurant', async ({ request }) => {
         const query = `
-      query GetRestaurant($id: ID!) {
+      query ($id: ID!) {
         getRestaurant(id: $id) {
           id
           restaurantName
@@ -170,17 +237,17 @@ test.describe('Fine Dining GraphQL API Tests', () => {
         }
       }
     `;
-        const { data, errors } = await gqlPost(request, query, { id: createdRestaurantId });
+        const { data, errors } = await gqlPost(request, query, { id: restaurantId });
         expect(errors).toBeUndefined();
-        expect(data.getRestaurant.restaurantName).toBe("The Healthy Spot");
+        expect(data.getRestaurant.restaurantName).toBe('Test Cafe');
     });
 
-    /* --------------------------------------
-     *  MEAL PLAN
-     * ------------------------------------*/
+    //
+    // --- 6) CREATE/GET/DELETE MEAL PLAN ---
+    //
     test('createMealPlan', async ({ request }) => {
         const mutation = `
-      mutation CreateMealPlan($userId: ID!, $startDate: String!, $endDate: String!) {
+      mutation ($userId: ID!, $startDate: String!, $endDate: String!) {
         createMealPlan(userId: $userId, startDate: $startDate, endDate: $endDate) {
           id
           startDate
@@ -193,66 +260,70 @@ test.describe('Fine Dining GraphQL API Tests', () => {
       }
     `;
         const variables = {
-            userId: createdUserId,
-            startDate: "2025-05-01",
-            endDate: "2025-05-07",
+            userId,
+            startDate: '2025-01-01',
+            endDate: '2025-01-07',
         };
         const { data, errors } = await gqlPost(request, mutation, variables);
         expect(errors).toBeUndefined();
-        createdMealPlanId = data.createMealPlan.id;
-        expect(createdMealPlanId).toBeTruthy();
+        mealPlanId = data.createMealPlan.id;
+        expect(mealPlanId).toBeTruthy();
+        // Confirm user relationship is correct
+        expect(data.createMealPlan.user.id).toBe(userId);
     });
 
     test('getMealPlan', async ({ request }) => {
         const query = `
-      query GetMealPlan($id: ID!) {
+      query ($id: ID!) {
         getMealPlan(id: $id) {
           id
           startDate
           endDate
           user {
             id
-            name
+            email
           }
         }
       }
     `;
-        const { data, errors } = await gqlPost(request, query, { id: createdMealPlanId });
+        const { data, errors } = await gqlPost(request, query, { id: mealPlanId });
         expect(errors).toBeUndefined();
-        expect(data.getMealPlan.user.id).toBe(createdUserId);
+        expect(data.getMealPlan.user.id).toBe(userId);
+        expect(data.getMealPlan.user.email).toBe(userEmail);
     });
 
-    /* --------------------------------------
-     *  STATS
-     * ------------------------------------*/
+    //
+    // --- 7) CREATE/GET/DELETE STATS ---
+    //
     test('createStats', async ({ request }) => {
         const mutation = `
-      mutation CreateStats($userId: ID!, $macros: String, $micros: String) {
+      mutation ($userId: ID!, $macros: String, $micros: String) {
         createStats(userId: $userId, macros: $macros, micros: $micros) {
           id
           macros
           micros
           user {
             id
-            name
+            email
           }
         }
       }
     `;
-        const variables = {
-            userId: createdUserId,
-            macros: "Protein: 150g",
-            micros: "Iron: 18mg",
+        const vars = {
+            userId,
+            macros: 'Protein: 120g',
+            micros: 'Iron: 10mg',
         };
-        const { data, errors } = await gqlPost(request, mutation, variables);
+        const { data, errors } = await gqlPost(request, mutation, vars);
         expect(errors).toBeUndefined();
-        createdStatsId = data.createStats.id;
-        expect(data.createStats.macros).toBe("Protein: 150g");
+        statsId = data.createStats.id;
+        expect(data.createStats.macros).toBe('Protein: 120g');
+        expect(data.createStats.user.email).toBe(userEmail);
     });
 
     test('getStatsByUser', async ({ request }) => {
         const query = `
-      query GetStats($userId: ID!) {
+      query ($userId: ID!) {
         getStatsByUser(userId: $userId) {
           id
           macros
@@ -260,207 +331,78 @@ test.describe('Fine Dining GraphQL API Tests', () => {
         }
       }
     `;
-        const { data, errors } = await gqlPost(request, query, { userId: createdUserId });
+        const { data, errors } = await gqlPost(request, query, { userId });
         expect(errors).toBeUndefined();
+        // Should at least have the one record we just made
         expect(data.getStatsByUser.length).toBeGreaterThan(0);
     });
 
-    /* --------------------------------------
-     *  CLEANUP TESTS
-     * ------------------------------------*/
-    test('deleteMealPlan', async ({ request }) => {
-        const mutation = `
-      mutation DeleteMealPlan($id: ID!) {
-        deleteMealPlan(id: $id)
-      }
-    `;
-        const { data, errors } = await gqlPost(request, mutation, { id: createdMealPlanId });
-        expect(errors).toBeUndefined();
-        expect(data.deleteMealPlan).toBe(true);
-    });
-
-    test('deleteUser', async ({ request }) => {
-        const mutation = `
-      mutation DeleteAUser($id: ID!) {
-        deleteUser(id: $id)
-      }
-    `;
-        const { data, errors } = await gqlPost(request, mutation, { id: createdUserId });
-        expect(errors).toBeUndefined();
-        expect(data.deleteUser).toBe(true);
-    });
-
-    /* --------------------------------------
- * ADDITIONAL TESTS FOR EXTENDED COVERAGE
- * ------------------------------------*/
-
-// 1) List All Users
+    //
+    // --- 8) "LIST ALL" QUERIES ---
+    //
     test('getUsers (list all)', async ({ request }) => {
-        const query = `
-    query GetAllUsers {
-      getUsers {
-        id
-        name
-        email
-      }
-    }
-  `;
+        const query = `query { getUsers { id email } }`;
         const { data, errors } = await gqlPost(request, query);
         expect(errors).toBeUndefined();
         expect(Array.isArray(data.getUsers)).toBe(true);
-        // Optional: expect(data.getUsers.length).toBeGreaterThan(0);
     });
 
-// 2) List All Recipes
     test('getRecipes (list all)', async ({ request }) => {
-        const query = `
-    query GetAllRecipes {
-      getRecipes {
-        id
-        recipeName
-        ingredients
-      }
-    }
-  `;
+        const query = `query { getRecipes { id recipeName } }`;
         const { data, errors } = await gqlPost(request, query);
         expect(errors).toBeUndefined();
         expect(Array.isArray(data.getRecipes)).toBe(true);
     });
 
-// 3) List All Restaurants
     test('getRestaurants (list all)', async ({ request }) => {
-        const query = `
-    query GetAllRestaurants {
-      getRestaurants {
-        id
-        restaurantName
-        address
-      }
-    }
-  `;
+        const query = `query { getRestaurants { id restaurantName } }`;
         const { data, errors } = await gqlPost(request, query);
         expect(errors).toBeUndefined();
         expect(Array.isArray(data.getRestaurants)).toBe(true);
     });
 
-// 4) List All MealPlans
     test('getMealPlans (list all)', async ({ request }) => {
-        const query = `
-    query {
-      getMealPlans {
-        id
-        startDate
-        endDate
-        user {
-          id
-          name
-        }
-      }
-    }
-  `;
+        const query = `query { getMealPlans { id startDate endDate user { id } } }`;
         const { data, errors } = await gqlPost(request, query);
         expect(errors).toBeUndefined();
         expect(Array.isArray(data.getMealPlans)).toBe(true);
     });
 
-// 5) Update a Recipe (Example)
-    test('updateRecipe (debug)', async ({ request }) => {
-        const mutation = `
-    mutation UpdateARecipe($id: ID!, $recipeName: String!) {
-      updateRecipe(id: $id, recipeName: $recipeName) {
-        id
-        recipeName
-      }
-    }
-  `;
-        const variables = {
-            id: createdRecipeId,
-            recipeName: "Green Smoothie Deluxe"
-        };
-
-        // Send the request
-        const responseJson = await gqlPost(request, mutation, variables);
-
-        // Log full response for debugging
-        console.log('DEBUG: updateRecipe response:', JSON.stringify(responseJson, null, 2));
-
-        // Check if the response has 'errors'
-        const { data, errors } = responseJson;
-
-        // Print out errors if present
-        if (errors) {
-            console.log('DEBUG: updateRecipe errors:', JSON.stringify(errors, null, 2));
-        }
-
-        // For debugging, we won't fail immediately if errors exist:
-        // but you can remove this once you see the logs
+    //
+    // --- 9) CLEAN-UP: DELETE STUFF ---
+    //
+    test('deleteRecipe', async ({ request }) => {
+        const mutation = `mutation ($id: ID!) { deleteRecipe(id: $id) }`;
+        const { data, errors } = await gqlPost(request, mutation, { id: recipeId });
         expect(errors).toBeUndefined();
-
-        // Also check the data
-        expect(data.updateRecipe).toBeTruthy();
-        expect(data.updateRecipe.recipeName).toBe("Green Smoothie Deluxe");
-    });
-
-// 6) Delete a Recipe
-    test('deleteRecipe (debug)', async ({ request }) => {
-        const mutation = `
-    mutation DeleteRecipe($id: ID!) {
-      deleteRecipe(id: $id)
-    }
-  `;
-        const responseJson = await gqlPost(request, mutation, { id: createdRecipeId });
-
-        console.log('DEBUG: deleteRecipe response:', JSON.stringify(responseJson, null, 2));
-
-        const { data, errors } = responseJson;
-        if (errors) {
-            console.log('DEBUG: deleteRecipe errors:', JSON.stringify(errors, null, 2));
-        }
-
-        expect(errors).toBeUndefined();
-        // If your resolver returns boolean
         expect(data.deleteRecipe).toBe(true);
     });
 
-// 7) Delete Restaurant
-    test('deleteRestaurant (debug)', async ({ request }) => {
-        const mutation = `
-    mutation DeleteRestaurant($id: ID!) {
-      deleteRestaurant(id: $id)
-    }
-  `;
-        const responseJson = await gqlPost(request, mutation, { id: createdRestaurantId });
-
-        console.log('DEBUG: deleteRestaurant response:', JSON.stringify(responseJson, null, 2));
-
-        const { data, errors } = responseJson;
-        if (errors) {
-            console.log('DEBUG: deleteRestaurant errors:', JSON.stringify(errors, null, 2));
-        }
-
+    test('deleteRestaurant', async ({ request }) => {
+        const mutation = `mutation ($id: ID!) { deleteRestaurant(id: $id) }`;
+        const { data, errors } = await gqlPost(request, mutation, { id: restaurantId });
         expect(errors).toBeUndefined();
         expect(data.deleteRestaurant).toBe(true);
     });
 
-// 8) Delete Stats
-    test('deleteStats (debug)', async ({ request }) => {
-        const mutation = `
-    mutation DeleteStats($id: ID!) {
-      deleteStats(id: $id)
-    }
-  `;
-        const responseJson = await gqlPost(request, mutation, { id: createdStatsId });
+    test('deleteMealPlan', async ({ request }) => {
+        const mutation = `mutation ($id: ID!) { deleteMealPlan(id: $id) }`;
+        const { data, errors } = await gqlPost(request, mutation, { id: mealPlanId });
+        expect(errors).toBeUndefined();
+        expect(data.deleteMealPlan).toBe(true);
+    });
 
-        console.log('DEBUG: deleteStats response:', JSON.stringify(responseJson, null, 2));
-
-        const { data, errors } = responseJson;
-        if (errors) {
-            console.log('DEBUG: deleteStats errors:', JSON.stringify(errors, null, 2));
-        }
-
+    test('deleteStats', async ({ request }) => {
+        const mutation = `mutation ($id: ID!) { deleteStats(id: $id) }`;
+        const { data, errors } = await gqlPost(request, mutation, { id: statsId });
         expect(errors).toBeUndefined();
         expect(data.deleteStats).toBe(true);
     });
 
-
+    test('deleteUser', async ({ request }) => {
+        const mutation = `mutation ($id: ID!) { deleteUser(id: $id) }`;
+        const { data, errors } = await gqlPost(request, mutation, { id: userId });
+        expect(errors).toBeUndefined();
+        expect(data.deleteUser).toBe(true);
+    });
 });

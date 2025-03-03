@@ -1,9 +1,19 @@
 /**********************************************************
  * FILE: resolvers.js
- * Provides the GraphQL resolvers for Fine Dining
- * Updated to include updateRecipe, deleteRecipe, deleteRestaurant, deleteStats.
+ * Provides combined GraphQL resolvers for Fine Dining,
+ * including user authentication (loginUser).
  **********************************************************/
 
+/**
+ * @fileoverview Main GraphQL resolvers for Fine Dining.
+ * Uses Mongoose models for data operations and bcrypt/jwt
+ * for authentication.
+ */
+
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+
+/* Mongoose Models */
 import UserModel from '@/models/UserModel';
 import RecipeModel from '@/models/RecipeModel';
 import RestaurantModel from '@/models/RestaurantModel';
@@ -12,8 +22,7 @@ import StatsModel from '@/models/StatsModel';
 
 /**
  * @constant resolvers
- * Maps Query and Mutation fields to JavaScript functions
- * that fetch or modify the data.
+ * Encapsulates all Queries and Mutations for the schema.
  */
 export const resolvers = {
     /******************************************************
@@ -21,72 +30,68 @@ export const resolvers = {
      ******************************************************/
     Query: {
         /**
-         * @function getUser
-         * Fetches one user by their ID.
+         * Retrieves a single user by ID.
+         * @param {object} _parent - Unused parent resolver
+         * @param {object} args - Resolver arguments
+         * @param {string} args.id - User ID
+         * @returns {Promise<UserModel>} User document
          */
         async getUser(_parent, { id }) {
             return UserModel.findById(id);
         },
 
         /**
-         * @function getUsers
-         * Fetches all users.
+         * Retrieves all users.
+         * @returns {Promise<UserModel[]>} Array of user docs
          */
         async getUsers() {
             return UserModel.find({});
         },
 
         /**
-         * @function getRecipe
-         * Fetches a specific recipe by ID.
+         * Retrieves a single recipe by ID.
          */
         async getRecipe(_parent, { id }) {
             return RecipeModel.findById(id);
         },
 
         /**
-         * @function getRecipes
-         * Fetches all recipes.
+         * Retrieves all recipes.
          */
         async getRecipes() {
             return RecipeModel.find({});
         },
 
         /**
-         * @function getRestaurant
-         * Fetches a specific restaurant by ID.
+         * Retrieves a single restaurant by ID.
          */
         async getRestaurant(_parent, { id }) {
             return RestaurantModel.findById(id);
         },
 
         /**
-         * @function getRestaurants
-         * Fetches all restaurants.
+         * Retrieves all restaurants.
          */
         async getRestaurants() {
             return RestaurantModel.find({});
         },
 
         /**
-         * @function getMealPlan
-         * Retrieves a single MealPlan by ID (only populates user).
+         * Retrieves a meal plan by ID (populates user).
          */
         async getMealPlan(_parent, { id }) {
             return MealPlanModel.findById(id).populate('user');
         },
 
         /**
-         * @function getMealPlans
-         * Retrieves all MealPlans (only populates user).
+         * Retrieves all meal plans (populates user).
          */
         async getMealPlans() {
             return MealPlanModel.find({}).populate('user');
         },
 
         /**
-         * @function getStatsByUser
-         * Retrieves all Stats records for a given user.
+         * Retrieves stats by userId.
          */
         async getStatsByUser(_parent, { userId }) {
             return StatsModel.find({ user: userId });
@@ -98,33 +103,74 @@ export const resolvers = {
      ******************************************************/
     Mutation: {
         /**
-         * @function createUser
-         * Creates a new User document.
+         * Creates a new user document (hashed password via pre-save).
+         * @param {object} args - Resolver arguments
+         * @param {object} args.input - Fields to create user
+         * @returns {Promise<UserModel>} Created user doc
          */
         async createUser(_parent, { input }) {
+            // Mongoose validation will ensure all required fields exist
+            // (name, email, password, gender, measurementSystem).
             return UserModel.create(input);
         },
 
         /**
-         * @function updateUser
-         * Updates an existing User by ID.
+         * Logs in the user, returning a JWT + user object.
+         * @param {string} email - User's email
+         * @param {string} password - User's plain password
+         * @returns {{token: string, user: object}}
          */
-        async updateUser(_parent, { id, input }) {
-            return UserModel.findByIdAndUpdate(id, input, { new: true });
+        async loginUser(_parent, { email, password }) {
+            // Include password explicitly
+            const user = await UserModel.findOne({ email }).select('+password');
+            if (!user) {
+                throw new Error('User not found');
+            }
+
+            const valid = await bcrypt.compare(password, user.password);
+            if (!valid) {
+                throw new Error('Invalid credentials');
+            }
+
+            // Replace 'YOUR_SECRET_KEY' with a secure key in .env
+            const token = jwt.sign(
+                { userId: user._id, email: user.email },
+                'YOUR_SECRET_KEY',
+                { expiresIn: '1d' }
+            );
+
+            return {
+                token,
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                },
+            };
         },
 
         /**
-         * @function deleteUser
-         * Removes a User by ID; returns true if successful.
+         * Updates user fields by ID; triggers pre-save hook if password changed.
+         */
+        async updateUser(_parent, { id, input }) {
+            const user = await UserModel.findById(id);
+            if (!user) throw new Error('User not found');
+
+            Object.assign(user, input);
+            return user.save(); // pre-save hook re-hashes if password changed
+        },
+
+        /**
+         * Deletes a user; returns true if found/deleted.
          */
         async deleteUser(_parent, { id }) {
             const result = await UserModel.findByIdAndDelete(id);
             return !!result;
         },
 
+        /* ------------------------ RECIPE ------------------------ */
         /**
-         * @function createRecipe
-         * Creates a new Recipe document.
+         * Creates a new recipe document.
          */
         async createRecipe(
             _parent,
@@ -141,8 +187,7 @@ export const resolvers = {
         },
 
         /**
-         * @function updateRecipe
-         * Updates a Recipe by ID; returns the updated Recipe.
+         * Updates a recipe document by ID.
          */
         async updateRecipe(
             _parent,
@@ -160,73 +205,56 @@ export const resolvers = {
         },
 
         /**
-         * @function deleteRecipe
-         * Removes a Recipe by ID; returns true if successful.
+         * Deletes a recipe; returns true if found/deleted.
          */
         async deleteRecipe(_parent, { id }) {
             const result = await RecipeModel.findByIdAndDelete(id);
             return !!result;
         },
 
+        /* ------------------------ RESTAURANT ------------------------ */
         /**
-         * @function createRestaurant
-         * Creates a new Restaurant document.
+         * Creates a new restaurant document.
          */
         async createRestaurant(_parent, { restaurantName, address, phone, website }) {
-            return RestaurantModel.create({
-                restaurantName,
-                address,
-                phone,
-                website,
-            });
+            return RestaurantModel.create({ restaurantName, address, phone, website });
         },
 
         /**
-         * @function deleteRestaurant
-         * Removes a Restaurant by ID; returns true if successful.
+         * Deletes a restaurant; returns true if found/deleted.
          */
         async deleteRestaurant(_parent, { id }) {
             const result = await RestaurantModel.findByIdAndDelete(id);
             return !!result;
         },
 
+        /* ------------------------ MEAL PLAN ------------------------ */
         /**
-         * @function createMealPlan
-         * Creates a new MealPlan for a specific user.
+         * Creates a meal plan and populates the user.
          */
         async createMealPlan(_parent, { userId, startDate, endDate }) {
-            const newPlan = await MealPlanModel.create({
-                user: userId,
-                startDate,
-                endDate,
-            });
+            const newPlan = await MealPlanModel.create({ user: userId, startDate, endDate });
             return newPlan.populate('user');
         },
 
         /**
-         * @function deleteMealPlan
-         * Deletes a MealPlan by ID; returns true if successful.
+         * Deletes a meal plan; returns true if found/deleted.
          */
         async deleteMealPlan(_parent, { id }) {
             const result = await MealPlanModel.findByIdAndDelete(id);
             return !!result;
         },
 
+        /* ------------------------ STATS ------------------------ */
         /**
-         * @function createStats
-         * Creates a new Stats document for a specific user.
+         * Creates a stats document for a user.
          */
         async createStats(_parent, { userId, macros, micros }) {
-            return StatsModel.create({
-                user: userId,
-                macros,
-                micros,
-            });
+            return StatsModel.create({ user: userId, macros, micros });
         },
 
         /**
-         * @function deleteStats
-         * Removes a Stats doc by ID; returns true if successful.
+         * Deletes a stats document; returns true if found/deleted.
          */
         async deleteStats(_parent, { id }) {
             const result = await StatsModel.findByIdAndDelete(id);
@@ -237,27 +265,37 @@ export const resolvers = {
     /******************************************************
      * FIELD RESOLVERS (OPTIONAL)
      ******************************************************/
+    /**
+     * MealPlan type resolvers for nested fields.
+     */
     MealPlan: {
         async user(parent) {
             return UserModel.findById(parent.user);
         },
         async meals(parent) {
-            // Return an empty array or add logic if you have a Meal model
+            // If you have a separate Meal model, reference or populate here
             return [];
         },
     },
+
+    /**
+     * Meal type resolvers for nested fields.
+     */
     Meal: {
-        // Only relevant if you define a Meal model with these fields
-        async mealPlan(parent) {
+        async mealPlan(_parent) {
             return null;
         },
-        async recipe(parent) {
+        async recipe(_parent) {
             return null;
         },
-        async restaurant(parent) {
+        async restaurant(_parent) {
             return null;
         },
     },
+
+    /**
+     * Stats type resolvers for nested fields.
+     */
     Stats: {
         async user(parent) {
             return UserModel.findById(parent.user);
@@ -267,20 +305,21 @@ export const resolvers = {
 
 /**********************************************************
  * EXPLANATION (LIKE I AM 10)
- * - "Query" means we get data (like getUser or getRecipe).
- * - "Mutation" means we change data (like createUser).
- * - We added updateRecipe, deleteRecipe, deleteRestaurant,
- *   and deleteStats to do more advanced modifications.
+ * 1) "createUser" needs "name, email, password, gender,
+ *    measurementSystem" to make a new user.
+ * 2) "loginUser" checks the password and gives you a "token"
+ *    so you can prove you logged in.
+ * 3) The rest is for recipes, restaurants, meal plans,
+ *    and stats, just like normal.
  **********************************************************/
 
 /**********************************************************
  * EXPLANATION (LIKE I AM A PROFESSIONAL)
- * The resolver map translates our schema's queries and
- * mutations into Mongoose calls. Beyond the previously
- * working create and read operations, we've added:
- *   - updateRecipe  -> partial updates to existing recipes
- *   - deleteRecipe  -> removes a recipe by ID
- *   - deleteRestaurant -> removes a restaurant by ID
- *   - deleteStats   -> removes user stats by ID
- * This completes full CRUD coverage for your GraphQL API.
+ * We have integrated a user authentication flow (loginUser)
+ * within the same resolvers file. The user model's password
+ * is automatically hashed via a pre-save hook, and we can
+ * selectively compare it with user-provided credentials
+ * by using `.select('+password')`. The schema now includes
+ * a `password` field for user creation, plus a `loginUser`
+ * mutation returning an AuthPayload (a token + user).
  **********************************************************/

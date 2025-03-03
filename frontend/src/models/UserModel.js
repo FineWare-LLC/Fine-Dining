@@ -4,28 +4,29 @@
  * Includes password and hashing logic for authentication.
  *************************************************************/
 
+/**
+ * @fileoverview Mongoose User model with a pre-save hook
+ * for password hashing via bcrypt. This ensures the password
+ * remains encrypted, making it more secure and less ephemeral(***)
+ * (***meaning short-lived and hidden***) to would-be attackers.
+ */
+
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 
 /**
  * @constant userSchema
- * Defines fields for the User collection, including authentication.
+ * Defines fields for the User collection, including authentication
+ * and personal stats. The password field is 'select: false' by default.
  */
 const userSchema = new mongoose.Schema(
     {
-        name: {
-            type: String,
-            required: true,
-        },
-        email: {
-            type: String,
-            unique: true,
-            required: true,
-        },
+        name: { type: String, required: true },
+        email: { type: String, unique: true, required: true },
         password: {
             type: String,
             required: true,
-            select: false,  // Exclude from regular queries by default
+            select: false, // Excluded from queries unless explicitly requested
         },
         weight: Number,
         height: Number,
@@ -53,7 +54,8 @@ const userSchema = new mongoose.Schema(
 /**
  * @function pre-save
  * Automatically hashes the password if it's new or modified,
- * ensuring secure storage.
+ * ensuring secure storage. This is invoked when the password
+ * field changes, using a bcrypt salt to add complexity.
  */
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) {
@@ -70,21 +72,24 @@ userSchema.pre('save', async function (next) {
 
 /**
  * @constant UserModel
- * Creates a Mongoose model named "User" if not already existing.
+ * Creates a Mongoose model named "User" if it doesn't exist,
+ * otherwise reuses the existing model. This pattern prevents
+ * recompiling models during development.
  */
-export default mongoose.models.User || mongoose.model('User', userSchema);
+const UserModel = mongoose.models.User || mongoose.model('User', userSchema);
+export default UserModel;
 
 /***************************************************************
  * EXPLANATION (LIKE I AM 10)
- * - The "password" is changed into a secret code (hashed) before
- *   we save it, so nobody can read it easily.
+ * - The "password" is turned into a secret code (hashed)
+ *   before saving, so nobody can read it easily.
  ***************************************************************/
 
 /***************************************************************
  * EXPLANATION (LIKE I AM A PROFESSIONAL)
  * We have introduced a pre-save hook that ensures passwords
  * are hashed using bcrypt before persisting to MongoDB. This
- * approach prevents storing plaintext credentials. Note that
- * 'select: false' omits the password field by default, though
- * it can still be selected explicitly if needed.
+ * approach prevents storing plaintext credentials. The field
+ * is declared `select: false` by default, so queries must
+ * explicitly request it if needed.
  ***************************************************************/

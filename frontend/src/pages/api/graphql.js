@@ -3,7 +3,7 @@
  */
 
 import { ApolloServer } from 'apollo-server-micro';
-import { typeDefs } from '@/graphql/schema';
+import { typeDefs } from '@/graphql/typeDefs';
 import { resolvers } from '@/graphql/resolvers';
 import { dbConnect } from '@/lib/dbConnect';
 

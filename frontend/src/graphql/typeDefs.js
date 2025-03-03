@@ -1,14 +1,11 @@
 /**********************************************************
  * FILE: typeDefs.js
- * Provides the GraphQL Schema Definition for Fine Dining
+ * Provides the GraphQL Schema Definition for Fine Dining,
+ * including user authentication via loginUser.
  **********************************************************/
 
 import { gql } from 'apollo-server-micro';
 
-/**
- * @constant typeDefs
- * Defines all types, queries, mutations for the Fine Dining app.
- */
 export const typeDefs = gql`
     """User gender enumeration."""
     enum Gender {
@@ -45,7 +42,7 @@ export const typeDefs = gql`
         SNACK
     }
 
-    """User type for storing personal and dietary info."""
+    """User type for storing personal, dietary, and authentication info."""
     type User {
         id: ID!
         name: String!
@@ -58,6 +55,7 @@ export const typeDefs = gql`
         foodGoals: [String]
         allergies: [String]
         dailyCalories: Int
+        # password is intentionally omitted from the public schema
     }
 
     """Recipe type storing cooking steps, ingredients, nutrition info."""
@@ -134,10 +132,11 @@ export const typeDefs = gql`
         getStatsByUser(userId: ID!): [Stats]
     }
 
-    """Input type for creating a new user."""
+    """Input type for creating a new user (now includes password)."""
     input CreateUserInput {
         name: String!
         email: String!
+        password: String!  # new required field
         weight: Float
         height: Float
         gender: Gender!
@@ -148,9 +147,10 @@ export const typeDefs = gql`
         dailyCalories: Int
     }
 
-    """Input type for updating user info."""
+    """Input type for updating user info (password is optional)."""
     input UpdateUserInput {
         name: String
+        password: String
         weight: Float
         height: Float
         measurementSystem: MeasurementSystem
@@ -160,12 +160,21 @@ export const typeDefs = gql`
         dailyCalories: Int
     }
 
+    """AuthPayload for loginUser returning a token and user info."""
+    type AuthPayload {
+        token: String!
+        user: User!
+    }
+
     """Mutations for creating, updating, deleting Fine Dining data."""
     type Mutation {
         # User
         createUser(input: CreateUserInput!): User!
         updateUser(id: ID!, input: UpdateUserInput!): User
         deleteUser(id: ID!): Boolean
+
+        """ Login mutation that returns a JWT token & the user """
+        loginUser(email: String!, password: String!): AuthPayload
 
         # Recipe
         createRecipe(
@@ -177,7 +186,6 @@ export const typeDefs = gql`
             nutritionFacts: String
         ): Recipe!
 
-        """ Update an existing Recipe by ID """
         updateRecipe(
             id: ID!
             recipeName: String
@@ -188,7 +196,6 @@ export const typeDefs = gql`
             nutritionFacts: String
         ): Recipe
 
-        """ Delete a recipe by ID, returns true if successful """
         deleteRecipe(id: ID!): Boolean
 
         # Restaurant
@@ -199,7 +206,6 @@ export const typeDefs = gql`
             website: String
         ): Restaurant!
 
-        """ Delete a restaurant by ID, returns true if successful """
         deleteRestaurant(id: ID!): Boolean
 
         # Meal Plan
@@ -208,27 +214,22 @@ export const typeDefs = gql`
 
         # Stats
         createStats(userId: ID!, macros: String, micros: String): Stats!
-
-        """ Delete a stats record by ID, returns true if successful """
         deleteStats(id: ID!): Boolean
     }
 `;
 
 /**********************************************************
  * EXPLANATION (LIKE I AM 10)
- * 1. "type Query" is where we read information.
- * 2. "type Mutation" is where we create or change data.
- * 3. "type User", "type Recipe", etc. are shapes of data.
- * 4. "enum" means a list of allowed words (like GENDER).
+ * 1. We added `password: String!` to CreateUserInput so
+ *    you must give a password when you create a user.
+ * 2. We added `loginUser(email, password)` which returns
+ *    `AuthPayload` with `token` + user.
  **********************************************************/
 
 /**********************************************************
  * EXPLANATION (LIKE I AM A PROFESSIONAL)
- * This schema defines the domain model for the Fine Dining
- * application, representing the primary entities: users,
- * recipes, restaurants, meal plans, individual meals,
- * and user-specific stats. The Query type offers read-only
- * operations, while the Mutation type now includes
- * updateRecipe, deleteRecipe, deleteRestaurant, and
- * deleteStats to support the end-to-end test coverage.
+ * This updated schema includes a `password` field for user
+ * creation, ensuring the Mongoose pre-save hook can hash it.
+ * The `loginUser` mutation expects `email` and `password`,
+ * returning an `AuthPayload` that includes a JWT and user data.
  **********************************************************/

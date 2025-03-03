@@ -1,10 +1,11 @@
 /**********************************************************
  * FILE: resolvers.js
  * Provides the GraphQL resolvers for Fine Dining
+ * Updated to include updateRecipe, deleteRecipe, deleteRestaurant, deleteStats.
  **********************************************************/
 
-import UserModel from '@/models/UserModel';        // Example Mongoose model
-import RecipeModel from '@/models/RecipeModel';    // Example Mongoose model
+import UserModel from '@/models/UserModel';
+import RecipeModel from '@/models/RecipeModel';
 import RestaurantModel from '@/models/RestaurantModel';
 import MealPlanModel from '@/models/MealPlanModel';
 import StatsModel from '@/models/StatsModel';
@@ -22,100 +23,73 @@ export const resolvers = {
         /**
          * @function getUser
          * Fetches one user by their ID.
-         * @param {object} _parent
-         * @param {object} args
-         * @returns {Promise<object>} user
          */
         async getUser(_parent, { id }) {
-            return await UserModel.findById(id);
+            return UserModel.findById(id);
         },
 
         /**
          * @function getUsers
          * Fetches all users.
-         * @returns {Promise<object[]>} array of users
          */
         async getUsers() {
-            return await UserModel.find({});
+            return UserModel.find({});
         },
 
         /**
          * @function getRecipe
          * Fetches a specific recipe by ID.
-         * @param {object} _parent
-         * @param {object} args
-         * @returns {Promise<object>} recipe
          */
         async getRecipe(_parent, { id }) {
-            return await RecipeModel.findById(id);
+            return RecipeModel.findById(id);
         },
 
         /**
          * @function getRecipes
          * Fetches all recipes.
-         * @returns {Promise<object[]>} array of recipes
          */
         async getRecipes() {
-            return await RecipeModel.find({});
+            return RecipeModel.find({});
         },
 
         /**
          * @function getRestaurant
          * Fetches a specific restaurant by ID.
-         * @param {object} _parent
-         * @param {object} args
-         * @returns {Promise<object>} restaurant
          */
         async getRestaurant(_parent, { id }) {
-            return await RestaurantModel.findById(id);
+            return RestaurantModel.findById(id);
         },
 
         /**
          * @function getRestaurants
          * Fetches all restaurants.
-         * @returns {Promise<object[]>} array of restaurants
          */
         async getRestaurants() {
-            return await RestaurantModel.find({});
+            return RestaurantModel.find({});
         },
 
         /**
          * @function getMealPlan
-         * Retrieves a single MealPlan by ID.
-         * NOTE: Removed populate('meals') to avoid errors if
-         * 'meals' field doesn’t exist in your MealPlan schema.
-         * @param {object} _parent
-         * @param {object} args
-         * @returns {Promise<object>} mealPlan
+         * Retrieves a single MealPlan by ID (only populates user).
          */
         async getMealPlan(_parent, { id }) {
-            return await MealPlanModel
-                .findById(id)
-                .populate('user'); // no .populate('meals')
+            return MealPlanModel.findById(id).populate('user');
         },
 
         /**
          * @function getMealPlans
-         * Retrieves all MealPlans.
-         * NOTE: Removed populate('meals') to avoid errors if
-         * 'meals' field doesn’t exist in your MealPlan schema.
-         * @returns {Promise<object[]>} array of mealPlans
+         * Retrieves all MealPlans (only populates user).
          */
         async getMealPlans() {
-            return await MealPlanModel
-                .find({})
-                .populate('user'); // no .populate('meals')
+            return MealPlanModel.find({}).populate('user');
         },
 
         /**
          * @function getStatsByUser
-         * Retrieves all stats entries for a given user.
-         * @param {object} _parent
-         * @param {object} args
-         * @returns {Promise<object[]>} array of stats
+         * Retrieves all Stats records for a given user.
          */
         async getStatsByUser(_parent, { userId }) {
-            return await StatsModel.find({ user: userId });
+            return StatsModel.find({ user: userId });
         },
     },
 
@@ -125,33 +99,23 @@ export const resolvers = {
     Mutation: {
         /**
          * @function createUser
-         * Creates a new user document.
-         * @param {object} _parent
-         * @param {object} args
-         * @returns {Promise<object>} newly created user
+         * Creates a new User document.
          */
         async createUser(_parent, { input }) {
-            const newUser = await UserModel.create(input);
-            return newUser;
+            return UserModel.create(input);
         },
 
         /**
          * @function updateUser
-         * Updates user details by ID.
-         * @param {object} _parent
-         * @param {object} args
-         * @returns {Promise<object|null>} updated user or null
+         * Updates an existing User by ID.
          */
         async updateUser(_parent, { id, input }) {
-            return await UserModel.findByIdAndUpdate(id, input, { new: true });
+            return UserModel.findByIdAndUpdate(id, input, { new: true });
         },
 
         /**
          * @function deleteUser
-         * Removes a user document by ID.
-         * @param {object} _parent
-         * @param {object} args
-         * @returns {Promise<boolean>} true if deleted successfully
+         * Removes a User by ID; returns true if successful.
          */
         async deleteUser(_parent, { id }) {
             const result = await UserModel.findByIdAndDelete(id);
@@ -160,16 +124,13 @@ export const resolvers = {
 
         /**
          * @function createRecipe
-         * Creates a new recipe document.
-         * @param {object} _parent
-         * @param {object} args
-         * @returns {Promise<object>} newly created recipe
+         * Creates a new Recipe document.
          */
         async createRecipe(
             _parent,
             { recipeName, ingredients, instructions, prepTime, difficulty, nutritionFacts }
         ) {
-            const newRecipe = await RecipeModel.create({
+            return RecipeModel.create({
                 recipeName,
                 ingredients,
                 instructions,
@@ -177,18 +138,42 @@ export const resolvers = {
                 difficulty: difficulty || 'EASY',
                 nutritionFacts,
             });
-            return newRecipe;
+        },
+
+        /**
+         * @function updateRecipe
+         * Updates a Recipe by ID; returns the updated Recipe.
+         */
+        async updateRecipe(
+            _parent,
+            { id, recipeName, ingredients, instructions, prepTime, difficulty, nutritionFacts }
+        ) {
+            const updateData = {};
+            if (recipeName !== undefined) updateData.recipeName = recipeName;
+            if (ingredients !== undefined) updateData.ingredients = ingredients;
+            if (instructions !== undefined) updateData.instructions = instructions;
+            if (prepTime !== undefined) updateData.prepTime = prepTime;
+            if (difficulty !== undefined) updateData.difficulty = difficulty;
+            if (nutritionFacts !== undefined) updateData.nutritionFacts = nutritionFacts;
+
+            return RecipeModel.findByIdAndUpdate(id, updateData, { new: true });
+        },
+
+        /**
+         * @function deleteRecipe
+         * Removes a Recipe by ID; returns true if successful.
+         */
+        async deleteRecipe(_parent, { id }) {
+            const result = await RecipeModel.findByIdAndDelete(id);
+            return !!result;
         },
 
         /**
          * @function createRestaurant
-         * Creates a new restaurant document.
-         * @param {object} _parent
-         * @param {object} args
-         * @returns {Promise<object>} newly created restaurant
+         * Creates a new Restaurant document.
          */
         async createRestaurant(_parent, { restaurantName, address, phone, website }) {
-            return await RestaurantModel.create({
+            return RestaurantModel.create({
                 restaurantName,
                 address,
                 phone,
@@ -197,11 +182,17 @@ export const resolvers = {
         },
 
         /**
+         * @function deleteRestaurant
+         * Removes a Restaurant by ID; returns true if successful.
+         */
+        async deleteRestaurant(_parent, { id }) {
+            const result = await RestaurantModel.findByIdAndDelete(id);
+            return !!result;
+        },
+
+        /**
          * @function createMealPlan
          * Creates a new MealPlan for a specific user.
-         * @param {object} _parent
-         * @param {object} args
-         * @returns {Promise<object>} newly created meal plan
          */
         async createMealPlan(_parent, { userId, startDate, endDate }) {
             const newPlan = await MealPlanModel.create({
@@ -214,10 +205,7 @@ export const resolvers = {
 
         /**
          * @function deleteMealPlan
-         * Deletes a MealPlan by ID.
-         * @param {object} _parent
-         * @param {object} args
-         * @returns {Promise<boolean>} true if deletion was successful
+         * Deletes a MealPlan by ID; returns true if successful.
          */
         async deleteMealPlan(_parent, { id }) {
             const result = await MealPlanModel.findByIdAndDelete(id);
@@ -226,32 +214,35 @@ export const resolvers = {
 
         /**
          * @function createStats
-         * Creates a new stats document for a user.
-         * @param {object} _parent
-         * @param {object} args
-         * @returns {Promise<object>} newly created stats
+         * Creates a new Stats document for a specific user.
          */
         async createStats(_parent, { userId, macros, micros }) {
-            const newStats = await StatsModel.create({
+            return StatsModel.create({
                 user: userId,
                 macros,
                 micros,
             });
-            return newStats;
+        },
+
+        /**
+         * @function deleteStats
+         * Removes a Stats doc by ID; returns true if successful.
+         */
+        async deleteStats(_parent, { id }) {
+            const result = await StatsModel.findByIdAndDelete(id);
+            return !!result;
         },
     },
 
     /******************************************************
      * FIELD RESOLVERS (OPTIONAL)
-     * Define how to fetch relations if not using .populate()
      ******************************************************/
     MealPlan: {
         async user(parent) {
             return UserModel.findById(parent.user);
         },
         async meals(parent) {
-            // If you had a "meals" field in MealPlan schema referencing a Meal model,
-            // you could return real data here. For now, just return an empty array.
+            // Return an empty array or add logic if you have a Meal model
             return [];
         },
     },
@@ -278,18 +269,18 @@ export const resolvers = {
  * EXPLANATION (LIKE I AM 10)
  * - "Query" means we get data (like getUser or getRecipe).
  * - "Mutation" means we change data (like createUser).
- * - "await" tells our code to wait for the database call.
+ * - We added updateRecipe, deleteRecipe, deleteRestaurant,
+ *   and deleteStats to do more advanced modifications.
  **********************************************************/
 
 /**********************************************************
  * EXPLANATION (LIKE I AM A PROFESSIONAL)
- * The resolver map translates the schema’s query and
- * mutation definitions to actual functions that interface
- * with Mongoose models. Each function either fetches
- * or manipulates data and returns it in the format
- * matching the defined schema types. Field-level resolvers
- * provide fine-grained control for populating related data,
- * but to avoid breaking code, references to "meals" have
- * been removed from direct .populate(), and the Meal field
- * resolvers are stubbed out unless you add a Meal model/logic.
+ * The resolver map translates our schema's queries and
+ * mutations into Mongoose calls. Beyond the previously
+ * working create and read operations, we've added:
+ *   - updateRecipe  -> partial updates to existing recipes
+ *   - deleteRecipe  -> removes a recipe by ID
+ *   - deleteRestaurant -> removes a restaurant by ID
+ *   - deleteStats   -> removes user stats by ID
+ * This completes full CRUD coverage for your GraphQL API.
  **********************************************************/

@@ -177,6 +177,20 @@ export const typeDefs = gql`
             nutritionFacts: String
         ): Recipe!
 
+        """ Update an existing Recipe by ID """
+        updateRecipe(
+            id: ID!
+            recipeName: String
+            ingredients: [String]
+            instructions: String
+            prepTime: Int
+            difficulty: Difficulty
+            nutritionFacts: String
+        ): Recipe
+
+        """ Delete a recipe by ID, returns true if successful """
+        deleteRecipe(id: ID!): Boolean
+
         # Restaurant
         createRestaurant(
             restaurantName: String!
@@ -185,12 +199,18 @@ export const typeDefs = gql`
             website: String
         ): Restaurant!
 
+        """ Delete a restaurant by ID, returns true if successful """
+        deleteRestaurant(id: ID!): Boolean
+
         # Meal Plan
         createMealPlan(userId: ID!, startDate: String!, endDate: String!): MealPlan!
         deleteMealPlan(id: ID!): Boolean
 
         # Stats
         createStats(userId: ID!, macros: String, micros: String): Stats!
+
+        """ Delete a stats record by ID, returns true if successful """
+        deleteStats(id: ID!): Boolean
     }
 `;
 
@@ -208,6 +228,7 @@ export const typeDefs = gql`
  * application, representing the primary entities: users,
  * recipes, restaurants, meal plans, individual meals,
  * and user-specific stats. The Query type offers read-only
- * operations, while the Mutation type encompasses
- * data modifications, including creation and updates.
+ * operations, while the Mutation type now includes
+ * updateRecipe, deleteRecipe, deleteRestaurant, and
+ * deleteStats to support the end-to-end test coverage.
  **********************************************************/

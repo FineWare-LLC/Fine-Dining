@@ -6,22 +6,30 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:playwright": "playwright test"
   },
   "dependencies": {
     "@apollo/client": "^3.13.1",
     "@apollo/server": "^4.11.3",
     "@as-integrations/next": "^3.2.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^6.4.6",
     "apollo-server-micro": "^3.13.0",
+    "bcrypt": "^5.1.1",
     "graphql": "^16.10.0",
     "graphql-tag": "^2.12.6",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.11.0",
     "next": "15.2.0",
+    "prop-types": "^15.8.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.50.1",
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.2.0",

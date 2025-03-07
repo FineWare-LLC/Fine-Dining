@@ -150,7 +150,7 @@ Log Meals: Track daily intake and view real-time nutrition stats.
 Auto Grocery Lists: Generate shopping lists for planned recipes.
 Restaurant Search: Find nearby eateries that meet your dietary needs.
 Folder Structure
-
+```
 fine-dining/
   ├── backend/
   │   ├── src/
@@ -175,8 +175,9 @@ fine-dining/
   │   ├── components/
   │   └── package.json
   └── README.md
+  ```
 Testing
-Unit Tests: Use Jest or Mocha for backend logic.
+Unit Tests: Use Playwright
 
 cd backend
 npm test

@@ -4,7 +4,8 @@
  *              Run via: `node scripts/seed.mjs`
  */
 
-import dotenv from 'dotenv'; // ESM import of dotenv
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env' }); // Now guaranteed to read from the same .env
 import mongoose from 'mongoose';
 import { faker } from '@faker-js/faker/locale/en';
 

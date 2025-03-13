@@ -5,53 +5,48 @@
  */
 
 import dotenv from 'dotenv';
-dotenv.config({ path: '.env' }); // Now guaranteed to read from the same .env
 import mongoose from 'mongoose';
-import { faker } from '@faker-js/faker/locale/en';
+import {faker} from '@faker-js/faker/locale/en';
 
 /* Adjust if your dbConnect is in a different path or uses a different name. */
-import { dbConnect } from '../dbConnect.js';
+import {dbConnect} from '../dbConnect.js';
 
-/* Mongoose Models (adjust paths as necessary) */
-import UserModel from '../src/models/UserModel.js';
-import RecipeModel from '../src/models/RecipeModel.js';
-import RestaurantModel from '../src/models/RestaurantModel.js';
-import MealPlanModel from '../src/models/MealPlanModel.js';
-import MealModel from '../src/models/MealModel.js';
-import StatsModel from '../src/models/StatsModel.js';
-import ReviewModel from '../src/models/ReviewModel.js';
+/* Mongoose Models */
+import UserModel from "@/models/User";
+import {RecipeModel} from "@/models/Recipe";
+import {RestaurantModel} from "@/models/Restaurant";
+import {MealPlanModel} from "@/models/MealPlan";
+import {MealModel} from "@/models/Meal";
+import {StatsModel} from "@/models/Stats";
+import {Review as ReviewModel} from "@/models/Review";
 
-/* Load environment variables from .env, .env.local, or wherever configured */
-dotenv.config();
+dotenv.config({path: '.env'});
 
 /* ------------------------------------------------------------------
-   Adjustable Constants:
+   Adjustable Constants
    ------------------------------------------------------------------ */
-const NUM_USERS = 1_000;
-const NUM_RESTAURANTS = 5_000;
-const NUM_RECIPES = 50_000;
-const NUM_MEAL_PLANS = 5_000;
-const MIN_MEALS_PER_PLAN = 3;
-const MAX_MEALS_PER_PLAN = 10;
-const REVIEWS_PER_RECIPE = 5;
-const REVIEWS_PER_RESTAURANT = 5;
+const NUM_USERS = 100;
+const NUM_RESTAURANTS = 200;
+const NUM_RECIPES = 500;
+const NUM_MEAL_PLANS = 500;
+const MIN_MEALS_PER_PLAN = 10;
+const MAX_MEALS_PER_PLAN = 25;
+const REVIEWS_PER_RECIPE = 20;
+const REVIEWS_PER_RESTAURANT = 50;
 const BATCH_SIZE = 500;
-
-/* Helper Functions */
 
 /**
  * Return a random cost as a small integer.
  */
 function generateCost() {
-    return faker.number.int({ min: 5, max: 100 });
+    return faker.number.int({min: 5, max: 100});
 }
 
 /**
- * Return a random difficulty value that matches your schema’s allowed enum.
- * (e.g., ['EASY', 'HARD']).
+ * Return a random difficulty matching your recipe schema’s enum.
  */
 function generateDifficulty() {
-    const difficulties = ['EASY', 'HARD']; // remove 'MEDIUM' if your enum doesn't allow it
+    const difficulties = ['EASY', 'INTERMEDIATE', 'HARD'];
     return faker.helpers.arrayElement(difficulties);
 }
 
@@ -59,23 +54,23 @@ function generateDifficulty() {
  * Return a random numeric portion size.
  */
 function generatePortionSize() {
-    return faker.number.int({ min: 1, max: 6 });
+    return faker.number.int({min: 1, max: 6});
 }
 
 /**
  * Create an array of random ingredients.
  */
 function generateIngredients() {
-    const ingredientCount = faker.number.int({ min: 3, max: 10 });
-    return Array.from({ length: ingredientCount }, () => faker.commerce.product());
+    const ingredientCount = faker.number.int({min: 3, max: 10});
+    return Array.from({length: ingredientCount}, () => faker.commerce.product());
 }
 
 /**
- * Create an array of random instruction steps; we will join them into a single string if needed.
+ * Create an array of random instruction steps.
  */
 function generateInstructions() {
-    const stepsCount = faker.number.int({ min: 2, max: 6 });
-    return Array.from({ length: stepsCount }, () => faker.lorem.sentence());
+    const stepsCount = faker.number.int({min: 2, max: 6});
+    return Array.from({length: stepsCount}, () => faker.lorem.sentence());
 }
 
 /**
@@ -87,20 +82,11 @@ async function seedDatabase() {
     console.log('Connected! Clearing existing data...');
 
     // Clear existing collections to avoid duplicates
-    await Promise.all([
-        UserModel.deleteMany({}),
-        RecipeModel.deleteMany({}),
-        RestaurantModel.deleteMany({}),
-        MealPlanModel.deleteMany({}),
-        MealModel.deleteMany({}),
-        StatsModel.deleteMany({}),
-        ReviewModel.deleteMany({}),
-    ]);
+    await Promise.all([UserModel.deleteMany({}), RecipeModel.deleteMany({}), RestaurantModel.deleteMany({}), MealPlanModel.deleteMany({}), MealModel.deleteMany({}), StatsModel.deleteMany({}), ReviewModel.deleteMany({}),]);
     console.log('Databases cleared. Generating data...');
 
     /* ---------------------------------------------
        1) Create Users
-       With required fields: measurementSystem & gender
     --------------------------------------------- */
     console.log(`Generating ${NUM_USERS} users...`);
     let userDocs = [];
@@ -112,7 +98,6 @@ async function seedDatabase() {
             role: faker.helpers.arrayElement(['USER', 'ADMIN']),
             accountStatus: faker.helpers.arrayElement(['ACTIVE', 'SUSPENDED']),
             lastLogin: faker.date.recent(),
-            // If your schema requires these exact values:
             measurementSystem: faker.helpers.arrayElement(['METRIC', 'IMPERIAL']),
             gender: faker.helpers.arrayElement(['MALE', 'FEMALE', 'OTHER']),
         });
@@ -135,13 +120,7 @@ async function seedDatabase() {
             address: faker.location.streetAddress(),
             phone: faker.phone.number(),
             website: faker.internet.url(),
-            cuisineType: faker.helpers.arrayElement([
-                'Italian',
-                'Chinese',
-                'Mexican',
-                'American',
-                'French',
-            ]),
+            cuisineType: faker.helpers.arrayElement(['Italian', 'Chinese', 'Mexican', 'American', 'French',]),
             priceRange: faker.helpers.arrayElement(['$', '$$', '$$$']),
             averageRating: 0,
             ratingCount: 0,
@@ -158,7 +137,7 @@ async function seedDatabase() {
        3) Create Recipes
     --------------------------------------------- */
     console.log(`Generating ${NUM_RECIPES} recipes...`);
-    const allUsers = await UserModel.find({}, { _id: 1 });
+    const allUsers = await UserModel.find({}, {_id: 1});
     const userIds = allUsers.map((u) => u._id.toString());
 
     let recipeDocs = [];
@@ -166,26 +145,23 @@ async function seedDatabase() {
         const randomUserId = faker.helpers.arrayElement(userIds);
         const steps = generateInstructions();
         const nutritionObj = {
-            calories: faker.number.int({ min: 100, max: 1000 }),
-            fat: faker.number.int({ min: 0, max: 50 }),
-            protein: faker.number.int({ min: 0, max: 50 }),
-            carbs: faker.number.int({ min: 0, max: 100 }),
+            calories: faker.number.int({min: 100, max: 1000}),
+            fat: faker.number.int({min: 0, max: 50}),
+            protein: faker.number.int({min: 0, max: 50}),
+            carbs: faker.number.int({min: 0, max: 100}),
         };
 
         recipeDocs.push({
-            recipeName: faker.lorem.words({ min: 2, max: 4 }),
-            // If your schema expects a string:
-            instructions: steps.join('\n'),
+            recipeName: faker.lorem.words({min: 2, max: 4}),
+            instructions: steps.join('\n'), // if your schema is a single string
             nutritionFacts: JSON.stringify(nutritionObj),
-            ingredients: generateIngredients(), // if your schema wants an array of strings
-            prepTime: faker.number.int({ min: 5, max: 90 }),
+            ingredients: generateIngredients(),
+            prepTime: faker.number.int({min: 5, max: 90}),
             difficulty: generateDifficulty(),
             tags: [faker.lorem.word(), faker.lorem.word()],
-            images: [faker.image.urlLoremFlickr({ category: 'food' })],
+            images: [faker.image.urlLoremFlickr({category: 'food'})],
             estimatedCost: generateCost(),
-            author: faker.datatype.boolean()
-                ? new mongoose.Types.ObjectId(randomUserId)
-                : null,
+            author: faker.datatype.boolean() ? new mongoose.Types.ObjectId(randomUserId) : null,
             averageRating: 0,
             ratingCount: 0,
         });
@@ -209,9 +185,9 @@ async function seedDatabase() {
             user: new mongoose.Types.ObjectId(randomUserId),
             startDate: faker.date.soon(),
             endDate: faker.date.future(),
-            title: faker.lorem.words({ min: 2, max: 5 }),
+            title: faker.lorem.words({min: 2, max: 5}),
             status: faker.helpers.arrayElement(['ACTIVE', 'COMPLETED', 'CANCELLED']),
-            totalCalories: faker.number.int({ min: 2000, max: 8000 }),
+            totalCalories: faker.number.int({min: 2000, max: 8000}),
             meals: [],
         });
 
@@ -223,41 +199,34 @@ async function seedDatabase() {
     console.log('Meal Plans created!');
 
     // Fetch newly inserted MealPlans
-    const allMealPlans = await MealPlanModel.find({}, { _id: 1 });
+    const allMealPlans = await MealPlanModel.find({}, {_id: 1});
     const mealPlanIds = allMealPlans.map((mp) => mp._id.toString());
 
     console.log('Generating Meals...');
     let mealDocs = [];
     for (const mealPlanId of mealPlanIds) {
         const mealCount = faker.number.int({
-            min: MIN_MEALS_PER_PLAN,
-            max: MAX_MEALS_PER_PLAN,
+            min: MIN_MEALS_PER_PLAN, max: MAX_MEALS_PER_PLAN,
         });
         for (let i = 0; i < mealCount; i++) {
             mealDocs.push({
                 mealPlan: new mongoose.Types.ObjectId(mealPlanId),
                 date: faker.date.future(),
-                mealType: faker.helpers.arrayElement([
-                    'BREAKFAST',
-                    'LUNCH',
-                    'DINNER',
-                    'SNACK',
-                ]),
-                recipe: null,
+                mealType: faker.helpers.arrayElement(['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK']),
+                recipe: null, // optional references
                 restaurant: null,
-                mealName: faker.lorem.words({ min: 1, max: 3 }),
+                mealName: faker.lorem.words({min: 1, max: 3}),
                 ingredients: [faker.commerce.product(), faker.commerce.product()],
                 nutritionFacts: JSON.stringify({
-                    calories: faker.number.int({ min: 200, max: 1000 }),
-                    fat: faker.number.int({ min: 0, max: 50 }),
-                    protein: faker.number.int({ min: 0, max: 50 }),
-                    carbs: faker.number.int({ min: 0, max: 100 }),
+                    calories: faker.number.int({min: 200, max: 1000}),
+                    fat: faker.number.int({min: 0, max: 50}),
+                    protein: faker.number.int({min: 0, max: 50}),
+                    carbs: faker.number.int({min: 0, max: 100}),
                 }),
                 portionSize: generatePortionSize(),
-                notes: faker.lorem.sentence(),
+                notes: faker.lorem.sentence(), // if you want to store notes
             });
         }
-
         // Insert in batches
         if (mealDocs.length >= BATCH_SIZE) {
             await MealModel.insertMany(mealDocs);
@@ -273,7 +242,7 @@ async function seedDatabase() {
 
     // Link Meals back to MealPlans
     console.log('Linking Meals back to MealPlans...');
-    const mealCursor = MealModel.find({}, { _id: 1, mealPlan: 1 }).cursor();
+    const mealCursor = MealModel.find({}, {_id: 1, mealPlan: 1}).cursor();
     while (true) {
         const batch = [];
         for (let i = 0; i < BATCH_SIZE; i++) {
@@ -285,8 +254,7 @@ async function seedDatabase() {
 
         const bulkOps = batch.map((meal) => ({
             updateOne: {
-                filter: { _id: meal.mealPlan },
-                update: { $push: { meals: meal._id } },
+                filter: {_id: meal.mealPlan}, update: {$push: {meals: meal._id}},
             },
         }));
         await MealPlanModel.bulkWrite(bulkOps);
@@ -295,26 +263,23 @@ async function seedDatabase() {
 
     /* ---------------------------------------------
        5) Create Stats
-       => macros & micros must be strings if Stats schema expects strings
     --------------------------------------------- */
     console.log('Generating stats...');
     let statsDocs = [];
     for (const userId of userIds) {
         statsDocs.push({
             user: new mongoose.Types.ObjectId(userId),
-            // Convert macros & micros to JSON if they need to be strings:
             macros: JSON.stringify({
-                protein: faker.number.int({ min: 20, max: 200 }),
-                fat: faker.number.int({ min: 10, max: 200 }),
-                carbs: faker.number.int({ min: 50, max: 400 }),
+                protein: faker.number.int({min: 20, max: 200}),
+                fat: faker.number.int({min: 10, max: 200}),
+                carbs: faker.number.int({min: 50, max: 400}),
             }),
             micros: JSON.stringify({
-                vitaminA: faker.number.int({ min: 100, max: 500 }),
-                vitaminC: faker.number.int({ min: 10, max: 200 }),
+                vitaminA: faker.number.int({min: 100, max: 500}), vitaminC: faker.number.int({min: 10, max: 200}),
             }),
-            caloriesConsumed: faker.number.int({ min: 1000, max: 5000 }),
-            waterIntake: faker.number.int({ min: 1, max: 10 }),
-            steps: faker.number.int({ min: 0, max: 20000 }),
+            caloriesConsumed: faker.number.int({min: 1000, max: 5000}),
+            waterIntake: faker.number.int({min: 1, max: 10}),
+            steps: faker.number.int({min: 0, max: 20000}),
         });
 
         if (statsDocs.length >= BATCH_SIZE) {
@@ -332,9 +297,10 @@ async function seedDatabase() {
        6) Create Reviews
     --------------------------------------------- */
     console.log('Generating reviews...');
-    const allRecipes = await RecipeModel.find({}, { _id: 1 });
+
+    const allRecipes = await RecipeModel.find({}, {_id: 1});
     const recipeIds = allRecipes.map((r) => r._id.toString());
-    const allRestaurants = await RestaurantModel.find({}, { _id: 1 });
+    const allRestaurants = await RestaurantModel.find({}, {_id: 1});
     const restaurantIds = allRestaurants.map((r) => r._id.toString());
 
     let reviewDocs = [];
@@ -350,12 +316,10 @@ async function seedDatabase() {
     for (const rId of recipeIds) {
         for (let i = 0; i < REVIEWS_PER_RECIPE; i++) {
             reviewDocs.push({
-                user: new mongoose.Types.ObjectId(
-                    faker.helpers.arrayElement(userIds)
-                ),
+                user: new mongoose.Types.ObjectId(faker.helpers.arrayElement(userIds)),
                 targetType: 'RECIPE',
                 targetId: new mongoose.Types.ObjectId(rId),
-                rating: faker.number.int({ min: 1, max: 5 }),
+                rating: faker.number.int({min: 1, max: 5}),
                 comment: faker.lorem.sentence(),
             });
         }
@@ -367,12 +331,10 @@ async function seedDatabase() {
     for (const restId of restaurantIds) {
         for (let i = 0; i < REVIEWS_PER_RESTAURANT; i++) {
             reviewDocs.push({
-                user: new mongoose.Types.ObjectId(
-                    faker.helpers.arrayElement(userIds)
-                ),
+                user: new mongoose.Types.ObjectId(faker.helpers.arrayElement(userIds)),
                 targetType: 'RESTAURANT',
                 targetId: new mongoose.Types.ObjectId(restId),
-                rating: faker.number.int({ min: 1, max: 5 }),
+                rating: faker.number.int({min: 1, max: 5}),
                 comment: faker.lorem.sentence(),
             });
         }
@@ -396,7 +358,7 @@ async function seedDatabase() {
  * @param {mongoose.Model} targetModel
  */
 async function recalcAverageRatings(targetType, targetModel) {
-    const cursor = targetModel.find({}, { _id: 1 }).cursor();
+    const cursor = targetModel.find({}, {_id: 1}).cursor();
 
     while (true) {
         const batch = [];
@@ -407,40 +369,31 @@ async function recalcAverageRatings(targetType, targetModel) {
         }
         if (!batch.length) break;
 
-        const reviews = await ReviewModel.aggregate([
-            { $match: { targetType, targetId: { $in: batch } } },
-            {
-                $group: {
-                    _id: '$targetId',
-                    count: { $sum: 1 },
-                    avgRating: { $avg: '$rating' },
-                },
+        const reviews = await ReviewModel.aggregate([{$match: {targetType, targetId: {$in: batch}}}, {
+            $group: {
+                _id: '$targetId', count: {$sum: 1}, avgRating: {$avg: '$rating'},
             },
-        ]);
+        },]);
 
         const statsMap = {};
         for (const r of reviews) {
             statsMap[r._id.toString()] = {
-                count: r.count,
-                avgRating: r.avgRating,
+                count: r.count, avgRating: r.avgRating,
             };
         }
 
         const bulkOps = batch.map((id) => {
-            const stats = statsMap[id.toString()] || { count: 0, avgRating: 0 };
+            const stats = statsMap[id.toString()] || {count: 0, avgRating: 0};
             return {
                 updateOne: {
-                    filter: { _id: id },
-                    update: {
+                    filter: {_id: id}, update: {
                         $set: {
-                            ratingCount: stats.count,
-                            averageRating: stats.avgRating,
+                            ratingCount: stats.count, averageRating: stats.avgRating,
                         },
                     },
                 },
             };
         });
-
         await targetModel.bulkWrite(bulkOps);
     }
 }

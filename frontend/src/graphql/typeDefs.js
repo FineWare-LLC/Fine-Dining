@@ -64,7 +64,7 @@ export const typeDefs = gql`
         DRAFT
         ACTIVE
         COMPLETED
-        CANCELED
+        CANCELLED
     }
 
     enum PriceRange {

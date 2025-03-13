@@ -5,21 +5,8 @@
 
 import React, { useState } from 'react';
 import { Container, Box, TextField, Button, Typography } from '@mui/material';
-import { gql, useMutation } from '@apollo/client';
+import { useMutation } from '@apollo/client';
 
-/**
- * GraphQL mutation for creating a new account
- * Adjust the fields to match your GraphQL schema.
- */
-const CREATE_ACCOUNT_MUTATION = gql`
-    mutation CreateAccount($username: String!, $email: String!, $password: String!) {
-        createAccount(input: { username: $username, email: $email, password: $password }) {
-            id
-            username
-            email
-        }
-    }
-`;
 
 /**
  * CreateAccountForm - Renders the form for creating a new user account

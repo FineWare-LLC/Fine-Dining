@@ -6,51 +6,8 @@
  ****************************************************/
 
 import React, { useEffect, useState } from 'react';
-import { gql, useQuery } from '@apollo/client';
 
-/**
- * Example GraphQL query that returns the current year.
- * In a real scenario, your backend would implement
- * the "getYear" resolver. This is purely for
- * demonstration/over-engineering purposes.
- */
-const GET_CURRENT_YEAR = gql`
-    query GetYear {
-        getYear
-    }
-`;
 
-/**
- * A custom hook that fetches the current year using Apollo Client,
- * but also provides the option to override the returned year via props.
- *
- * @function useYearFetcher
- * @param {object} [options={}] - Options to override or fallback the year.
- * @param {number} [options.overrideYear] - A manually specified year that overrides GraphQL data.
- * @param {number} [options.fallbackYear] - If the GraphQL query fails, use this year.
- * @returns {number} The final resolved year value after factoring in overrides and fallback logic.
- *
- * @example
- * const year = useYearFetcher({ overrideYear: 2025, fallbackYear: 2023 });
- */
-function useYearFetcher({ overrideYear, fallbackYear }) {
-    // Apollo query to get year
-    const { data, loading, error } = useQuery(GET_CURRENT_YEAR);
-    const [fetchedYear, setFetchedYear] = useState(new Date().getFullYear());
-
-    useEffect(() => {
-        if (!loading && data && data.getYear) {
-            setFetchedYear(data.getYear);
-        }
-    }, [data, loading]);
-
-    // If overrideYear is provided, use it regardless.
-    if (overrideYear) return overrideYear;
-    // If there's an error or no data, use fallbackYear or a generic fallback (current year).
-    if (error || !data) return fallbackYear || fetchedYear;
-
-    return data?.getYear || fetchedYear;
-}
 
 /**
  * Renders an outrageously over-engineered copyright notice,

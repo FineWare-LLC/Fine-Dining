@@ -3,9 +3,14 @@
  * @fileoverview The login form section for FineDinning landing page
  */
 
-import React, {useState} from 'react';
-import {Box, TextField, Button, Link, Typography} from '@mui/material';
-import {gql, useMutation} from '@apollo/client';
+// Import necessary hooks from React and Next.js
+import React, { useState } from 'react';
+import { useRouter } from 'next/router'; // Import useRouter for redirection
+import { Box, TextField, Button, Link, Typography } from '@mui/material';
+import { gql, useMutation } from '@apollo/client';
+
+// Import the useAuth hook from your context file
+import { useAuth } from '../context/AuthContext'; // Make sure the path is correct
 
 // Define the GraphQL Mutation
 const LOGIN_MUTATION = gql`
@@ -16,49 +21,64 @@ const LOGIN_MUTATION = gql`
                 id
                 name
                 email
+                role # Example: Include role if needed by AuthContext
             }
         }
     }
 `;
 
 /**
- * LoginForm - Renders the login form with Name, Password fields, and login actions
+ * LoginForm - Renders the login form with Email, Password fields, and login actions
  * @returns {JSX.Element} The login form component
  */
 export default function LoginForm() {
-    // Use email instead of name for login, based on the mutation definition
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-
     const [errorMessage, setErrorMessage] = useState('');
+    const router = useRouter(); // Initialize the router
+
+    // Get the login function from AuthContext
+    const { login } = useAuth();
 
     // Apollo useMutation hook
-    const [loginUser, {loading, error, data}] = useMutation(LOGIN_MUTATION);
+    const [loginUserMutation, { loading }] = useMutation(LOGIN_MUTATION, {
+        onCompleted: (data) => {
+            // This function runs *after* the mutation is successful
+            console.log('Login successful:', data.loginUser);
+            const { token, user } = data.loginUser;
 
-    /**
-     * handleLogin - Handles the login button click
-     * @param {React.FormEvent} e - The event triggered by form submission
-     */
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setData(null);
-        setErrorMessage('');
-        try {
-            const result = await loginUser({
-                variables: {
-                    email: email,
-                    password: password,
-                },
-            });
-            console.log('Login successful:', result.data.loginUser);
-        } catch (err) {
+            // Use the login function from AuthContext to handle state and storage
+            login(token, user); // <<< This now handles setting token/user state
+
+            // Redirect to a dashboard or home page after successful login
+            router.push('/dashboard'); // Adjust the target route as needed
+        },
+        onError: (err) => {
+            // Handle errors specifically in onError callback
             console.error('Login failed:', err);
             if (err.graphQLErrors && err.graphQLErrors.length > 0) {
                 setErrorMessage(err.graphQLErrors[0].message);
             } else {
-                setErrorMessage('An unexpected error occurred.');
+                setErrorMessage('An unexpected error occurred during login.');
             }
         }
+    });
+
+    /**
+     * handleLogin - Handles the login button click by calling the mutation
+     * @param {React.FormEvent} e - The event triggered by form submission
+     */
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setErrorMessage(''); // Clear previous errors on new submission
+
+        // Call the mutation function provided by useMutation
+        await loginUserMutation({
+            variables: {
+                email: email,
+                password: password,
+            },
+        });
     };
 
     return (
@@ -71,49 +91,41 @@ export default function LoginForm() {
                 gap: '1rem'
             }}
         >
-            {/* Changed label and field to Email */}
             <TextField
                 label="Email"
                 variant="outlined"
-                name="email" // Added name attribute
-                type="email" // Set type to email
+                name="email"
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 fullWidth
                 required
-                aria-required="true" // Accessibility
+                aria-required="true"
+                error={!!errorMessage}
             />
             <TextField
                 label="Password"
                 variant="outlined"
-                name="password" // Added name attribute
+                name="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 fullWidth
                 required
-                aria-required="true" // Accessibility
+                aria-required="true"
+                error={!!errorMessage}
             />
-            {/* Display Loading and Error States */}
+
+            {/* Display Loading State */}
             {loading && <Typography>Logging in...</Typography>}
-            {error && (
-                <Typography color="error" variant="body2">
-                    Login failed: {error.message}
-                </Typography>
-            )}
 
+            {/* Display Specific Error Message */}
             {errorMessage && (
-                <Typography color="error" variant="body2">
-                    Login failed: {errorMessage}
+                <Typography color="error" variant="body2" role="alert">
+                    {errorMessage}
                 </Typography>
             )}
 
-
-            {data && (
-                <Typography color="success.main" variant="body2">
-                    Login successful! Welcome {data.loginUser.user.name}.
-                </Typography>
-            )}
             <Button
                 type="submit"
                 variant="contained"
@@ -128,14 +140,24 @@ export default function LoginForm() {
                 Log In
             </Button>
             <Link
-                href="/forgot-password"
+                href="/forgot-password" // Link to your forgot password page
                 variant="body2"
                 sx={{
                     textAlign: 'center',
                     marginTop: '0.5rem'
                 }}
             >
-                Forgot Password
+                Forgot Password?
+            </Link>
+            <Link
+                href="/create-account" // Link to your create account page
+                variant="body2"
+                sx={{
+                    textAlign: 'center',
+                    marginTop: '0.5rem'
+                }}
+            >
+                Don't have an account? Create one!
             </Link>
         </Box>
     );

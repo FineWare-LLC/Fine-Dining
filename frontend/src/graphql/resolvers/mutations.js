@@ -89,10 +89,16 @@ async function loginUser(_parent, {email, password}) {
     await user.save();
 
     // In production, use an env-based secret key:
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        console.error('FATAL ERROR: JWT_SECRET is not defined in environment variables.');
+        throw new Error('Authentication configuration error.'); // Don't leak details
+    }
+
     const token = jwt.sign(
-        {userId: user._id, email: user.email, role: user.role},
-        'YOUR_SECRET_KEY',
-        {expiresIn: '1d'}
+        { userId: user._id, email: user.email, role: user.role },
+        secret, // Use the secret from .env.local
+        { expiresIn: '1d' } // Or your desired expiration
     );
 
     return {

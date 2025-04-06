@@ -1,73 +1,36 @@
-/****************************************************
- * File: components/OverEngineeredCopyright.jsx
- * Description: A highly modular, prop-friendly, and
- *              extravagantly overbuilt Next.js
- *              component to display a copyright notice.
- ****************************************************/
-
-import React, { useEffect, useState } from 'react';
-
-
+// components/Footer/Simple Info/CopyWright/index.js
+import React from 'react';
+// Removed unused imports: useEffect, useState, gql, useQuery
 
 /**
- * Renders an outrageously over-engineered copyright notice,
- * complete with props for brand identity, optional messages,
- * and a dynamic year powered by an unnecessary GraphQL query.
+ * Renders a simplified copyright notice.
  *
- * @function OverEngineeredCopyright
+ * @function CopyrightNotice
  * @param {object} props - The properties object.
- * @param {string} props.companyName - Name of the company or entity.
+ * @param {string} [props.companyName='YourCompany'] - Name of the company or entity.
  * @param {number} [props.startYear] - Year the company started (if any).
- * @param {number} [props.overrideYear] - A year to forcibly override the GraphQL result.
- * @param {number} [props.fallbackYear] - A year to fall back on if GraphQL fails.
- * @param {string} [props.message] - Additional text to display after the year range.
- * @returns {JSX.Element} A thoroughly verbose component that makes
- *                        you question every life choice leading up to
- *                        this point in your dev career.
- *
- * @example
- * // Usage in a Next.js page:
- * import React from 'react';
- * import OverEngineeredCopyright from '../components/OverEngineeredCopyright';
- *
- * export default function Home() {
- *   return (
- *     <div>
- *       <h1>Welcome to The Over-Engineered Next.js App</h1>
- *       <OverEngineeredCopyright
- *         companyName="ExampleCorp"
- *         startYear={1995}
- *         overrideYear={2025}
- *         fallbackYear={2023}
- *         message="All rights somewhat reserved."
- *       />
- *     </div>
- *   );
- * }
+ * @param {string} [props.message='All rights reserved.'] - Additional text.
+ * @returns {JSX.Element} A functional copyright component.
  */
-export default function OverEngineeredCopyright({
-                                                    companyName,
+export default function CopyrightNotice({
+                                                    companyName = 'YourCompany', // Added default value
                                                     startYear,
-                                                    overrideYear,
-                                                    fallbackYear,
-                                                    message,
+                                                    message = 'All rights reserved.', // Added default value
                                                 }) {
-    const currentYear = useYearFetcher({ overrideYear, fallbackYear });
+    // Get the current year directly
+    const currentYear = new Date().getFullYear();
 
     /**
-     * Constructs a string representing either a single year
-     * or a range if startYear is provided and differs from currentYear.
-     *
-     * @function buildYearRange
-     * @param {number} start - The year to start from.
-     * @param {number} end   - The final year (usually the current year).
-     * @returns {string} A string representing either a single year
-     *                   or a range (e.g., "2020 - 2025").
+     * Constructs a string representing either a single year or a range.
      */
     const buildYearRange = (start, end) => {
-        if (!start) return `${end}`;
-        if (start === end) return `${end}`;
-        return `${start} - ${end}`;
+        if (!start || isNaN(start)) return `${end}`; // Handle null/invalid startYear
+        const startNum = Number(start);
+        if (startNum === end) return `${end}`;
+        // Show range only if start is genuinely before end
+        if (startNum < end) return `${startNum} - ${end}`;
+        // If startYear is in the future or invalid, just show current year
+        return `${end}`;
     };
 
     return (
@@ -77,13 +40,14 @@ export default function OverEngineeredCopyright({
                 padding: '1rem',
                 border: '2px dashed #ccc',
                 backgroundColor: '#f7f7f7',
+                marginTop: '2rem' // Added some margin for spacing
             }}
         >
-            <div style={{ marginBottom: '0.5rem' }}>
-                &copy; {buildYearRange(startYear, currentYear)} {companyName || 'YourCompany'}
+            <div style={{marginBottom: '0.5rem'}}>
+                &copy; {buildYearRange(startYear, currentYear)} {companyName}
             </div>
-            <div style={{ fontStyle: 'italic', color: '#666' }}>
-                {message || 'All rights reserved.'}
+            <div style={{fontStyle: 'italic', color: '#666'}}>
+                {message}
             </div>
         </footer>
     );

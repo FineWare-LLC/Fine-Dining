@@ -1,22 +1,23 @@
 /**
- * @file dbConnect.js
- * @description Establishes and caches a Mongoose connection to MongoDB.
- *
- * This ensures that subsequent calls to dbConnect reuse the existing
- * database connection within the Next.js serverless environment.
+ * @fileoverview Mongoose connection helper (Consolidated).
+ * Location: /src/lib/dbConnect.js
  */
-
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/myLocalDB';
+// Read from environment
+const MONGODB_URI = process.env.MONGODB_URI;
+
+// Throw if there's no URI
+if (!MONGODB_URI) {
+    throw new Error(
+        'Please define MONGODB_URI in your .env.local file'
+    );
+}
 
 /**
- * A global variable to hold the cached database connection and promise.
- *
- * @type {{
- *   conn: mongoose.Connection | null,
- *   promise: Promise<mongoose.Connection> | null
- * }}
+ * Global is used here to maintain a cached connection across hot reloads
+ * in development. This prevents connections growing exponentially
+ * during API Route usage.
  */
 let cached = global.mongoose;
 
@@ -26,33 +27,40 @@ if (!cached) {
 
 /**
  * @function dbConnect
- * @async
- * @description Asynchronous function that checks for an existing connection
- *              or creates a new one if needed, then returns the active
- *              Mongoose connection object.
- *
- * @throws Will throw an error if the connection to MongoDB fails.
- * @returns {Promise<mongoose.Connection>} - The active Mongoose Connection instance.
+ * Opens or returns a cached Mongoose connection.
+ * @returns {Promise<mongoose.Connection>} The Mongoose connection instance
  */
 export async function dbConnect() {
-    // If connection is already established, return it
     if (cached.conn) {
+        console.log('Using cached database connection');
         return cached.conn;
     }
 
-    // If no promise yet, initiate a new one
     if (!cached.promise) {
-        // Create a new Mongoose connection promise
-        cached.promise = mongoose
-            .connect(MONGODB_URI, {
-                // For example, recommended options:
-                useNewUrlParser: true,
-                useUnifiedTopology: true,
-            })
-            .then((mongooseConnection) => mongooseConnection.connection);
+        const opts = {
+            bufferCommands: false,
+            // Add other Mongoose 6+ options here if needed
+            // useNewUrlParser and useUnifiedTopology are deprecated
+        };
+
+        console.log('Creating new database connection promise');
+        cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
+            console.log('Database connection established');
+            return mongooseInstance.connection; // Use mongooseInstance.connection directly
+        }).catch(error => {
+            console.error('Database connection error:', error);
+            cached.promise = null; // Reset promise on error
+            throw error; // Re-throw error after logging
+        });
     }
 
-    // Await the promise and cache the connection
-    cached.conn = await cached.promise;
-    return cached.conn;
+    try {
+        console.log('Awaiting database connection promise');
+        cached.conn = await cached.promise;
+        return cached.conn;
+    } catch (error) {
+        // Ensure promise is nullified if await fails
+        cached.promise = null;
+        throw error;
+    }
 }

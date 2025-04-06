@@ -13,12 +13,12 @@ designs:
 [![License](https://img.shields.io/badge/license-MIT-blue)](#)
 [![Coverage](https://img.shields.io/badge/coverage-90%25-yellowgreen)](#)
 
-Fine Dining is a web and mobile application offering:
+Fine Dining is a web application offering:
 - **Personalized Meal Planning**
 - **Nutritional Tracking**
 - **Restaurant Recommendations**
 - **Grocery List Generation**
-- **Cost Optimization** via Linear Programming (Google OR-Tools)
+- **Cost Optimization** (*Note: Google OR-Tools integration planned*)
 
 > **Note**: This repository is in active development. Features and documentation will evolve over time.
 
@@ -53,144 +53,48 @@ Fine Dining is a web and mobile application offering:
 
 ---
 
-## Architecture Overview
+## Architecture Overview (Frontend)
 
-Fine Dining uses a microservices-like structure:
+This repository contains the **Frontend** of the Fine Dining application:
 
-1. **Frontend**  
-   - Built with [Next.js](https://reactjs.org/)
-   - Consumes RESTful APIs; provides a user-friendly interface for meal planning, nutritional stats, etc.
+1.  **Web Application**
+    * Built with [Next.js](https://nextjs.org/) and [React](https://react.dev/). [cite: frontend/package.json]
+    * Provides a user-friendly interface for meal planning, nutritional stats, etc.
+    * Includes an integrated GraphQL API endpoint built using Apollo Server within Next.js API routes. [cite: frontend/src/pages/api/graphql.js, frontend/package.json]
 
-2. **Backend**  
-   - Powered by [Node.js + Apollo](https://apollo.com/).  
-   - Integrates [Google OR-Tools](https://developers.google.com/optimization) for optimization tasks.
+2.  **Data Layer**
+    * Connects directly to [MongoDB](https://www.mongodb.com/) using [Mongoose](https://mongoosejs.com/) for storing user profiles, recipes, meal plans, etc. [cite: frontend/dbConnect.js, frontend/src/lib/dbConnect.js, frontend/package.json]
 
-3. **Database**  
-   - [MongoDB](https://www.mongodb.com/) for storing user profiles, recipes, and meal plans in a flexible document format.
-
-4. **Security**  
-   - [Firebase Auth](https://firebase.google.com/docs/auth) for secure user sign-up and login.  
-   - HTTPS/TLS encryption for data in transit.
+3.  **Security**
+    * Uses JWT for session management via the GraphQL API. [cite: frontend/src/graphql/resolvers/mutations.js]
+    * *Note: Firebase Auth mentioned in the Tech Stack below refers to the overall project plan, but is not currently implemented in this specific `frontend` codebase.*
 
 ---
 
-## Tech Stack
+## Tech Stack (Frontend)
 
-| **Layer**            | **Technology**         | **Description**                                             |
-|----------------------|------------------------|-------------------------------------------------------------|
-| Frontend (Web)       | React.js               | Component-based UI                                          |
-| Frontend (Mobile)    | React Native           | Cross-platform mobile framework                             |
-| Backend              | Node.js + Express      | Asynchronous server-side API                                |
-| Database             | MongoDB                | Flexible NoSQL data store                                   |
-| Optimization Engine  | Google OR-Tools        | Linear programming capabilities                              |
-| Authentication       | Firebase Auth          | Secure, scalable user identity management                   |
+*(Based on the analyzed `frontend` codebase)*
+
+| **Category** | **Technology** | **Description** | **Source File(s)** |
+|--------------|----------------|-----------------|-------------------|
+| Framework | Next.js (v15+) | React framework for web applications. | `frontend/package.json` |
+| UI Library | React (v19+) | Core library for building user interfaces. | `frontend/package.json` |
+| Component Lib | Material UI (MUI) | UI components and theming. | `frontend/package.json`, `frontend/src/pages/_app.js` |
+| Styling | Emotion | CSS-in-JS library used by MUI. | `frontend/package.json`, `frontend/src/pages/_app.js` |
+| Styling | Tailwind CSS | Utility-first CSS framework. | `frontend/package.json`, `frontend/tailwind.config.js`, `frontend/src/styles/globals.css` |
+| API Layer | GraphQL | Query language for APIs. | `frontend/src/graphql/typeDefs.js` |
+| API Server | Apollo Server (integrated) | GraphQL server running within Next.js API routes. | `frontend/package.json`, `frontend/src/pages/api/graphql.js` |
+| GraphQL Client | Apollo Client | State management and client for GraphQL. | `frontend/package.json`, `frontend/src/pages/_app.js` |
+| Database ODM | Mongoose | MongoDB object modeling. | `frontend/package.json`, `frontend/src/models/` |
+| Database Driver | MongoDB Node.js Driver | Underlying driver used by Mongoose. | `frontend/package.json` (via Mongoose) |
+| Testing | Playwright | End-to-end and component testing. | `frontend/package.json`, `frontend/playwright.config.js`, `frontend/src/tests/` |
+| Linting | ESLint | Code linting. | `frontend/package.json`, `frontend/eslint.config.mjs` |
+| Type Generation | GraphQL Code Generator | Generates types from GraphQL schema. | `frontend/package.json`, `frontend/codegen.yml` |
+| Authentication | JWT (jsonwebtoken) | Token generation/verification (via API). | `frontend/package.json`, `frontend/src/graphql/resolvers/mutations.js` |
+| Password Hashing | bcrypt | Library for hashing user passwords. | `frontend/package.json`, `frontend/src/graphql/resolvers/mutations.js` |
 
 ---
 
 ## Getting Started
 
-### Prerequisites
 
-- **Node.js** (v14+)
-- **npm** or **yarn**
-- **MongoDB** (local or cloud, e.g., MongoDB Atlas)
-- **Firebase** (for Authentication)
-- **Google OR-Tools** (optional local install if you prefer running optimization locally; otherwise, use the Node.js package)
-
-### Installation
-
-1. **Clone the Repository**  
-   ```bash
-   git clone https://github.com/FineWare-LLC/Fine-Dining.git
-   cd Fine-Dining
-   
-2. Install Dependencies
-
-## Backend
-cd backend
-npm install
-
-## Frontend (Web)
-cd ../frontend
-npm install
-
-## Mobile
-cd ../mobile
-npm install
-
-3. Set Up Environment Variables
-In backend/.env, add your credentials and keys:
-
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/fine-dining
-FIREBASE_API_KEY=your_firebase_api_key
-FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
-Adjust paths and credentials as necessary.
-
-4. Run the Application
-
-## Backend
-cd backend
-npm run dev
-
-## Frontend (Web)
-cd ../frontend
-npm start
-
-## Mobile (React Native)
-cd ../mobile
-npm start
-## Then run on an emulator or physical device
-Usage
-Once the services are running, visit the frontend (e.g., http://localhost:3000) and:
-
-Sign Up / Log In: Use Firebase Auth for secure access.
-Profile Setup: Enter dietary preferences, calorie goals, and budget constraints.
-Generate Meal Plans: Get weekly suggestions based on your parameters.
-Log Meals: Track daily intake and view real-time nutrition stats.
-Auto Grocery Lists: Generate shopping lists for planned recipes.
-Restaurant Search: Find nearby eateries that meet your dietary needs.
-Folder Structure
-```
-fine-dining/
-  ├── backend/
-  │   ├── src/
-  │   │   ├── controllers/
-  │   │   ├── models/
-  │   │   ├── routes/
-  │   │   ├── utils/
-  │   │   └── ...
-  │   ├── package.json
-  │   └── ...
-  ├── frontend/
-  │   ├── src/
-  │   │   ├── components/
-  │   │   ├── pages/
-  │   │   ├── services/
-  │   │   └── ...
-  │   ├── package.json
-  │   └── ...
-  ├── mobile/
-  │   ├── App.js
-  │   ├── screens/
-  │   ├── components/
-  │   └── package.json
-  └── README.md
-  ```
-Testing
-Unit Tests: Use Playwright
-
-cd backend
-npm test
-Integration / E2E Tests: Use Cypress or similar tools in the frontend.
-
-cd frontend
-npm run test:e2e
-Acceptance Tests: Validate end-user scenarios (meal plan creation, grocery lists, etc.).
-
-Refer to the testing documentation for detailed procedures.
-
-Contact
-For questions, issues, or support, please open an issue on GitHub.
-
-Happy Cooking and Planning!
-The Fine Dining Team

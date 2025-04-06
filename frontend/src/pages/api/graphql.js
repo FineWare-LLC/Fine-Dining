@@ -1,85 +1,81 @@
 /**
- * @fileoverview Next.js API route for GraphQL endpoint using Apollo Server.
- *               Handles CORS, connects to MongoDB, and provides a GraphQL interface.
+ * @fileoverview Next.js API route for GraphQL endpoint using Apollo Server v4+.
+ * Uses @apollo/server and @as-integrations/next.
+ * CORS needs to be handled externally (e.g., vercel.json, platform config, or dedicated middleware).
  */
 
-import { ApolloServer } from 'apollo-server-micro';
-import { typeDefs } from '@/graphql/typeDefs';
-import { resolvers } from '@/graphql/resolvers';
-import { dbConnect } from '@/lib/dbConnect';
+import { ApolloServer } from '@apollo/server';
+import { startServerAndCreateNextHandler } from '@as-integrations/next';
+import { typeDefs } from '@/graphql/typeDefs'; // Ensure path is correct
+import { resolvers } from '@/graphql/resolvers'; // Ensure path is correct
+import { dbConnect } from '@/lib/dbConnect'; // Ensure path is correct
+
+// Create the Apollo Server instance (outside the handler for efficiency)
+const apolloServer = new ApolloServer({
+    typeDefs,
+    resolvers,
+    // Explicitly enable introspection for development environments
+    introspection: true,
+    // Playground is replaced by Apollo Sandbox (enabled by default in dev)
+});
+
+// Create the Next.js handler using the integration package
+// The context function handles the database connection per request
+const serverHandler = startServerAndCreateNextHandler(apolloServer, {
+    context: async (req, res) => {
+        try {
+            // Establish DB connection for this request
+            await dbConnect();
+            // Return an empty context (extend here for authentication if needed)
+            return {};
+        } catch (error) {
+            console.error('Error setting up Apollo context:', error);
+            throw new Error(`Context setup failed: ${error.message}`);
+        }
+    },
+});
 
 /**
- * A singleton variable to ensure Apollo Server is started only once.
- * @type {ApolloServer | undefined}
+ * Custom API handler to ensure the raw request body is parsed when needed.
+ * This is necessary because Next.js body parsing is disabled for this route.
+ *
+ * @async
+ * @function handler
+ * @param {import('next').NextApiRequest} req - The incoming Next.js API request.
+ * @param {import('next').NextApiResponse} res - The outgoing Next.js API response.
+ * @returns {Promise<void>} Resolves when the response is handled.
  */
-let apolloServer;
+export default async function handler(req, res) {
+    // Only attempt manual parsing for POST requests.
+    if (req.method === 'POST') {
+        let rawBody = '';
+        // Accumulate raw data from the request stream.
+        req.on('data', (chunk) => {
+            rawBody += chunk;
+        });
+        await new Promise((resolve) => req.on('end', resolve));
+
+        // If the body is not already set and raw data exists, attempt to parse it.
+        if (!req.body && rawBody) {
+            try {
+                req.body = JSON.parse(rawBody);
+            } catch (err) {
+                console.error('Error parsing request body:', err);
+                return res.status(400).json({ error: 'Invalid JSON in request body' });
+            }
+        }
+    }
+
+    // Delegate the request to the Apollo Server handler.
+    return serverHandler(req, res);
+}
 
 /**
- * Disables Next.js built-in body parsing for this route since Apollo Server
- * needs raw request bodies for GraphQL operations.
- * @constant
+ * Next.js API route configuration to disable the default body parser.
+ * This is required for Apollo Server's raw body handling.
  */
 export const config = {
     api: {
         bodyParser: false,
     },
 };
-
-/**
- * An async handler function that:
- * 1. Handles preflight OPTIONS requests for CORS.
- * 2. Lazily initializes Apollo Server (singleton).
- * 3. Connects to the MongoDB database.
- * 4. Applies CORS headers for GraphQL POST requests.
- * 5. Delegates request handling to Apollo Server's createHandler.
- *
- * @async
- * @function handler
- * @param {import('next').NextApiRequest} req - The incoming Next.js API request.
- * @param {import('next').NextApiResponse} res - The outgoing Next.js API response.
- * @returns {Promise<void>} A promise that resolves once the response is handled by Apollo.
- */
-export default async function handler(req, res) {
-    /* (1) Handle preflight (OPTIONS) for CORS */
-    if (req.method === 'OPTIONS') {
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-        return res.status(200).end();
-    }
-
-    /* (2) Lazy-init ApolloServer only once */
-    if (!apolloServer) {
-        apolloServer = new ApolloServer({
-            typeDefs,
-            resolvers,
-            /**
-             * In production, you might disable introspection or Apollo Playground for security.
-             * e.g., introspection: process.env.NODE_ENV !== 'production',
-             */
-            introspection: true,
-            /**
-             * Apollo Server 3 or higher no longer includes a built-in playground by default.
-             * You can enable it via a plugin or set playground options here (if using Apollo Server 2).
-             */
-            playground: true,
-        });
-        await apolloServer.start();
-    }
-
-    /* (3) Connect to DB inside a try/catch to handle potential errors */
-    try {
-        await dbConnect();
-    } catch (error) {
-        console.error('Database connection error:', error);
-        return res.status(500).json({ error: 'Failed to connect to the database' });
-    }
-
-    /* (4) Set CORS headers for GraphQL requests */
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-    /* (5) Hand over to Apollo Server’s request handler */
-    return apolloServer.createHandler({ path: '/api/graphql' })(req, res);
-}

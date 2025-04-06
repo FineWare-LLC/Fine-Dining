@@ -23,8 +23,8 @@ import {Review as ReviewModel} from '@/models/Review';
  * @param {object} args.input - The user data (name, email, password, etc.).
  * @returns {Promise<User>} The created user document.
  */
-async function createUser(_parent, { input }) {
-    const existingUser = await User.findOne({ email: input.email });
+const createUser = async (_parent, {input}) => {
+    const existingUser = await User.findOne({email: input.email});
     if (existingUser) {
         throw new Error('Email already in use');
     }
@@ -40,25 +40,27 @@ async function createUser(_parent, { input }) {
  * @param {object} args.input - The fields to update.
  * @returns {Promise<User>} The updated user document.
  */
-async function updateUser(_parent, { id, input }) {
+async function updateUser(_parent, {id, input}) {
     const user = await User.findById(id);
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error(`User with ID ${id} not found`);
 
-    Object.assign(user, input);
+    const updatedUser = await User.findByIdAndUpdate(id, {...input}, {new: true});
+    return updatedUser;
     return user.save();
 }
 
 /**
  * @function deleteUser
  * @description Deletes a user by ID.
+ * @note Returns true if a user was found and deleted, false otherwise.
  * @param {object} _parent - Parent resolver (unused).
  * @param {object} args
  * @param {string} args.id - The user's ID.
  * @returns {Promise<boolean>} True if deleted, otherwise false.
  */
-async function deleteUser(_parent, { id }) {
+async function deleteUser(_parent, {id}) {
     const result = await User.findByIdAndDelete(id);
-    return !!result;
+    return Boolean(result);
 }
 
 /* ------------------------------ AUTH MUTATIONS ----------------------------- */
@@ -72,8 +74,8 @@ async function deleteUser(_parent, { id }) {
  * @param {string} args.password - The user's password in plain text.
  * @returns {Promise<{ token: string, user: object }>} Token + user data.
  */
-async function loginUser(_parent, { email, password }) {
-    const user = await User.findOne({ email }).select('+password');
+async function loginUser(_parent, {email, password}) {
+    const user = await User.findOne({email}).select('+password');
     if (!user) {
         throw new Error('User not found');
     }
@@ -88,9 +90,9 @@ async function loginUser(_parent, { email, password }) {
 
     // In production, use an env-based secret key:
     const token = jwt.sign(
-        { userId: user._id, email: user.email, role: user.role },
+        {userId: user._id, email: user.email, role: user.role},
         'YOUR_SECRET_KEY',
-        { expiresIn: '1d' }
+        {expiresIn: '1d'}
     );
 
     return {
@@ -113,8 +115,8 @@ async function loginUser(_parent, { email, password }) {
  * @param {string} args.email - The user's email that needs password reset.
  * @returns {Promise<boolean>} Returns true if token creation is successful (even if user not found).
  */
-async function requestPasswordReset(_parent, { email }) {
-    const user = await User.findOne({ email });
+async function requestPasswordReset(_parent, {email}) {
+    const user = await User.findOne({email});
     if (!user) {
         // Return true to avoid enumerating user existence.
         return true;
@@ -136,8 +138,8 @@ async function requestPasswordReset(_parent, { email }) {
  * @param {string} args.newPassword - The user's new password.
  * @returns {Promise<boolean>} True if successful, otherwise an error is thrown.
  */
-async function resetPassword(_parent, { resetToken, newPassword }) {
-    const user = await User.findOne({ passwordResetToken: resetToken });
+async function resetPassword(_parent, {resetToken, newPassword}) {
+    const user = await User.findOne({passwordResetToken: resetToken});
     if (!user) {
         throw new Error('Invalid or expired reset token.');
     }
@@ -157,9 +159,8 @@ async function resetPassword(_parent, { resetToken, newPassword }) {
 
 /* ------------------------------ RECIPE MUTATIONS --------------------------- */
 
-async function createRecipe(
-    _parent,
-    {
+const createRecipe = async (_parent, {input}) => {
+    const {
         recipeName,
         ingredients,
         instructions,
@@ -170,8 +171,7 @@ async function createRecipe(
         images,
         estimatedCost,
         authorId
-    }
-) {
+    } = input;
     const author = authorId ? await User.findById(authorId) : null;
     if (authorId && !author) {
         throw new Error('Author not found');
@@ -189,12 +189,12 @@ async function createRecipe(
         estimatedCost,
         author: author ? author._id : null,
     });
-}
+};
 
-async function updateRecipe(
+const updateRecipe = async (
     _parent,
-    { id, recipeName, ingredients, instructions, prepTime, difficulty, nutritionFacts, tags, images, estimatedCost }
-) {
+    {id, recipeName, ingredients, instructions, prepTime, difficulty, nutritionFacts, tags, images, estimatedCost}
+) => {
     const updateData = {};
     if (recipeName !== undefined) updateData.recipeName = recipeName;
     if (ingredients !== undefined) updateData.ingredients = ingredients;
@@ -206,10 +206,10 @@ async function updateRecipe(
     if (images !== undefined) updateData.images = images;
     if (estimatedCost !== undefined) updateData.estimatedCost = estimatedCost;
 
-    return RecipeModel.findByIdAndUpdate(id, updateData, { new: true });
+    return RecipeModel.findByIdAndUpdate(id, updateData, {new: true});
 }
 
-async function deleteRecipe(_parent, { id }) {
+async function deleteRecipe(_parent, {id}) {
     const result = await RecipeModel.findByIdAndDelete(id);
     return !!result;
 }
@@ -218,7 +218,7 @@ async function deleteRecipe(_parent, { id }) {
 
 async function createRestaurant(
     _parent,
-    { restaurantName, address, phone, website, cuisineType, priceRange }
+    {restaurantName, address, phone, website, cuisineType, priceRange}
 ) {
     return RestaurantModel.create({
         restaurantName,
@@ -232,7 +232,7 @@ async function createRestaurant(
 
 async function updateRestaurant(
     _parent,
-    { id, restaurantName, address, phone, website, cuisineType, priceRange }
+    {id, restaurantName, address, phone, website, cuisineType, priceRange}
 ) {
     const updateData = {};
     if (restaurantName !== undefined) updateData.restaurantName = restaurantName;
@@ -242,10 +242,10 @@ async function updateRestaurant(
     if (cuisineType !== undefined) updateData.cuisineType = cuisineType;
     if (priceRange !== undefined) updateData.priceRange = priceRange;
 
-    return RestaurantModel.findByIdAndUpdate(id, updateData, { new: true });
+    return RestaurantModel.findByIdAndUpdate(id, updateData, {new: true});
 }
 
-async function deleteRestaurant(_parent, { id }) {
+async function deleteRestaurant(_parent, {id}) {
     const result = await RestaurantModel.findByIdAndDelete(id);
     return !!result;
 }
@@ -254,7 +254,7 @@ async function deleteRestaurant(_parent, { id }) {
 
 async function createMealPlan(
     _parent,
-    { userId, startDate, endDate, title, status, totalCalories }
+    {userId, startDate, endDate, title, status, totalCalories}
 ) {
     const user = await User.findById(userId);
     if (!user) throw new Error('User not found');
@@ -272,7 +272,7 @@ async function createMealPlan(
 
 async function updateMealPlan(
     _parent,
-    { id, startDate, endDate, title, status, totalCalories }
+    {id, startDate, endDate, title, status, totalCalories}
 ) {
     const updateData = {};
     if (startDate !== undefined) updateData.startDate = startDate;
@@ -281,10 +281,10 @@ async function updateMealPlan(
     if (status !== undefined) updateData.status = status;
     if (totalCalories !== undefined) updateData.totalCalories = totalCalories;
 
-    return MealPlanModel.findByIdAndUpdate(id, updateData, { new: true }).populate('user');
+    return MealPlanModel.findByIdAndUpdate(id, updateData, {new: true}).populate('user');
 }
 
-async function deleteMealPlan(_parent, { id }) {
+async function deleteMealPlan(_parent, {id}) {
     const result = await MealPlanModel.findByIdAndDelete(id);
     return !!result;
 }
@@ -333,7 +333,7 @@ async function createMeal(
 
 async function updateMeal(
     _parent,
-    { id, date, mealType, recipeId, restaurantId, mealName, ingredients, nutritionFacts, portionSize, notes }
+    {id, date, mealType, recipeId, restaurantId, mealName, ingredients, nutritionFacts, portionSize, notes}
 ) {
     const meal = await MealModel.findById(id);
     if (!meal) throw new Error('Meal not found');
@@ -351,7 +351,7 @@ async function updateMeal(
     return meal.save();
 }
 
-async function deleteMeal(_parent, { id }) {
+async function deleteMeal(_parent, {id}) {
     const meal = await MealModel.findById(id);
     if (!meal) return false;
 
@@ -369,7 +369,7 @@ async function deleteMeal(_parent, { id }) {
 
 async function createStats(
     _parent,
-    { userId, macros, micros, caloriesConsumed, waterIntake, steps }
+    {userId, macros, micros, caloriesConsumed, waterIntake, steps}
 ) {
     return StatsModel.create({
         user: userId,
@@ -381,14 +381,14 @@ async function createStats(
     });
 }
 
-async function deleteStats(_parent, { id }) {
+async function deleteStats(_parent, {id}) {
     const result = await StatsModel.findByIdAndDelete(id);
     return !!result;
 }
 
 /* ----------------------------- REVIEW MUTATIONS ---------------------------- */
 
-async function createReview(_parent, { targetType, targetId, rating, comment }) {
+async function createReview(_parent, {targetType, targetId, rating, comment}) {
     if (!['RECIPE', 'RESTAURANT'].includes(targetType)) {
         throw new Error('Invalid targetType');
     }
@@ -428,7 +428,7 @@ async function createReview(_parent, { targetType, targetId, rating, comment }) 
     return newReview;
 }
 
-async function deleteReview(_parent, { id }) {
+async function deleteReview(_parent, {id}) {
     const review = await ReviewModel.findById(id);
     if (!review) return false;
 

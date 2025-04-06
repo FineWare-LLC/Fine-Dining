@@ -188,7 +188,7 @@ test.describe('OverEngineeredCopyright Component', () => {
     test('Should prioritize overrideYear over fallbackYear', async ({ mount }) => {
         const component = await mount(
             <MockedProvider mocks={ERROR_MOCK} addTypename={false}>
-                <OverEngineeredCopyright overrideYear={2040} fallbackYear={2050} />
+                <CopyrightNotice overrideYear={2040} fallbackYear={2050} />
             </MockedProvider>
         );
 

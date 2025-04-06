@@ -3,7 +3,8 @@
  * Provides the GraphQL Schema Definition for Fine Dining,
  * heavily expanded for demonstration.
  **********************************************************/
-import { gql } from 'apollo-server-micro';
+// Corrected import for the gql tag
+import { gql } from 'graphql-tag'; // Changed from 'apollo-server-micro'
 
 export const typeDefs = gql`
     """Custom scalar for Dates."""
@@ -67,13 +68,13 @@ export const typeDefs = gql`
         CANCELLED
     }
 
+    """Restaurant price range enumeration."""
     enum PriceRange {
         CHEAP
         MODERATE
         EXPENSIVE
         LUXURY
     }
-
 
     """User type with robust fields, including accountStatus and role."""
     type User {
@@ -200,36 +201,45 @@ export const typeDefs = gql`
         updatedAt: Date!
     }
 
+    """Simple Lat/Lng coordinate type."""
+    type LatLng {
+        latitude: Float
+        longitude: Float
+    }
+
+    """Represents restaurant data fetched from an external API like Google Places."""
+    type ExternalRestaurant {
+        placeId: String!       # External API Place ID (e.g., Google Place ID)
+        name: String
+        vicinity: String       # Short address/neighborhood
+        rating: Float
+        userRatingsTotal: Int
+        location: LatLng       # Using the simple LatLng type defined above
+    }
+
     """Queries for retrieving Fine Dining data."""
     type Query {
-        # Health Check
         ping: String
-
-        # User
         getUser(id: ID!): User
         getUsers(page: Int, limit: Int): [User]
         searchUsers(keyword: String!): [User]
-
-        # Recipe
         getRecipe(id: ID!): Recipe
         getRecipes(page: Int, limit: Int): [Recipe]
         searchRecipes(keyword: String!): [Recipe]
-
-        # Restaurant
         getRestaurant(id: ID!): Restaurant
         getRestaurants(page: Int, limit: Int): [Restaurant]
         searchRestaurants(keyword: String!): [Restaurant]
-
-        # Meal Plan
         getMealPlan(id: ID!): MealPlan
         getMealPlans(userId: ID, page: Int, limit: Int): [MealPlan]
-
-        # Stats
         getStatsByUser(userId: ID!): [Stats]
-
-        # Reviews
         getReview(id: ID!): Review
         getReviewsForTarget(targetType: String!, targetId: ID!): [Review]
+        findNearbyRestaurants(
+            latitude: Float!,
+            longitude: Float!,
+            radius: Int,
+            keyword: String
+        ): [ExternalRestaurant]
     }
 
     """Input type for creating a new user (includes password)."""
@@ -271,17 +281,12 @@ export const typeDefs = gql`
 
     """Mutations for creating, updating, deleting Fine Dining data."""
     type Mutation {
-        # User
         createUser(input: CreateUserInput!): User!
         updateUser(id: ID!, input: UpdateUserInput!): User
         deleteUser(id: ID!): Boolean
-
-        # Authentication
         loginUser(email: String!, password: String!): AuthPayload
         requestPasswordReset(email: String!): Boolean
         resetPassword(resetToken: String!, newPassword: String!): Boolean
-
-        # Recipe
         createRecipe(
             recipeName: String!
             ingredients: [String]!
@@ -294,7 +299,6 @@ export const typeDefs = gql`
             estimatedCost: Float
             authorId: ID
         ): Recipe!
-
         updateRecipe(
             id: ID!
             recipeName: String
@@ -307,10 +311,7 @@ export const typeDefs = gql`
             images: [String]
             estimatedCost: Float
         ): Recipe
-
         deleteRecipe(id: ID!): Boolean
-
-        # Restaurant
         createRestaurant(
             restaurantName: String!
             address: String!
@@ -319,7 +320,6 @@ export const typeDefs = gql`
             cuisineType: [String]
             priceRange: PriceRange
         ): Restaurant!
-
         updateRestaurant(
             id: ID!
             restaurantName: String
@@ -329,10 +329,7 @@ export const typeDefs = gql`
             cuisineType: [String]
             priceRange: PriceRange
         ): Restaurant
-
         deleteRestaurant(id: ID!): Boolean
-
-        # Meal Plan
         createMealPlan(
             userId: ID!
             startDate: Date!
@@ -350,8 +347,6 @@ export const typeDefs = gql`
             totalCalories: Int
         ): MealPlan
         deleteMealPlan(id: ID!): Boolean
-
-        # Meal
         createMeal(
             mealPlanId: ID!
             date: Date!
@@ -377,12 +372,8 @@ export const typeDefs = gql`
             notes: String
         ): Meal
         deleteMeal(id: ID!): Boolean
-
-        # Stats
         createStats(userId: ID!, macros: String, micros: String, caloriesConsumed: Int, waterIntake: Int, steps: Int): Stats!
         deleteStats(id: ID!): Boolean
-
-        # Reviews
         createReview(targetType: String!, targetId: ID!, rating: Int!, comment: String): Review!
         deleteReview(id: ID!): Boolean
     }

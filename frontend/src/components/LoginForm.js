@@ -1,18 +1,15 @@
-// components/LoginForm.js
 /**
- * @fileoverview The login form section for FineDinning landing page
+ * @fileoverview The login form section for FineDining landing page.
+ * This component is over-engineered and hardened for security, accessibility, and maintainability.
  */
 
-// Import necessary hooks from React and Next.js
 import React, { useState } from 'react';
-import { useRouter } from 'next/router'; // Import useRouter for redirection
-import { Box, TextField, Button, Link, Typography } from '@mui/material';
+import { useRouter } from 'next/router';
+import { Box, TextField, Button, Link, Typography, CircularProgress } from '@mui/material';
 import { gql, useMutation } from '@apollo/client';
+import { useAuth } from '../context/AuthContext';
 
-// Import the useAuth hook from your context file
-import { useAuth } from '../context/AuthContext'; // Make sure the path is correct
-
-// Define the GraphQL Mutation
+// Define the GraphQL mutation.
 const LOGIN_MUTATION = gql`
     mutation LoginUser($email: String!, $password: String!) {
         loginUser(email: $email, password: $password) {
@@ -21,41 +18,48 @@ const LOGIN_MUTATION = gql`
                 id
                 name
                 email
-                role # Example: Include role if needed by AuthContext
+                role
             }
         }
     }
 `;
 
+// Basic email regex for client-side validation.
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /**
- * LoginForm - Renders the login form with Email, Password fields, and login actions
- * @returns {JSX.Element} The login form component
+ * LoginForm - Renders the login form with enhanced input validation, error handling,
+ * accessibility features, and loading states.
+ * @returns {JSX.Element} The login form component.
  */
 export default function LoginForm() {
+    // Local state for inputs.
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    // Local state for error messages.
     const [errorMessage, setErrorMessage] = useState('');
-    const router = useRouter(); // Initialize the router
+    // Local state for success message.
+    const [successMessage, setSuccessMessage] = useState('');
 
-    // Get the login function from AuthContext
+    const router = useRouter();
     const { login } = useAuth();
 
-    // Apollo useMutation hook
+    // Setup the Apollo mutation.
     const [loginUserMutation, { loading }] = useMutation(LOGIN_MUTATION, {
         onCompleted: (data) => {
-            // This function runs *after* the mutation is successful
-            console.log('Login successful:', data.loginUser);
+            // Clear any previous errors.
+            setErrorMessage('');
+            // Log the success data for debugging.
+            console.info('Login successful:', data.loginUser);
             const { token, user } = data.loginUser;
-
-            // Use the login function from AuthContext to handle state and storage
-            login(token, user); // <<< This now handles setting token/user state
-
-            // Redirect to a dashboard or home page after successful login
-            router.push('/dashboard'); // Adjust the target route as needed
+            login(token, user); // Update AuthContext with token and user.
+            setSuccessMessage(`Welcome, ${user.name}! Redirecting...`);
+            // Redirect after a brief delay to allow users to see the success message.
+            setTimeout(() => router.push('/dashboard'), 1000);
         },
         onError: (err) => {
-            // Handle errors specifically in onError callback
             console.error('Login failed:', err);
+            // Prefer graphQLErrors message if available.
             if (err.graphQLErrors && err.graphQLErrors.length > 0) {
                 setErrorMessage(err.graphQLErrors[0].message);
             } else {
@@ -65,20 +69,39 @@ export default function LoginForm() {
     });
 
     /**
-     * handleLogin - Handles the login button click by calling the mutation
-     * @param {React.FormEvent} e - The event triggered by form submission
+     * handleLogin - Handles the login form submission with enhanced validations.
+     * @param {React.FormEvent} e - The form submission event.
      */
     const handleLogin = async (e) => {
         e.preventDefault();
-        setErrorMessage(''); // Clear previous errors on new submission
+        setErrorMessage('');
+        setSuccessMessage('');
 
-        // Call the mutation function provided by useMutation
-        await loginUserMutation({
-            variables: {
-                email: email,
-                password: password,
-            },
-        });
+        // Sanitize and trim inputs.
+        const sanitizedEmail = email.trim().toLowerCase();
+        const sanitizedPassword = password.trim();
+
+        // Validate email format.
+        if (!sanitizedEmail || !emailRegex.test(sanitizedEmail)) {
+            setErrorMessage('Please enter a valid email address.');
+            return;
+        }
+        // Validate password non-empty.
+        if (!sanitizedPassword) {
+            setErrorMessage('Please enter your password.');
+            return;
+        }
+
+        try {
+            await loginUserMutation({
+                variables: {
+                    email: sanitizedEmail,
+                    password: sanitizedPassword,
+                },
+            });
+        } catch (err) {
+            // Error handling is already managed in onError.
+        }
     };
 
     return (
@@ -88,8 +111,10 @@ export default function LoginForm() {
             sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1rem'
+                gap: '1rem',
             }}
+            noValidate
+            autoComplete="off"
         >
             <TextField
                 label="Email"
@@ -101,7 +126,8 @@ export default function LoginForm() {
                 fullWidth
                 required
                 aria-required="true"
-                error={!!errorMessage}
+                error={Boolean(errorMessage)}
+                helperText={errorMessage && !password && errorMessage}
             />
             <TextField
                 label="Password"
@@ -113,49 +139,55 @@ export default function LoginForm() {
                 fullWidth
                 required
                 aria-required="true"
-                error={!!errorMessage}
+                error={Boolean(errorMessage)}
             />
 
-            {/* Display Loading State */}
-            {loading && <Typography>Logging in...</Typography>}
+            {/* Display loading state */}
+            {loading && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CircularProgress size={20} />
+                    <Typography variant="body2">Logging in...</Typography>
+                </Box>
+            )}
 
-            {/* Display Specific Error Message */}
+            {/* Display error message */}
             {errorMessage && (
                 <Typography color="error" variant="body2" role="alert">
                     {errorMessage}
                 </Typography>
             )}
 
+            {/* Display success message */}
+            {successMessage && (
+                <Typography variant="body2" color="success.main" role="status">
+                    {successMessage}
+                </Typography>
+            )}
+
             <Button
                 type="submit"
                 variant="contained"
-                disabled={loading} // Disable button while loading
+                disabled={loading}
                 sx={{
                     backgroundColor: 'primary.main',
                     ':hover': {
-                        backgroundColor: 'primary.dark'
-                    }
+                        backgroundColor: 'primary.dark',
+                    },
                 }}
             >
                 Log In
             </Button>
             <Link
-                href="/forgot-password" // Link to your forgot password page
+                href="/forgot-password"
                 variant="body2"
-                sx={{
-                    textAlign: 'center',
-                    marginTop: '0.5rem'
-                }}
+                sx={{ textAlign: 'center', marginTop: '0.5rem' }}
             >
                 Forgot Password?
             </Link>
             <Link
-                href="/create-account" // Link to your create account page
+                href="/create-account"
                 variant="body2"
-                sx={{
-                    textAlign: 'center',
-                    marginTop: '0.5rem'
-                }}
+                sx={{ textAlign: 'center', marginTop: '0.5rem' }}
             >
                 Don't have an account? Create one!
             </Link>

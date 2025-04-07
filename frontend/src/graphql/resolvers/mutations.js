@@ -8,99 +8,107 @@ import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 
 import User from '@/models/User';
-import {RecipeModel} from '@/models/Recipe';
-import {RestaurantModel} from '@/models/Restaurant';
-import {MealPlanModel} from "@/models/MealPlan";
-import {MealModel} from '@/models/Meal';
-import {StatsModel} from '@/models/Stats';
-import {Review as ReviewModel} from '@/models/Review';
+import { RecipeModel } from '@/models/Recipe';
+import { RestaurantModel } from '@/models/Restaurant';
+import { MealPlanModel } from "@/models/MealPlan";
+import { MealModel } from '@/models/Meal';
+import { StatsModel } from '@/models/Stats';
+import { Review as ReviewModel } from '@/models/Review';
+
+/**
+ * A helper function that wraps resolvers to catch unexpected errors.
+ *
+ * @param {Function} resolver - The resolver function to wrap.
+ * @returns {Function} The wrapped resolver function.
+ */
+const withErrorHandling = (resolver) => async (parent, args, context, info) => {
+    try {
+        return await resolver(parent, args, context, info);
+    } catch (error) {
+        console.error('Resolver Error:', error);
+        // Optionally, you can inspect error types and rethrow known errors.
+        // For unexpected errors, throw a generic error message.
+        throw new Error('Internal server error.');
+    }
+};
+
+/* ----------------------------- USER MUTATIONS ----------------------------- */
 
 /**
  * @function createUser
  * @description Creates a new user with the provided input.
- * @param {object} _parent - Parent resolver (unused).
- * @param {object} args - Arguments containing the user input object.
- * @param {object} args.input - The user data (name, email, password, etc.).
- * @returns {Promise<User>} The created user document.
+ * Public mutation.
  */
-const createUser = async (_parent, {input}) => {
-    const existingUser = await User.findOne({email: input.email});
+const createUser = withErrorHandling(async (_parent, { input }, context) => {
+    const existingUser = await User.findOne({ email: input.email });
     if (existingUser) {
         throw new Error('Email already in use');
     }
     return User.create(input);
-}
+});
 
 /**
  * @function updateUser
  * @description Updates an existing user by ID with new fields.
- * @param {object} _parent - Parent resolver (unused).
- * @param {object} args - Arguments.
- * @param {string} args.id - The user's ID.
- * @param {object} args.input - The fields to update.
- * @returns {Promise<User>} The updated user document.
+ * Protected: requires that the user is logged in and is updating their own profile or is an admin.
  */
-async function updateUser(_parent, {id, input}) {
+const updateUser = withErrorHandling(async (_parent, { id, input }, context) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    if (context.user.userId !== id && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only update your own profile.');
+    }
     const user = await User.findById(id);
     if (!user) throw new Error(`User with ID ${id} not found`);
-
-    const updatedUser = await User.findByIdAndUpdate(id, {...input}, {new: true});
+    const updatedUser = await User.findByIdAndUpdate(id, { ...input }, { new: true });
     return updatedUser;
-    return user.save();
-}
+});
 
 /**
  * @function deleteUser
  * @description Deletes a user by ID.
- * @note Returns true if a user was found and deleted, false otherwise.
- * @param {object} _parent - Parent resolver (unused).
- * @param {object} args
- * @param {string} args.id - The user's ID.
- * @returns {Promise<boolean>} True if deleted, otherwise false.
+ * Protected: requires that the user is logged in and can only delete their own profile unless admin.
  */
-async function deleteUser(_parent, {id}) {
+const deleteUser = withErrorHandling(async (_parent, { id }, context) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    if (context.user.userId !== id && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only delete your own profile or be an admin.');
+    }
     const result = await User.findByIdAndDelete(id);
     return Boolean(result);
-}
+});
 
 /* ------------------------------ AUTH MUTATIONS ----------------------------- */
 
 /**
  * @function loginUser
  * @description Attempts to log a user in by verifying their credentials.
- * @param {object} _parent - Parent resolver (unused).
- * @param {object} args
- * @param {string} args.email - The user's email.
- * @param {string} args.password - The user's password in plain text.
- * @returns {Promise<{ token: string, user: object }>} Token + user data.
+ * Public mutation.
  */
-async function loginUser(_parent, {email, password}) {
-    const user = await User.findOne({email}).select('+password');
+const loginUser = withErrorHandling(async (_parent, { email, password }, context) => {
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
         throw new Error('User not found');
     }
-
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
         throw new Error('Invalid credentials');
     }
-
     user.lastLogin = new Date();
     await user.save();
-
-    // In production, use an env-based secret key:
     const secret = process.env.JWT_SECRET;
     if (!secret) {
         console.error('FATAL ERROR: JWT_SECRET is not defined in environment variables.');
-        throw new Error('Authentication configuration error.'); // Don't leak details
+        throw new Error('Authentication configuration error.');
     }
-
     const token = jwt.sign(
         { userId: user._id, email: user.email, role: user.role },
-        secret, // Use the secret from .env.local
-        { expiresIn: '1d' } // Or your desired expiration
+        secret,
+        { expiresIn: '1d' }
     );
-
     return {
         token,
         user: {
@@ -111,61 +119,57 @@ async function loginUser(_parent, {email, password}) {
             accountStatus: user.accountStatus,
         },
     };
-}
+});
 
 /**
  * @function requestPasswordReset
- * @description Initiates a "forgot password" flow by generating a reset token and emailing it.
- * @param {object} _parent - Parent resolver (unused).
- * @param {object} args
- * @param {string} args.email - The user's email that needs password reset.
- * @returns {Promise<boolean>} Returns true if token creation is successful (even if user not found).
+ * @description Initiates a "forgot password" flow by generating a reset token.
+ * Public mutation.
  */
-async function requestPasswordReset(_parent, {email}) {
-    const user = await User.findOne({email});
+const requestPasswordReset = withErrorHandling(async (_parent, { email }, context) => {
+    const user = await User.findOne({ email });
     if (!user) {
-        // Return true to avoid enumerating user existence.
-        return true;
+        return true; // Avoid user enumeration
     }
     const resetToken = user.generatePasswordResetToken();
     await user.save();
-
-    // Example: you'd integrate with an email service or Nodemailer here.
-
+    // Integration with email service would go here.
     return true;
-}
+});
 
 /**
  * @function resetPassword
  * @description Completes the password reset by verifying the reset token and updating the password.
- * @param {object} _parent - Parent resolver (unused).
- * @param {object} args
- * @param {string} args.resetToken - The token user received via email.
- * @param {string} args.newPassword - The user's new password.
- * @returns {Promise<boolean>} True if successful, otherwise an error is thrown.
+ * Public mutation.
  */
-async function resetPassword(_parent, {resetToken, newPassword}) {
-    const user = await User.findOne({passwordResetToken: resetToken});
+const resetPassword = withErrorHandling(async (_parent, { resetToken, newPassword }, context) => {
+    const user = await User.findOne({ passwordResetToken: resetToken });
     if (!user) {
         throw new Error('Invalid or expired reset token.');
     }
-
     const isValid = user.validatePasswordResetToken(resetToken);
     if (!isValid) {
         throw new Error('Invalid or expired reset token.');
     }
-
     user.password = newPassword;
     user.passwordResetToken = null;
     user.passwordResetTokenExpiry = null;
     await user.save();
-
     return true;
-}
+});
 
 /* ------------------------------ RECIPE MUTATIONS --------------------------- */
 
-const createRecipe = async (_parent, {input}) => {
+/**
+ * @function createRecipe
+ * @description Creates a new recipe.
+ * Protected: requires authentication. The recipe author is set to the logged-in user.
+ */
+const createRecipe = withErrorHandling(async (_parent, { input }, context) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    // Enforce that the recipe is created by the logged-in user.
     const {
         recipeName,
         ingredients,
@@ -178,11 +182,15 @@ const createRecipe = async (_parent, {input}) => {
         estimatedCost,
         authorId
     } = input;
-    const author = authorId ? await User.findById(authorId) : null;
-    if (authorId && !author) {
+    // If an authorId is provided, ensure it matches the logged-in user or the user is an admin.
+    if (authorId && authorId !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only create recipes as yourself.');
+    }
+    // Force the author to be the logged-in user if not an admin.
+    const author = context.user.role === 'ADMIN' && authorId ? await User.findById(authorId) : await User.findById(context.user.userId);
+    if (!author) {
         throw new Error('Author not found');
     }
-
     return RecipeModel.create({
         recipeName,
         ingredients,
@@ -193,14 +201,30 @@ const createRecipe = async (_parent, {input}) => {
         tags,
         images,
         estimatedCost,
-        author: author ? author._id : null,
+        author: author._id,
     });
-};
+});
 
-const updateRecipe = async (
+/**
+ * @function updateRecipe
+ * @description Updates an existing recipe.
+ * Protected: only the recipe owner or an admin can update the recipe.
+ */
+const updateRecipe = withErrorHandling(async (
     _parent,
-    {id, recipeName, ingredients, instructions, prepTime, difficulty, nutritionFacts, tags, images, estimatedCost}
+    { id, recipeName, ingredients, instructions, prepTime, difficulty, nutritionFacts, tags, images, estimatedCost },
+    context
 ) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    const recipe = await RecipeModel.findById(id);
+    if (!recipe) {
+        throw new Error('Recipe not found');
+    }
+    if (recipe.author.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only update your own recipes.');
+    }
     const updateData = {};
     if (recipeName !== undefined) updateData.recipeName = recipeName;
     if (ingredients !== undefined) updateData.ingredients = ingredients;
@@ -211,21 +235,41 @@ const updateRecipe = async (
     if (tags !== undefined) updateData.tags = tags;
     if (images !== undefined) updateData.images = images;
     if (estimatedCost !== undefined) updateData.estimatedCost = estimatedCost;
+    return RecipeModel.findByIdAndUpdate(id, updateData, { new: true });
+});
 
-    return RecipeModel.findByIdAndUpdate(id, updateData, {new: true});
-}
-
-async function deleteRecipe(_parent, {id}) {
+/**
+ * @function deleteRecipe
+ * @description Deletes a recipe.
+ * Protected: only the recipe owner or an admin can delete the recipe.
+ */
+const deleteRecipe = withErrorHandling(async (_parent, { id }, context) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    const recipe = await RecipeModel.findById(id);
+    if (!recipe) {
+        throw new Error('Recipe not found');
+    }
+    if (recipe.author.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only delete your own recipes.');
+    }
     const result = await RecipeModel.findByIdAndDelete(id);
     return !!result;
-}
+});
 
 /* --------------------------- RESTAURANT MUTATIONS -------------------------- */
 
-async function createRestaurant(
-    _parent,
-    {restaurantName, address, phone, website, cuisineType, priceRange}
-) {
+/**
+ * @function createRestaurant
+ * @description Creates a new restaurant.
+ * Protected: requires authentication.
+ */
+const createRestaurant = withErrorHandling(async (_parent, args, context) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    const { restaurantName, address, phone, website, cuisineType, priceRange } = args;
     return RestaurantModel.create({
         restaurantName,
         address,
@@ -234,12 +278,20 @@ async function createRestaurant(
         cuisineType,
         priceRange,
     });
-}
+});
 
-async function updateRestaurant(
-    _parent,
-    {id, restaurantName, address, phone, website, cuisineType, priceRange}
-) {
+/**
+ * @function updateRestaurant
+ * @description Updates a restaurant.
+ * Protected: only admins can update restaurants.
+ */
+const updateRestaurant = withErrorHandling(async (_parent, { id, restaurantName, address, phone, website, cuisineType, priceRange }, context) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    if (context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: Only admins can update restaurants.');
+    }
     const updateData = {};
     if (restaurantName !== undefined) updateData.restaurantName = restaurantName;
     if (address !== undefined) updateData.address = address;
@@ -247,24 +299,41 @@ async function updateRestaurant(
     if (website !== undefined) updateData.website = website;
     if (cuisineType !== undefined) updateData.cuisineType = cuisineType;
     if (priceRange !== undefined) updateData.priceRange = priceRange;
+    return RestaurantModel.findByIdAndUpdate(id, updateData, { new: true });
+});
 
-    return RestaurantModel.findByIdAndUpdate(id, updateData, {new: true});
-}
-
-async function deleteRestaurant(_parent, {id}) {
+/**
+ * @function deleteRestaurant
+ * @description Deletes a restaurant.
+ * Protected: only admins can delete restaurants.
+ */
+const deleteRestaurant = withErrorHandling(async (_parent, { id }, context) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    if (context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: Only admins can delete restaurants.');
+    }
     const result = await RestaurantModel.findByIdAndDelete(id);
     return !!result;
-}
+});
 
 /* --------------------------- MEAL PLAN MUTATIONS --------------------------- */
 
-async function createMealPlan(
-    _parent,
-    {userId, startDate, endDate, title, status, totalCalories}
-) {
+/**
+ * @function createMealPlan
+ * @description Creates a meal plan.
+ * Protected: a user can only create a meal plan for themselves unless admin.
+ */
+const createMealPlan = withErrorHandling(async (_parent, { userId, startDate, endDate, title, status, totalCalories }, context) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    if (context.user.userId !== userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only create meal plans for yourself or be an admin.');
+    }
     const user = await User.findById(userId);
     if (!user) throw new Error('User not found');
-
     const newPlan = await MealPlanModel.create({
         user: user._id,
         startDate,
@@ -274,50 +343,71 @@ async function createMealPlan(
         totalCalories,
     });
     return newPlan.populate('user');
-}
+});
 
-async function updateMealPlan(
-    _parent,
-    {id, startDate, endDate, title, status, totalCalories}
-) {
+/**
+ * @function updateMealPlan
+ * @description Updates a meal plan.
+ * Protected: only the meal plan owner or an admin can update.
+ */
+const updateMealPlan = withErrorHandling(async (_parent, { id, startDate, endDate, title, status, totalCalories }, context) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    const mealPlan = await MealPlanModel.findById(id);
+    if (!mealPlan) throw new Error('Meal plan not found');
+    if (mealPlan.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only update your own meal plans or be an admin.');
+    }
     const updateData = {};
     if (startDate !== undefined) updateData.startDate = startDate;
     if (endDate !== undefined) updateData.endDate = endDate;
     if (title !== undefined) updateData.title = title;
     if (status !== undefined) updateData.status = status;
     if (totalCalories !== undefined) updateData.totalCalories = totalCalories;
+    return MealPlanModel.findByIdAndUpdate(id, updateData, { new: true }).populate('user');
+});
 
-    return MealPlanModel.findByIdAndUpdate(id, updateData, {new: true}).populate('user');
-}
-
-async function deleteMealPlan(_parent, {id}) {
+/**
+ * @function deleteMealPlan
+ * @description Deletes a meal plan.
+ * Protected: only the owner or an admin can delete.
+ */
+const deleteMealPlan = withErrorHandling(async (_parent, { id }, context) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    const mealPlan = await MealPlanModel.findById(id);
+    if (!mealPlan) throw new Error('Meal plan not found');
+    if (mealPlan.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only delete your own meal plans or be an admin.');
+    }
     const result = await MealPlanModel.findByIdAndDelete(id);
     return !!result;
-}
+});
 
 /* ------------------------------ MEAL MUTATIONS ----------------------------- */
 
-async function createMeal(
+/**
+ * @function createMeal
+ * @description Creates a meal within a meal plan.
+ * Protected: only the owner or an admin can add meals.
+ */
+const createMeal = withErrorHandling(async (
     _parent,
-    {
-        mealPlanId,
-        date,
-        mealType,
-        recipeId,
-        restaurantId,
-        mealName,
-        ingredients,
-        nutritionFacts,
-        portionSize,
-        notes,
+    { mealPlanId, date, mealType, recipeId, restaurantId, mealName, ingredients, nutritionFacts, portionSize, notes },
+    context
+) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
     }
-) {
     const mealPlan = await MealPlanModel.findById(mealPlanId);
     if (!mealPlan) throw new Error('MealPlan not found');
-
+    if (mealPlan.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only create meals for your own meal plans or be an admin.');
+    }
     const recipe = recipeId ? await RecipeModel.findById(recipeId) : null;
     const restaurant = restaurantId ? await RestaurantModel.findById(restaurantId) : null;
-
     const newMeal = await MealModel.create({
         mealPlan: mealPlan._id,
         date,
@@ -330,20 +420,30 @@ async function createMeal(
         portionSize,
         notes,
     });
-
     mealPlan.meals.push(newMeal._id);
     await mealPlan.save();
-
     return newMeal;
-}
+});
 
-async function updateMeal(
+/**
+ * @function updateMeal
+ * @description Updates a meal.
+ * Protected: only the owner (via the meal plan) or an admin can update.
+ */
+const updateMeal = withErrorHandling(async (
     _parent,
-    {id, date, mealType, recipeId, restaurantId, mealName, ingredients, nutritionFacts, portionSize, notes}
-) {
+    { id, date, mealType, recipeId, restaurantId, mealName, ingredients, nutritionFacts, portionSize, notes },
+    context
+) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
     const meal = await MealModel.findById(id);
     if (!meal) throw new Error('Meal not found');
-
+    const mealPlan = await MealPlanModel.findById(meal.mealPlan);
+    if (mealPlan.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only update meals in your own meal plans or be an admin.');
+    }
     if (date !== undefined) meal.date = date;
     if (mealType !== undefined) meal.mealType = mealType;
     if (recipeId !== undefined) meal.recipe = recipeId;
@@ -353,30 +453,50 @@ async function updateMeal(
     if (nutritionFacts !== undefined) meal.nutritionFacts = nutritionFacts;
     if (portionSize !== undefined) meal.portionSize = portionSize;
     if (notes !== undefined) meal.notes = notes;
-
     return meal.save();
-}
+});
 
-async function deleteMeal(_parent, {id}) {
+/**
+ * @function deleteMeal
+ * @description Deletes a meal.
+ * Protected: only the owner (via the meal plan) or an admin can delete.
+ */
+const deleteMeal = withErrorHandling(async (_parent, { id }, context) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
     const meal = await MealModel.findById(id);
-    if (!meal) return false;
-
+    if (!meal) throw new Error('Meal not found');
     const mealPlan = await MealPlanModel.findById(meal.mealPlan);
+    if (mealPlan.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only delete meals from your own meal plans or be an admin.');
+    }
     if (mealPlan) {
         mealPlan.meals = mealPlan.meals.filter(mId => mId.toString() !== id);
         await mealPlan.save();
     }
-
     await meal.deleteOne();
     return true;
-}
+});
 
 /* ----------------------------- STATS MUTATIONS ----------------------------- */
 
-async function createStats(
+/**
+ * @function createStats
+ * @description Creates user stats.
+ * Protected: a user can only create stats for themselves unless admin.
+ */
+const createStats = withErrorHandling(async (
     _parent,
-    {userId, macros, micros, caloriesConsumed, waterIntake, steps}
-) {
+    { userId, macros, micros, caloriesConsumed, waterIntake, steps },
+    context
+) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    if (context.user.userId !== userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only create stats for yourself or be an admin.');
+    }
     return StatsModel.create({
         user: userId,
         macros,
@@ -385,23 +505,41 @@ async function createStats(
         waterIntake,
         steps,
     });
-}
+});
 
-async function deleteStats(_parent, {id}) {
+/**
+ * @function deleteStats
+ * @description Deletes stats.
+ * Protected: only the stats owner or an admin can delete.
+ */
+const deleteStats = withErrorHandling(async (_parent, { id }, context) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    const stats = await StatsModel.findById(id);
+    if (!stats) throw new Error('Stats not found');
+    if (stats.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only delete your own stats or be an admin.');
+    }
     const result = await StatsModel.findByIdAndDelete(id);
     return !!result;
-}
+});
 
 /* ----------------------------- REVIEW MUTATIONS ---------------------------- */
 
-async function createReview(_parent, {targetType, targetId, rating, comment}) {
+/**
+ * @function createReview
+ * @description Creates a review.
+ * Protected: requires authentication.
+ */
+const createReview = withErrorHandling(async (_parent, { targetType, targetId, rating, comment }, context) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
     if (!['RECIPE', 'RESTAURANT'].includes(targetType)) {
         throw new Error('Invalid targetType');
     }
-
-    // In real app, userId usually comes from context (logged-in user).
-    const userId = mongoose.Types.ObjectId('640faaaa4dc91567048f0abc'); // placeholder
-
+    const userId = context.user.userId;
     const newReview = await ReviewModel.create({
         user: userId,
         targetType,
@@ -430,14 +568,23 @@ async function createReview(_parent, {targetType, targetId, rating, comment}) {
             await restaurant.save();
         }
     }
-
     return newReview;
-}
+});
 
-async function deleteReview(_parent, {id}) {
+/**
+ * @function deleteReview
+ * @description Deletes a review.
+ * Protected: only the review owner or an admin can delete.
+ */
+const deleteReview = withErrorHandling(async (_parent, { id }, context) => {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
     const review = await ReviewModel.findById(id);
-    if (!review) return false;
-
+    if (!review) throw new Error('Review not found');
+    if (review.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only delete your own reviews or be an admin.');
+    }
     if (review.targetType === 'RECIPE') {
         const recipe = await RecipeModel.findById(review.targetId);
         if (recipe && recipe.ratingCount > 0) {
@@ -459,10 +606,9 @@ async function deleteReview(_parent, {id}) {
             await restaurant.save();
         }
     }
-
     await ReviewModel.findByIdAndDelete(id);
     return true;
-}
+});
 
 export const Mutation = {
     // Users

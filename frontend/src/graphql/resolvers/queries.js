@@ -12,10 +12,24 @@ import { Review as ReviewModel } from "@/graphql/resolvers/resolversFields.js";
 import { paginateQuery } from '@/utils/pagination.js';
 
 /**
- * Alias for imported default User model, for clarity in JSDoc references.
- * @typedef {import('mongoose').Model} UserModel
+ * A helper function that wraps resolvers to catch unexpected errors.
+ *
+ * @param {Function} resolver - The resolver function to wrap.
+ * @returns {Function} The wrapped resolver function.
  */
-const UserModel = User;
+const withErrorHandling = (resolver) => async (parent, args, context, info) => {
+    try {
+        return await resolver(parent, args, context, info);
+    } catch (error) {
+        console.error("Query Resolver Error:", error);
+        // Return a generic error message to avoid leaking internal details.
+        throw new Error("Internal server error.");
+    }
+};
+
+/* -------------------------------------------------------------------------- */
+/*                                 GENERAL QUERIES                            */
+/* -------------------------------------------------------------------------- */
 
 /**
  * @function ping
@@ -25,7 +39,7 @@ const UserModel = User;
 const ping = () => 'pong';
 
 /* -------------------------------------------------------------------------- */
-/*                                 USER QUERIES                                */
+/*                                 USER QUERIES                               */
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -34,10 +48,16 @@ const ping = () => 'pong';
  * @param {object} _parent - Parent resolver (unused in this case).
  * @param {object} args - The query arguments.
  * @param {string} args.id - The unique ID of the user to fetch.
- * @returns {Promise<UserModel|null>} A promise resolving to the user document or null if not found.
+ * @returns {Promise<User|null>} A promise resolving to the user document or null if not found.
  */
-async function getUser(_parent, { id }) {
-    return UserModel.findById(id);
+async function getUser(_parent, { id }, context) {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    if (context.user.userId !== id && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only get your own profile or be an admin.');
+    }
+    return User.findById(id);
 }
 
 /**
@@ -47,10 +67,13 @@ async function getUser(_parent, { id }) {
  * @param {object} args - The query arguments.
  * @param {number} [args.page=1] - The page number.
  * @param {number} [args.limit=10] - The number of users per page.
- * @returns {Promise<UserModel[]>} An array of user documents for the specified page.
+ * @returns {Promise<User[]>} An array of user documents for the specified page.
  */
-async function getUsers(_parent, { page, limit }) {
-    return paginateQuery(UserModel, page, limit);
+async function getUsers(_parent, { page, limit }, context) {
+    if (!context.user?.userId || context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: Only admins can get all users.');
+    }
+    return paginateQuery(User, page, limit);
 }
 
 /**
@@ -59,10 +82,13 @@ async function getUsers(_parent, { page, limit }) {
  * @param {object} _parent - Parent resolver (unused).
  * @param {object} args - The query arguments.
  * @param {string} args.keyword - The keyword to match in name or email fields.
- * @returns {Promise<UserModel[]>} An array of user documents matching the query.
+ * @returns {Promise<User[]>} An array of user documents matching the query.
  */
-async function searchUsers(_parent, { keyword }) {
-    return UserModel.find({
+async function searchUsers(_parent, { keyword }, context) {
+    if (!context.user?.userId || context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: Only admins can search users.');
+    }
+    return User.find({
         $or: [
             { name: { $regex: keyword, $options: 'i' } },
             { email: { $regex: keyword, $options: 'i' } },
@@ -71,7 +97,7 @@ async function searchUsers(_parent, { keyword }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                                RECIPE QUERIES                               */
+/*                                RECIPE QUERIES                              */
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -80,9 +106,10 @@ async function searchUsers(_parent, { keyword }) {
  * @param {object} _parent - Parent resolver (unused).
  * @param {object} args
  * @param {string} args.id - The unique ID of the recipe.
- * @returns {Promise<RecipeModel|null>} A promise resolving to the recipe document or null.
+ * @returns {Promise<Object|null>} A promise resolving to the recipe document or null.
  */
-async function getRecipe(_parent, { id }) {
+async function getRecipe(_parent, { id }, context) {
+    // No authentication required to get a recipe
     return RecipeModel.findById(id).populate('author');
 }
 
@@ -93,9 +120,10 @@ async function getRecipe(_parent, { id }) {
  * @param {object} args
  * @param {number} [args.page=1] - The page number.
  * @param {number} [args.limit=10] - The number of recipes per page.
- * @returns {Promise<RecipeModel[]>} A promise resolving to an array of recipes.
+ * @returns {Promise<Object[]>} A promise resolving to an array of recipes.
  */
-async function getRecipes(_parent, { page, limit }) {
+async function getRecipes(_parent, { page, limit }, context) {
+    // No authentication required to get recipes
     return paginateQuery(RecipeModel, page, limit);
 }
 
@@ -105,16 +133,17 @@ async function getRecipes(_parent, { page, limit }) {
  * @param {object} _parent - Parent resolver (unused).
  * @param {object} args
  * @param {string} args.keyword - The keyword to match in recipeName.
- * @returns {Promise<RecipeModel[]>} A promise resolving to an array of matched recipes.
+ * @returns {Promise<Object[]>} A promise resolving to an array of matched recipes.
  */
-async function searchRecipes(_parent, { keyword }) {
+async function searchRecipes(_parent, { keyword }, context) {
+    // No authentication required to search recipes
     return RecipeModel.find({
         recipeName: { $regex: keyword, $options: 'i' },
     });
 }
 
 /* -------------------------------------------------------------------------- */
-/*                             RESTAURANT QUERIES                             */
+/*                             RESTAURANT QUERIES                            */
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -123,9 +152,10 @@ async function searchRecipes(_parent, { keyword }) {
  * @param {object} _parent - Parent resolver (unused).
  * @param {object} args
  * @param {string} args.id - The unique ID of the restaurant.
- * @returns {Promise<RestaurantModel|null>} A promise resolving to the restaurant or null if not found.
+ * @returns {Promise<Object|null>} A promise resolving to the restaurant or null if not found.
  */
-async function getRestaurant(_parent, { id }) {
+async function getRestaurant(_parent, { id }, context) {
+    // No authentication required to get a restaurant
     return RestaurantModel.findById(id);
 }
 
@@ -136,9 +166,10 @@ async function getRestaurant(_parent, { id }) {
  * @param {object} args
  * @param {number} [args.page=1] - The page number.
  * @param {number} [args.limit=10] - The number of restaurants per page.
- * @returns {Promise<RestaurantModel[]>} A promise resolving to an array of restaurants.
+ * @returns {Promise<Object[]>} A promise resolving to an array of restaurants.
  */
-async function getRestaurants(_parent, { page, limit }) {
+async function getRestaurants(_parent, { page, limit }, context) {
+    // No authentication required to get restaurants
     return paginateQuery(RestaurantModel, page, limit);
 }
 
@@ -148,16 +179,17 @@ async function getRestaurants(_parent, { page, limit }) {
  * @param {object} _parent - Parent resolver (unused).
  * @param {object} args
  * @param {string} args.keyword - The keyword to match in restaurantName.
- * @returns {Promise<RestaurantModel[]>} A promise resolving to an array of matched restaurants.
+ * @returns {Promise<Object[]>} A promise resolving to an array of matched restaurants.
  */
-async function searchRestaurants(_parent, { keyword }) {
+async function searchRestaurants(_parent, { keyword }, context) {
+    // No authentication required to search restaurants
     return RestaurantModel.find({
         restaurantName: { $regex: keyword, $options: 'i' },
     });
 }
 
 /* -------------------------------------------------------------------------- */
-/*                              MEAL PLAN QUERIES                             */
+/*                             MEAL PLAN QUERIES                            */
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -166,25 +198,37 @@ async function searchRestaurants(_parent, { keyword }) {
  * @param {object} _parent - Parent resolver (unused).
  * @param {object} args
  * @param {string} args.id - The unique ID of the meal plan.
- * @returns {Promise<MealPlanModel|null>} A promise that resolves to the meal plan or null if not found.
+ * @returns {Promise<Object|null>} A promise that resolves to the meal plan or null if not found.
  */
-async function getMealPlan(_parent, { id }) {
-    return MealPlanModel.findById(id)
-        .populate('user')
-        .populate('meals');
+async function getMealPlan(_parent, { id }, context) {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    const mealPlan = await MealPlanModel.findById(id);
+    if (!mealPlan) throw new Error('Meal plan not found');
+    if (mealPlan.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only get your own meal plans or be an admin.');
+    }
+    return mealPlan.populate('user').populate('meals');
 }
 
 /**
  * @function getMealPlans
- * @description Retrieves paginated meal plans, optionally filtered by a specific user’s ID.
+ * @description Retrieves paginated meal plans, optionally filtered by a specific user ID.
  * @param {object} _parent - Parent resolver (unused).
  * @param {object} args
  * @param {string} [args.userId] - If provided, filter meal plans by the given user’s ID.
- * @param {number} [args.page=1] - The page number to return.
+ * @param {number} [args.page=1] - The page number.
  * @param {number} [args.limit=10] - The number of meal plans per page.
- * @returns {Promise<MealPlanModel[]>} A promise resolving to an array of meal plan documents.
+ * @returns {Promise<Object[]>} A promise resolving to an array of meal plan documents.
  */
-async function getMealPlans(_parent, { userId, page, limit }) {
+async function getMealPlans(_parent, { userId, page, limit }, context) {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    if (userId && context.user.userId !== userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only get your own meal plans or be an admin.');
+    }
     const filter = userId ? { user: userId } : {};
     return paginateQuery(
         MealPlanModel.find(filter).populate('user'),
@@ -194,7 +238,7 @@ async function getMealPlans(_parent, { userId, page, limit }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                                  STATS QUERY                                */
+/*                                STATS QUERY                               */
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -205,12 +249,18 @@ async function getMealPlans(_parent, { userId, page, limit }) {
  * @param {string} args.userId - The unique ID of the user for whom to retrieve stats.
  * @returns {Promise<Object[]>} A promise that resolves to an array of user stats objects.
  */
-async function getStatsByUser(_parent, { userId }) {
+async function getStatsByUser(_parent, { userId }, context) {
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    if (context.user.userId !== userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only get your own stats or be an admin.');
+    }
     return StatsModel.find({ user: userId });
 }
 
 /* -------------------------------------------------------------------------- */
-/*                                  REVIEW QUERIES                             */
+/*                              REVIEW QUERIES                              */
 /* -------------------------------------------------------------------------- */
 
 /**
@@ -218,44 +268,46 @@ async function getStatsByUser(_parent, { userId }) {
  * @description Retrieves a single review by its ID, populating the user who created it.
  * @param {object} _parent - Parent resolver (unused).
  * @param {object} args
- * @param {string} args.id - The unique ID of the review to retrieve.
- * @returns {Promise<ReviewModel|null>} A promise that resolves to the review document or null if not found.
+ * @param {string} args.id - The unique ID of the review.
+ * @returns {Promise<Object|null>} A promise that resolves to the review or null if not found.
  */
-async function getReview(_parent, { id }) {
+async function getReview(_parent, { id }, context) {
+    // No authentication required to get a review
     return ReviewModel.findById(id).populate('user');
 }
 
 /**
  * @function getReviewsForTarget
- * @description Retrieves all reviews matching a specific target type and target ID, populating the user who created each review.
+ * @description Retrieves all reviews matching a specific target type and target ID.
  * @param {object} _parent - Parent resolver (unused).
  * @param {object} args
  * @param {string} args.targetType - The type of target (e.g., 'Restaurant', 'Recipe').
- * @param {string} args.targetId - The unique ID of the target resource being reviewed.
- * @returns {Promise<ReviewModel[]>} A promise that resolves to an array of reviews.
+ * @param {string} args.targetId - The unique ID of the target.
+ * @returns {Promise<Object[]>} A promise resolving to an array of reviews.
  */
-async function getReviewsForTarget(_parent, { targetType, targetId }) {
+async function getReviewsForTarget(_parent, { targetType, targetId }, context) {
+    // No authentication required to get reviews for a target
     return ReviewModel.find({ targetType, targetId }).populate('user');
 }
 
 /* -------------------------------------------------------------------------- */
-/*                                QUERY EXPORTS                                */
+/*                                QUERY EXPORTS                             */
 /* -------------------------------------------------------------------------- */
 
 export const Query = {
-    ping,
-    getUser,
-    getUsers,
-    searchUsers,
-    getRecipe,
-    getRecipes,
-    searchRecipes,
-    getRestaurant,
-    getRestaurants,
-    searchRestaurants,
-    getMealPlan,
-    getMealPlans,
-    getStatsByUser,
-    getReview,
-    getReviewsForTarget,
+    ping: withErrorHandling(ping),
+    getUser: withErrorHandling(getUser),
+    getUsers: withErrorHandling(getUsers),
+    searchUsers: withErrorHandling(searchUsers),
+    getRecipe: withErrorHandling(getRecipe),
+    getRecipes: withErrorHandling(getRecipes),
+    searchRecipes: withErrorHandling(searchRecipes),
+    getRestaurant: withErrorHandling(getRestaurant),
+    getRestaurants: withErrorHandling(getRestaurants),
+    searchRestaurants: withErrorHandling(searchRestaurants),
+    getMealPlan: withErrorHandling(getMealPlan),
+    getMealPlans: withErrorHandling(getMealPlans),
+    getStatsByUser: withErrorHandling(getStatsByUser),
+    getReview: withErrorHandling(getReview),
+    getReviewsForTarget: withErrorHandling(getReviewsForTarget),
 };

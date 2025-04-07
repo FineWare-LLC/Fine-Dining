@@ -1,13 +1,20 @@
 /**
  * @file create-account.js
- * @description FineDining Create Account Page in Next.js & Material UI
+ * @description FineDining Create Account Page in Next.js & Material UI using generated GraphQL hooks.
  */
 
 import React, { useState } from 'react';
-import { Container, Box, TextField, Button, Typography, CircularProgress } from '@mui/material';
+import {
+    Container,
+    Box,
+    TextField,
+    Button,
+    Typography,
+    CircularProgress,
+} from '@mui/material';
 import { useMutation } from '@apollo/client';
-// Make sure you import your actual GraphQL mutation from your queries
-import { CREATE_ACCOUNT_MUTATION } from '../graphql/mutations';
+// Import the generated mutation document from your codegen output.
+import { CreateUserDocument } from '@/gql/graphql'; // Adjust the path if needed
 
 // Regular expression for basic email validation.
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -16,11 +23,6 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_USERNAME_LENGTH = 3;
 const MIN_PASSWORD_LENGTH = 8;
 
-/**
- * CreateAccountForm - Renders the form for creating a new user account.
- * Includes robust input validation, sanitization, and enhanced error handling.
- * @returns {JSX.Element} The form component.
- */
 function CreateAccountForm() {
     // Local state for form inputs.
     const [username, setUsername] = useState('');
@@ -28,20 +30,34 @@ function CreateAccountForm() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
 
+    // Default values for fields not collected in the form.
+    const defaultGender = "OTHER"; // Options: 'MALE', 'FEMALE', 'OTHER'
+    const defaultMeasurementSystem = "METRIC"; // Options: 'METRIC', 'IMPERIAL'
+
     // Local state for error and success messages.
     const [formError, setFormError] = useState('');
     const [formSuccess, setFormSuccess] = useState('');
 
-    // Set up GraphQL mutation hook.
-    const [createAccount, { loading, error, data }] = useMutation(CREATE_ACCOUNT_MUTATION, {
-        // Optional: refetchQueries, update cache, etc.
+    // Use Apollo's useMutation with the generated CreateUserDocument.
+    const [createAccount, { loading }] = useMutation(CreateUserDocument, {
+        onCompleted: (data) => {
+            if (data?.createUser?.name) {
+                setFormSuccess(`User ${data.createUser.name} created successfully!`);
+                // Clear form inputs after success.
+                setUsername('');
+                setEmail('');
+                setPassword('');
+                setConfirmPassword('');
+            } else {
+                setFormError('Account created, but user details are missing.');
+            }
+        },
+        onError: (err) => {
+            console.error('Error creating account:', err);
+            setFormError(err.message || 'An error occurred while creating your account. Please try again.');
+        },
     });
 
-    /**
-     * handleSubmit - Handles form submission to create a new account.
-     * Performs client-side validation before calling the mutation.
-     * @param {React.FormEvent<HTMLFormElement>} e - The form submission event.
-     */
     const handleSubmit = async (e) => {
         e.preventDefault();
         setFormError('');
@@ -71,30 +87,23 @@ function CreateAccountForm() {
             return;
         }
 
-        // Optional: Further password strength validation can be added here.
-        // Optional: Add rate limiting or debounce user submissions if needed.
-
         try {
-            // Call the GraphQL mutation to create an account.
-            const result = await createAccount({
+            await createAccount({
                 variables: {
-                    username: trimmedUsername,
-                    email: trimmedEmail,
-                    password: trimmedPassword,
+                    input: {
+                        name: trimmedUsername,
+                        email: trimmedEmail,
+                        password: trimmedPassword,
+                        gender: defaultGender,
+                        measurementSystem: defaultMeasurementSystem,
+                    },
                 },
             });
-            if (result?.data?.createAccount) {
-                setFormSuccess(`User ${result.data.createAccount.username} created successfully!`);
-                // Optionally, clear form inputs after success.
-                setUsername('');
-                setEmail('');
-                setPassword('');
-                setConfirmPassword('');
-            }
         } catch (err) {
-            // Log error to console for debugging (avoid exposing details to users).
-            console.error('Error creating account:', err);
-            setFormError('An error occurred while creating your account. Please try again.');
+            console.error("Error invoking createAccount mutation:", err);
+            if (!formError) {
+                setFormError('A submission error occurred. Please try again.');
+            }
         }
     };
 
@@ -108,6 +117,8 @@ function CreateAccountForm() {
                 gap: '0.75rem',
                 marginTop: '1rem',
             }}
+            noValidate
+            autoComplete="off"
         >
             <TextField
                 name="username"
@@ -117,6 +128,7 @@ function CreateAccountForm() {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 inputProps={{ minLength: MIN_USERNAME_LENGTH }}
+                aria-label="Username"
             />
             <TextField
                 name="email"
@@ -126,7 +138,9 @@ function CreateAccountForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                aria-label="Email Address"
             />
+            {/* TODO: Add proper inputs for gender and measurement system */}
             <TextField
                 name="password"
                 label="Password"
@@ -136,6 +150,7 @@ function CreateAccountForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 inputProps={{ minLength: MIN_PASSWORD_LENGTH }}
+                aria-label="Password"
             />
             <TextField
                 name="confirmPassword"
@@ -145,16 +160,15 @@ function CreateAccountForm() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                aria-label="Confirm Password"
             />
-            {/* Display error message if any */}
             {formError && (
-                <Typography variant="body2" color="error">
+                <Typography variant="body2" color="error" role="alert">
                     {formError}
                 </Typography>
             )}
-            {/* Display success message if account is created */}
             {formSuccess && (
-                <Typography variant="body2" color="success.main">
+                <Typography variant="body2" color="success.main" role="status">
                     {formSuccess}
                 </Typography>
             )}
@@ -176,19 +190,15 @@ function CreateAccountForm() {
                             marginTop: '-12px',
                             marginLeft: '-12px',
                         }}
+                        aria-label="Creating account"
                     />
                 )}
-                CREATE ACCOUNT
+                {loading ? 'Creating...' : 'CREATE ACCOUNT'}
             </Button>
         </Box>
     );
 }
 
-/**
- * CreateAccountPage - Main page component for user registration.
- * Engineered for extra clarity, responsiveness, and security.
- * @returns {JSX.Element} A Next.js page containing the sign-up form.
- */
 export default function CreateAccountPage() {
     return (
         <Container
@@ -198,9 +208,9 @@ export default function CreateAccountPage() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: '100vh',
+                minHeight: '100vh',
                 padding: '1rem',
-                backgroundColor: '#f9f9f9', // Optional: Set a subtle background
+                backgroundColor: '#f9f9f9',
             }}
         >
             <Typography variant="h4" component="h1" gutterBottom>

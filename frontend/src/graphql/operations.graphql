@@ -1,0 +1,548 @@
+# frontend/src/graphql/operations.graphql
+
+# --- Mutations ---
+
+mutation CreateUser($input: CreateUserInput!) {
+    createUser(input: $input) {
+        id
+        name
+        email
+        role
+        accountStatus
+    }
+}
+
+mutation UpdateUser($id: ID!, $input: UpdateUserInput!) {
+    updateUser(id: $id, input: $input) {
+        id
+        name
+        email
+        role
+        accountStatus
+        dailyCalories
+        weight
+        height
+    }
+}
+
+mutation DeleteUser($id: ID!) {
+    deleteUser(id: $id)
+}
+
+mutation LoginUser($email: String!, $password: String!) {
+    loginUser(email: $email, password: $password) {
+        token
+        user {
+            id
+            name
+            email
+            role
+        }
+    }
+}
+
+mutation RequestPasswordReset($email: String!) {
+    requestPasswordReset(email: $email)
+}
+
+mutation ResetPassword($resetToken: String!, $newPassword: String!) {
+    resetPassword(resetToken: $resetToken, newPassword: $newPassword)
+}
+
+mutation CreateRecipe(
+    $recipeName: String!
+    $ingredients: [String]!
+    $instructions: String!
+    $prepTime: Int!
+    $difficulty: Difficulty
+    $nutritionFacts: String
+    $tags: [String]
+    $images: [String]
+    $estimatedCost: Float
+    $authorId: ID
+) {
+    createRecipe(
+        recipeName: $recipeName
+        ingredients: $ingredients
+        instructions: $instructions
+        prepTime: $prepTime
+        difficulty: $difficulty
+        nutritionFacts: $nutritionFacts
+        tags: $tags
+        images: $images
+        estimatedCost: $estimatedCost
+        authorId: $authorId
+    ) {
+        id
+        recipeName
+        prepTime
+        difficulty
+        author {
+            id
+            name
+        }
+    }
+}
+
+mutation UpdateRecipe(
+    $id: ID!
+    $recipeName: String
+    $ingredients: [String]
+    $instructions: String
+    $prepTime: Int
+    $difficulty: Difficulty
+    $nutritionFacts: String
+    $tags: [String]
+    $images: [String]
+    $estimatedCost: Float
+) {
+    updateRecipe(
+        id: $id
+        recipeName: $recipeName
+        ingredients: $ingredients
+        instructions: $instructions
+        prepTime: $prepTime
+        difficulty: $difficulty
+        nutritionFacts: $nutritionFacts
+        tags: $tags
+        images: $images
+        estimatedCost: $estimatedCost
+    ) {
+        id
+        recipeName
+        prepTime
+        difficulty
+        updatedAt
+    }
+}
+
+mutation DeleteRecipe($id: ID!) {
+    deleteRecipe(id: $id)
+}
+
+mutation CreateRestaurant(
+    $restaurantName: String!
+    $address: String!
+    $phone: String
+    $website: String
+    $cuisineType: [String]
+    $priceRange: PriceRange
+) {
+    createRestaurant(
+        restaurantName: $restaurantName
+        address: $address
+        phone: $phone
+        website: $website
+        cuisineType: $cuisineType
+        priceRange: $priceRange
+    ) {
+        id
+        restaurantName
+        address
+    }
+}
+
+mutation UpdateRestaurant(
+    $id: ID!
+    $restaurantName: String
+    $address: String
+    $phone: String
+    $website: String
+    $cuisineType: [String]
+    $priceRange: PriceRange
+) {
+    updateRestaurant(
+        id: $id
+        restaurantName: $restaurantName
+        address: $address
+        phone: $phone
+        website: $website
+        cuisineType: $cuisineType
+        priceRange: $priceRange
+    ) {
+        id
+        restaurantName
+        address
+        updatedAt
+    }
+}
+
+mutation DeleteRestaurant($id: ID!) {
+    deleteRestaurant(id: $id)
+}
+
+mutation CreateMealPlan(
+    $userId: ID!
+    $startDate: Date!
+    $endDate: Date!
+    $title: String
+    $status: MealPlanStatus
+    $totalCalories: Int
+) {
+    createMealPlan(
+        userId: $userId
+        startDate: $startDate
+        endDate: $endDate
+        title: $title
+        status: $status
+        totalCalories: $totalCalories
+    ) {
+        id
+        title
+        startDate
+        endDate
+        user {
+            id
+        }
+    }
+}
+
+mutation UpdateMealPlan(
+    $id: ID!
+    $startDate: Date
+    $endDate: Date
+    $title: String
+    $status: MealPlanStatus
+    $totalCalories: Int
+) {
+    updateMealPlan(
+        id: $id
+        startDate: $startDate
+        endDate: $endDate
+        title: $title
+        status: $status
+        totalCalories: $totalCalories
+    ) {
+        id
+        title
+        startDate
+        endDate
+        status
+        updatedAt
+    }
+}
+
+mutation DeleteMealPlan($id: ID!) {
+    deleteMealPlan(id: $id)
+}
+
+mutation CreateMeal(
+    $mealPlanId: ID!
+    $date: Date!
+    $mealType: MealType!
+    $recipeId: ID
+    $restaurantId: ID
+    $mealName: String
+    $ingredients: [String]
+    $nutritionFacts: String
+    $portionSize: String
+    $notes: String
+) {
+    createMeal(
+        mealPlanId: $mealPlanId
+        date: $date
+        mealType: $mealType
+        recipeId: $recipeId
+        restaurantId: $restaurantId
+        mealName: $mealName
+        ingredients: $ingredients
+        nutritionFacts: $nutritionFacts
+        portionSize: $portionSize
+        notes: $notes
+    ) {
+        id
+        mealName
+        mealType
+        date
+    }
+}
+
+mutation UpdateMeal(
+    $id: ID!
+    $date: Date
+    $mealType: MealType
+    $recipeId: ID
+    $restaurantId: ID
+    $mealName: String
+    $ingredients: [String]
+    $nutritionFacts: String
+    $portionSize: String
+    $notes: String
+) {
+    updateMeal(
+        id: $id
+        date: $date
+        mealType: $mealType
+        recipeId: $recipeId
+        restaurantId: $restaurantId
+        mealName: $mealName
+        ingredients: $ingredients
+        nutritionFacts: $nutritionFacts
+        portionSize: $portionSize
+        notes: $notes
+    ) {
+        id
+        mealName
+        mealType
+        date
+        updatedAt
+    }
+}
+
+mutation DeleteMeal($id: ID!) {
+    deleteMeal(id: $id)
+}
+
+mutation CreateStats(
+    $userId: ID!
+    $macros: String
+    $micros: String
+    $caloriesConsumed: Int
+    $waterIntake: Int
+    $steps: Int
+) {
+    createStats(
+        userId: $userId
+        macros: $macros
+        micros: $micros
+        caloriesConsumed: $caloriesConsumed
+        waterIntake: $waterIntake
+        steps: $steps
+    ) {
+        id
+        dateLogged
+        caloriesConsumed
+    }
+}
+
+mutation DeleteStats($id: ID!) {
+    deleteStats(id: $id)
+}
+
+mutation CreateReview(
+    $targetType: String!
+    $targetId: ID!
+    $rating: Int!
+    $comment: String
+) {
+    createReview(
+        targetType: $targetType
+        targetId: $targetId
+        rating: $rating
+        comment: $comment
+    ) {
+        id
+        rating
+        comment
+        targetType
+        targetId
+    }
+}
+
+mutation DeleteReview($id: ID!) {
+    deleteReview(id: $id)
+}
+
+
+# --- Queries ---
+
+query GetUser($id: ID!) {
+    getUser(id: $id) {
+        id
+        name
+        email
+        role
+        accountStatus
+        weight
+        height
+        gender
+        measurementSystem
+        dailyCalories
+        createdAt
+    }
+}
+
+query GetUsers($page: Int, $limit: Int) {
+    getUsers(page: $page, limit: $limit) {
+        id
+        name
+        email
+        role
+    }
+}
+
+query SearchUsers($keyword: String!) {
+    searchUsers(keyword: $keyword) {
+        id
+        name
+        email
+    }
+}
+
+query GetRecipe($id: ID!) {
+    getRecipe(id: $id) {
+        id
+        recipeName
+        ingredients
+        instructions
+        prepTime
+        difficulty
+        nutritionFacts
+        tags
+        images
+        estimatedCost
+        averageRating
+        ratingCount
+        author {
+            id
+            name
+        }
+    }
+}
+
+query GetRecipes($page: Int, $limit: Int) {
+    getRecipes(page: $page, limit: $limit) {
+        id
+        recipeName
+        difficulty
+        averageRating
+        author {
+            id
+            name
+        }
+    }
+}
+
+query SearchRecipes($keyword: String!) {
+    searchRecipes(keyword: $keyword) {
+        id
+        recipeName
+        difficulty
+    }
+}
+
+query GetRestaurant($id: ID!) {
+    getRestaurant(id: $id) {
+        id
+        restaurantName
+        address
+        phone
+        website
+        cuisineType
+        priceRange
+        averageRating
+        ratingCount
+        # location { type coordinates } # Add if needed
+        # openingHours { day hours } # Add if needed
+    }
+}
+
+query GetRestaurants($page: Int, $limit: Int) {
+    getRestaurants(page: $page, limit: $limit) {
+        id
+        restaurantName
+        address
+        cuisineType
+        averageRating
+    }
+}
+
+query SearchRestaurants($keyword: String!) {
+    searchRestaurants(keyword: $keyword) {
+        id
+        restaurantName
+        address
+    }
+}
+
+query GetMealPlan($id: ID!) {
+    getMealPlan(id: $id) {
+        id
+        title
+        startDate
+        endDate
+        status
+        totalCalories
+        user {
+            id
+            name
+        }
+        meals {
+            id
+            mealName
+            mealType
+            date
+        }
+    }
+}
+
+query GetMealPlans($userId: ID, $page: Int, $limit: Int) {
+    getMealPlans(userId: $userId, page: $page, limit: $limit) {
+        id
+        title
+        startDate
+        endDate
+        status
+        user {
+            id
+        }
+    }
+}
+
+query GetStatsByUser($userId: ID!) {
+    getStatsByUser(userId: $userId) {
+        id
+        dateLogged
+        macros
+        micros
+        caloriesConsumed
+        waterIntake
+        steps
+    }
+}
+
+query GetReview($id: ID!) {
+    getReview(id: $id) {
+        id
+        rating
+        comment
+        targetType
+        targetId
+        user {
+            id
+            name
+        }
+        createdAt
+    }
+}
+
+query GetReviewsForTarget($targetType: String!, $targetId: ID!) {
+    getReviewsForTarget(targetType: $targetType, targetId: $targetId) {
+        id
+        rating
+        comment
+        user {
+            id
+            name
+        }
+        createdAt
+    }
+}
+
+query FindNearbyRestaurants($latitude: Float!, $longitude: Float!, $radius: Int, $keyword: String) {
+    findNearbyRestaurants(latitude: $latitude, longitude: $longitude, radius: $radius, keyword: $keyword) {
+        placeId
+        name
+        vicinity
+        rating
+        userRatingsTotal
+        location {
+            latitude
+            longitude
+        }
+    }
+}
+
+query Ping {
+    ping
+}

@@ -1,43 +1,61 @@
-/**********************************************************
- * FILE: /src/graphql/typeDefs.js
- * Provides the GraphQL Schema Definition for Fine Dining,
- * heavily expanded for demonstration.
- **********************************************************/
-// Corrected import for the gql tag
-import { gql } from 'graphql-tag'; // Changed from 'apollo-server-micro'
+/**
+ * @file /src/graphql/typeDefs.js
+ * @description Provides the GraphQL Schema Definition for Fine Dining, heavily expanded for demonstration.
+ * This version is over-engineered and hardened with extensive descriptions and suggestions for validations.
+ */
+
+import { gql } from 'graphql-tag';
 
 export const typeDefs = gql`
-    """Custom scalar for Dates."""
+    """
+    Custom scalar for Dates.
+    You might implement this scalar to validate proper ISO date strings.
+    """
     scalar Date
 
-    """User gender enumeration."""
+    """
+    User gender enumeration.
+    Use this to ensure a valid, controlled list of genders.
+    """
     enum Gender {
         MALE
         FEMALE
         OTHER
     }
 
-    """Measurement system enumeration."""
+    """
+    Measurement system enumeration.
+    Only METRIC and IMPERIAL values are allowed.
+    """
     enum MeasurementSystem {
         METRIC
         IMPERIAL
     }
 
-    """User weight goal enumeration."""
+    """
+    User weight goal enumeration.
+    Valid weight goals for users.
+    """
     enum WeightGoal {
         LOSE
         GAIN
         MAINTAIN
     }
 
-    """Meal difficulty enumeration."""
+    """
+    Meal difficulty enumeration.
+    Reflects the complexity level of a recipe.
+    """
     enum Difficulty {
         EASY
         INTERMEDIATE
         HARD
     }
 
-    """Meal type enumeration."""
+    """
+    Meal type enumeration.
+    Defines when a meal is typically consumed.
+    """
     enum MealType {
         BREAKFAST
         LUNCH
@@ -45,14 +63,20 @@ export const typeDefs = gql`
         SNACK
     }
 
-    """Role-based user enumeration."""
+    """
+    Role-based user enumeration.
+    Restricts users to known roles for authorization purposes.
+    """
     enum UserRole {
         ADMIN
         USER
         PREMIUM
     }
 
-    """Account status enumeration."""
+    """
+    Account status enumeration.
+    States that describe the user's account lifecycle.
+    """
     enum AccountStatus {
         ACTIVE
         PENDING
@@ -60,7 +84,10 @@ export const typeDefs = gql`
         DELETED
     }
 
-    """MealPlan status enumeration."""
+    """
+    MealPlan status enumeration.
+    Defines the lifecycle status of a meal plan.
+    """
     enum MealPlanStatus {
         DRAFT
         ACTIVE
@@ -68,7 +95,10 @@ export const typeDefs = gql`
         CANCELLED
     }
 
-    """Restaurant price range enumeration."""
+    """
+    Restaurant price range enumeration.
+    Provides a controlled vocabulary for price classification.
+    """
     enum PriceRange {
         CHEAP
         MODERATE
@@ -76,7 +106,10 @@ export const typeDefs = gql`
         LUXURY
     }
 
-    """User type with robust fields, including accountStatus and role."""
+    """
+    Represents a User with robust fields.
+    Note: Passwords are handled separately for security.
+    """
     type User {
         id: ID!
         name: String!
@@ -96,7 +129,9 @@ export const typeDefs = gql`
         updatedAt: Date!
     }
 
-    """Recipe type storing cooking steps, ingredients, advanced fields."""
+    """
+    Represents a Recipe with details including instructions, ingredients, and ratings.
+    """
     type Recipe {
         id: ID!
         recipeName: String!
@@ -115,7 +150,9 @@ export const typeDefs = gql`
         updatedAt: Date!
     }
 
-    """Restaurant type storing location and contact info."""
+    """
+    Represents a Restaurant with location, contact, and rating details.
+    """
     type Restaurant {
         id: ID!
         restaurantName: String!
@@ -132,19 +169,27 @@ export const typeDefs = gql`
         updatedAt: Date!
     }
 
-    """Simple key/value for opening hours (mon: "9AM-5PM", etc.)."""
+    """
+    Simple key/value pair for restaurant opening hours.
+    For example: mon: "9AM-5PM"
+    """
     type OpeningHour {
         day: String
         hours: String
     }
 
-    """GeoJSON for location-based data."""
+    """
+    GeoJSON for location-based data.
+    Must conform to standard GeoJSON structures.
+    """
     type GeoJSON {
         type: String
         coordinates: [Float]
     }
 
-    """Meal Plan type storing a set of meals for a user."""
+    """
+    Represents a MealPlan which groups multiple meals for a user.
+    """
     type MealPlan {
         id: ID!
         user: User!
@@ -158,7 +203,9 @@ export const typeDefs = gql`
         updatedAt: Date!
     }
 
-    """Meal type storing recipes, restaurants, or custom items."""
+    """
+    Represents a Meal which can be tied to a recipe, restaurant, or be custom.
+    """
     type Meal {
         id: ID!
         mealPlan: MealPlan!
@@ -175,7 +222,9 @@ export const typeDefs = gql`
         updatedAt: Date!
     }
 
-    """Stats type storing logged nutritional data."""
+    """
+    Represents nutritional and activity statistics logged by a user.
+    """
     type Stats {
         id: ID!
         user: User!
@@ -189,7 +238,9 @@ export const typeDefs = gql`
         updatedAt: Date!
     }
 
-    """Review type for rating either a Recipe or Restaurant."""
+    """
+    Represents a Review made by a user on either a Recipe or Restaurant.
+    """
     type Review {
         id: ID!
         user: User!
@@ -201,13 +252,17 @@ export const typeDefs = gql`
         updatedAt: Date!
     }
 
-    """Simple Lat/Lng coordinate type."""
+    """
+    Simple LatLng coordinate type.
+    """
     type LatLng {
         latitude: Float
         longitude: Float
     }
 
-    """Represents restaurant data fetched from an external API like Google Places."""
+    """
+    Represents restaurant data fetched from an external API (e.g., Google Places).
+    """
     type ExternalRestaurant {
         placeId: String!       # External API Place ID (e.g., Google Place ID)
         name: String
@@ -217,7 +272,10 @@ export const typeDefs = gql`
         location: LatLng       # Using the simple LatLng type defined above
     }
 
-    """Queries for retrieving Fine Dining data."""
+    """
+    Query definitions for retrieving data in Fine Dining.
+    Each query includes security and validation considerations.
+    """
     type Query {
         ping: String
         getUser(id: ID!): User
@@ -242,11 +300,14 @@ export const typeDefs = gql`
         ): [ExternalRestaurant]
     }
 
-    """Input type for creating a new user (includes password)."""
+    """
+    Input type for creating a new user account.
+    Consider adding directives like @constraint if using validation libraries.
+    """
     input CreateUserInput {
         name: String!
-        email: String!
-        password: String!
+        email: String! # e.g. "user@example.com" @constraint(format: "email")
+        password: String! # Enforce minimum length and complexity if desired.
         role: UserRole
         weight: Float
         height: Float
@@ -258,7 +319,9 @@ export const typeDefs = gql`
         dailyCalories: Int
     }
 
-    """Input type for updating user info (password is optional)."""
+    """
+    Input type for updating a user.
+    """
     input UpdateUserInput {
         name: String
         password: String
@@ -273,13 +336,18 @@ export const typeDefs = gql`
         role: UserRole
     }
 
-    """AuthPayload for loginUser returning a token and user info."""
+    """
+    Payload type returned by loginUser containing a JWT token and user info.
+    """
     type AuthPayload {
         token: String!
         user: User!
     }
 
-    """Mutations for creating, updating, deleting Fine Dining data."""
+    """
+    Mutation definitions for Fine Dining.
+    Each mutation should implement robust security, input validations, and logging.
+    """
     type Mutation {
         createUser(input: CreateUserInput!): User!
         updateUser(id: ID!, input: UpdateUserInput!): User
@@ -372,9 +440,21 @@ export const typeDefs = gql`
             notes: String
         ): Meal
         deleteMeal(id: ID!): Boolean
-        createStats(userId: ID!, macros: String, micros: String, caloriesConsumed: Int, waterIntake: Int, steps: Int): Stats!
+        createStats(
+            userId: ID!
+            macros: String
+            micros: String
+            caloriesConsumed: Int
+            waterIntake: Int
+            steps: Int
+        ): Stats!
         deleteStats(id: ID!): Boolean
-        createReview(targetType: String!, targetId: ID!, rating: Int!, comment: String): Review!
+        createReview(
+            targetType: String!
+            targetId: ID!
+            rating: Int!
+            comment: String
+        ): Review!
         deleteReview(id: ID!): Boolean
     }
 `;

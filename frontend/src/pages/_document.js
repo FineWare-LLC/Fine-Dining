@@ -150,7 +150,7 @@ MyDocument.getInitialProps = async (ctx) => {
     const cache = createEmotionCache();
     const { extractCriticalToChunks } = createEmotionServer(cache);
 
-    // Enhance the App component to include the Emotion cache.
+    // Enhance the App component.10 to include the Emotion cache.
     ctx.renderPage = () =>
         originalRenderPage({
             enhanceApp: (App) =>

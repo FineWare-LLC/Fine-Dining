@@ -191,15 +191,7 @@ const apolloServer = new ApolloServer({
 const serverHandler = startServerAndCreateNextHandler(apolloServer, {
     context: async (req, res) => {
         let contextUser = null;
-
-        // In development, inject a dummy user to bypass authentication.
-        if (!isProduction) {
-            contextUser = {
-                userId: 'dev-user-id',
-                email: 'dev@example.com',
-                role: 'ADMIN', // Adjust as needed for your testing
-            };
-        } else if (JWT_SECRET) {
+        if (JWT_SECRET) {
             try {
                 await dbConnect();
                 const authHeader = req.headers.authorization || '';
@@ -270,7 +262,9 @@ export default async function handler(req, res) {
     if (req.method === 'POST' && !validateContentType(req)) {
         res.statusCode = 415;
         res.setHeader('Content-Type', 'application/json');
-        return res.end(JSON.stringify({ errors: [{ message: 'Unsupported Media Type. Expected application/json.' }] }));
+        return res.end(
+            JSON.stringify({ errors: [{ message: 'Unsupported Media Type. Expected application/json.' }] })
+        );
     }
 
     // Request body parsing with size limitation for POST requests
@@ -310,7 +304,9 @@ export default async function handler(req, res) {
                     console.error('Invalid JSON body:', parseError);
                     res.statusCode = 400;
                     res.setHeader('Content-Type', 'application/json');
-                    return res.end(JSON.stringify({ errors: [{ message: 'Invalid JSON format in request body.' }] }));
+                    return res.end(
+                        JSON.stringify({ errors: [{ message: 'Invalid JSON format in request body.' }] })
+                    );
                 }
             }
         } catch (err) {

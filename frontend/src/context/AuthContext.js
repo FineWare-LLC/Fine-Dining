@@ -18,8 +18,22 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const storedToken = localStorage.getItem('authToken');
         const storedUser = localStorage.getItem('userInfo'); // Basic user info if stored
-        if (storedToken) {
+
+        const isTokenValid = (token) => {
+            try {
+                const [, payloadBase64] = token.split('.');
+                const payload = JSON.parse(atob(payloadBase64));
+                const now = Math.floor(Date.now() / 1000); // Current time in seconds
+                return payload.exp && payload.exp > now;
+            } catch (e) {
+                console.warn("Token validation failed", e);
+                return false;
+            }
+        };
+
+        if (storedToken && isTokenValid(storedToken)) {
             setToken(storedToken);
+
             if (storedUser) {
                 try {
                     setUser(JSON.parse(storedUser));
@@ -32,10 +46,17 @@ export const AuthProvider = ({ children }) => {
                     setUser(null);
                 }
             }
-            // Optional: Add token validation logic here (e.g., check expiry)
+
+        } else {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userInfo');
+            setToken(null);
+            setUser(null);
         }
+
         setLoading(false); // Finished initial loading
     }, []);
+
 
     // Login function
     const login = useCallback((newToken, userData) => {

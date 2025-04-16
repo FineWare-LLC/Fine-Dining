@@ -45,9 +45,10 @@ export const loginUser = withErrorHandling(async (_parent, { email, password }, 
     // Compare the provided password with the stored hashed password.
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
-        // Optionally add a small delay to slow down brute force attacks.
+        await new Promise(resolve => setTimeout(resolve, 100)); // 500ms delay
         throw new Error('Invalid credentials');
     }
+
 
     // Update last login time (could also log the IP address here)
     user.lastLogin = new Date();

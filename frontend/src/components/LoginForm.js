@@ -1,15 +1,9 @@
-/**
- * @fileoverview The login form section for FineDining landing page.
- * This component is over-engineered and hardened for security, accessibility, and maintainability.
- */
-
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import { Box, TextField, Button, Link, Typography, CircularProgress } from '@mui/material';
 import { gql, useMutation } from '@apollo/client';
 import { useAuth } from '../context/AuthContext';
 
-// Define the GraphQL mutation.
 const LOGIN_MUTATION = gql`
     mutation LoginUser($email: String!, $password: String!) {
         loginUser(email: $email, password: $password) {
@@ -24,42 +18,35 @@ const LOGIN_MUTATION = gql`
     }
 `;
 
-// Basic email regex for client-side validation.
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * LoginForm - Renders the login form with enhanced input validation, error handling,
- * accessibility features, and loading states.
- * @returns {JSX.Element} The login form component.
+ * LoginForm - A component that renders the sign-in form.
+ *
+ * @component
+ * @returns {JSX.Element} The rendered LoginForm component.
  */
 export default function LoginForm() {
-    // Local state for inputs.
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    // Local state for error messages.
     const [errorMessage, setErrorMessage] = useState('');
-    // Local state for success message.
     const [successMessage, setSuccessMessage] = useState('');
 
     const router = useRouter();
     const { login } = useAuth();
 
-    // Setup the Apollo mutation.
+    // Use the login mutation with GraphQL.
     const [loginUserMutation, { loading }] = useMutation(LOGIN_MUTATION, {
         onCompleted: (data) => {
-            // Clear any previous errors.
             setErrorMessage('');
-            // Log the success data for debugging.
             console.info('Login successful:', data.loginUser);
             const { token, user } = data.loginUser;
-            login(token, user); // Update AuthContext with token and user.
+            login(token, user);
             setSuccessMessage(`Welcome, ${user.name}! Redirecting...`);
-            // Redirect after a brief delay to allow users to see the success message.
             setTimeout(() => router.push('/dashboard'), 1000);
         },
         onError: (err) => {
             console.error('Login failed:', err);
-            // Prefer graphQLErrors message if available.
             if (err.graphQLErrors && err.graphQLErrors.length > 0) {
                 setErrorMessage(err.graphQLErrors[0].message);
             } else {
@@ -69,24 +56,54 @@ export default function LoginForm() {
     });
 
     /**
-     * handleLogin - Handles the login form submission with enhanced validations.
-     * @param {React.FormEvent} e - The form submission event.
+     * Handles changes to the email input.
+     * Clears the error message if the new email and current password are valid.
+     *
+     * @param {React.ChangeEvent<HTMLInputElement>} e - The email change event.
+     */
+    const handleEmailChange = (e) => {
+        const newEmail = e.target.value;
+        setEmail(newEmail);
+        // Clear error if the new email is valid and the password is not empty.
+        if (emailRegex.test(newEmail.trim().toLowerCase()) && password.trim() !== '') {
+            setErrorMessage('');
+        }
+    };
+
+    /**
+     * Handles changes to the password input.
+     * Clears the error message if the new password and current email are valid.
+     *
+     * @param {React.ChangeEvent<HTMLInputElement>} e - The password change event.
+     */
+    const handlePasswordChange = (e) => {
+        const newPassword = e.target.value;
+        setPassword(newPassword);
+        // Clear error if the current email is valid and the new password is not empty.
+        if (emailRegex.test(email.trim().toLowerCase()) && newPassword.trim() !== '') {
+            setErrorMessage('');
+        }
+    };
+
+    /**
+     * Handles the form submission.
+     * Validates input fields and triggers the login mutation.
+     *
+     * @param {React.FormEvent<HTMLFormElement>} e - The submit event.
+     * @returns {Promise<void>}
      */
     const handleLogin = async (e) => {
         e.preventDefault();
         setErrorMessage('');
         setSuccessMessage('');
 
-        // Sanitize and trim inputs.
         const sanitizedEmail = email.trim().toLowerCase();
         const sanitizedPassword = password.trim();
 
-        // Validate email format.
         if (!sanitizedEmail || !emailRegex.test(sanitizedEmail)) {
             setErrorMessage('Please enter a valid email address.');
             return;
         }
-        // Validate password non-empty.
         if (!sanitizedPassword) {
             setErrorMessage('Please enter your password.');
             return;
@@ -100,7 +117,7 @@ export default function LoginForm() {
                 },
             });
         } catch (err) {
-            // Error handling is already managed in onError.
+            // Error handling is managed in onError.
         }
     };
 
@@ -117,32 +134,52 @@ export default function LoginForm() {
             autoComplete="off"
         >
             <TextField
+                id="email"
                 label="Email"
+                placeholder="Email"
                 variant="outlined"
                 name="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
                 fullWidth
                 required
                 aria-required="true"
-                error={Boolean(errorMessage)}
-                helperText={errorMessage && !password && errorMessage}
+                // Display error style only if email is empty or invalid.
+                error={Boolean(errorMessage) && (!email || !emailRegex.test(email.trim().toLowerCase()))}
+                helperText={
+                    (errorMessage && (!email || !emailRegex.test(email.trim().toLowerCase()))) ? errorMessage : ''
+                }
+                InputLabelProps={{
+                    htmlFor: 'email'
+                }}
+                inputProps={{
+                    'aria-invalid': (errorMessage && (!email || !emailRegex.test(email.trim().toLowerCase()))) ? 'true' : 'false'
+                }}
             />
             <TextField
+                id="password"
                 label="Password"
+                placeholder="Password"
                 variant="outlined"
                 name="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 fullWidth
                 required
                 aria-required="true"
-                error={Boolean(errorMessage)}
+                // Display error style if password is empty.
+                error={Boolean(errorMessage) && password.trim() === ''}
+                helperText={(errorMessage && password.trim() === '') ? errorMessage : ''}
+                InputLabelProps={{
+                    htmlFor: 'password'
+                }}
+                inputProps={{
+                    'aria-invalid': (errorMessage && password.trim() === '') ? 'true' : 'false'
+                }}
             />
 
-            {/* Display loading state */}
             {loading && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <CircularProgress size={20} />
@@ -150,14 +187,12 @@ export default function LoginForm() {
                 </Box>
             )}
 
-            {/* Display error message */}
             {errorMessage && (
-                <Typography color="error" variant="body2" role="alert">
+                <Typography color="error" variant="body2" role="alert" id="form-error-message">
                     {errorMessage}
                 </Typography>
             )}
 
-            {/* Display success message */}
             {successMessage && (
                 <Typography variant="body2" color="success.main" role="status">
                     {successMessage}
@@ -173,7 +208,12 @@ export default function LoginForm() {
                     ':hover': {
                         backgroundColor: 'primary.dark',
                     },
+                    ':disabled': {
+                        backgroundColor: 'action.disabledBackground',
+                        color: 'action.disabled',
+                    },
                 }}
+                aria-describedby={errorMessage ? "form-error-message" : undefined}
             >
                 Log In
             </Button>

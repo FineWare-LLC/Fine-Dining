@@ -33,16 +33,12 @@ import { AuthProvider } from '../context/AuthContext';
 const createAuthLink = setContext((_, { headers }) => {
     // Retrieve the token from localStorage.
     // Note: This check ensures that token retrieval only happens in a client-side environment.
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+    const authToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
 
     return {
         headers: {
             ...headers,
-            /**
-             * Attach the Authorization header if the token exists.
-             * Example format: "Bearer <token>"
-             */
-            authorization: token ? `Bearer ${token}` : "",
+            authorization: authToken ? `Bearer ${authToken}` : "",
         },
     };
 });

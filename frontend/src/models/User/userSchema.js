@@ -47,16 +47,17 @@ const userSchema = new mongoose.Schema(
             required: true,
             lowercase: true,
             trim: true,
+            // Ensure the email has a valid format using a regular expression.
+            match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Please fill a valid email address'],
         },
         password: {
             type: String,
             required: true,
-            select: false, // Must explicitly .select('+password') to retrieve
+            select: false, // Must explicitly .select('+password') to retrieve it
         },
 
         /**
-         * For demonstration of "maximum over-engineering," let's store
-         * tokens for password reset, phone/email verification, magic links, etc.
+         * Tokens for various authentication flows.
          */
         passwordResetToken: { type: String, default: null },
         passwordResetTokenExpiry: { type: Date, default: null },
@@ -86,7 +87,7 @@ const userSchema = new mongoose.Schema(
         },
 
         /**
-         * Account status: e.g. "ACTIVE", "SUSPENDED", etc.
+         * Account status (e.g. "ACTIVE", "SUSPENDED").
          */
         accountStatus: {
             type: String,
@@ -95,13 +96,13 @@ const userSchema = new mongoose.Schema(
         },
 
         /**
-         * Soft delete approach
+         * Soft delete and archive fields.
          */
         deletedAt: { type: Date, default: null },
         archivedAt: { type: Date, default: null },
 
         /**
-         * Basic user metrics
+         * Basic user metrics.
          */
         weight: { type: Number, default: null },
         height: { type: Number, default: null },
@@ -124,7 +125,7 @@ const userSchema = new mongoose.Schema(
         dailyCalories: { type: Number, default: 0 },
 
         /**
-         * Additional personal details
+         * Additional personal details.
          */
         birthDate: { type: Date, default: null },
         avatarUrl: { type: String, default: '' },
@@ -132,7 +133,7 @@ const userSchema = new mongoose.Schema(
         bio: { type: String, default: '' },
 
         /**
-         * 2FA, Security, and login attempt counters
+         * 2FA, Security, and login attempt counters.
          */
         twoFactorEnabled: { type: Boolean, default: false },
         twoFactorMethod: {
@@ -148,12 +149,12 @@ const userSchema = new mongoose.Schema(
         tokenVersion: { type: Number, default: 0 },
 
         /**
-         * Security Questions
+         * Security Questions.
          */
         securityQuestions: [securityQuestionSchema],
 
         /**
-         * Timestamps: last login, last password change, password history, etc.
+         * Timestamps and password change history.
          */
         lastLogin: { type: Date, default: null },
         lastPasswordChange: { type: Date, default: null },
@@ -165,12 +166,12 @@ const userSchema = new mongoose.Schema(
         ],
 
         /**
-         * Social connections
+         * Social connections.
          */
         connectedSocialAccounts: [socialAccountSchema],
 
         /**
-         * Subscription / Payment details
+         * Subscription / Payment details.
          */
         subscriptionPlan: {
             type: String,
@@ -185,71 +186,71 @@ const userSchema = new mongoose.Schema(
         couponCodesUsed: [{ type: String }],
 
         /**
-         * Addresses
+         * Addresses.
          */
         addresses: [addressSchema],
 
         /**
-         * Preferences
+         * Preferences.
          */
         preferences: preferencesSchema,
 
         /**
-         * Follower/Following or blocked users
+         * Follower/Following or blocked users.
          */
         blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
         followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
         following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 
         /**
-         * Referral system
+         * Referral system.
          */
         referralCode: { type: String, default: null },
         referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
         referredUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 
         /**
-         * Achievements or badges
+         * Achievements or badges.
          */
         badges: [{ type: String }],
 
         /**
-         * Loyalty/points-based system
+         * Loyalty/points-based system.
          */
         loyaltyPoints: { type: Number, default: 0 },
         loyaltyTier: { type: String, default: 'BRONZE' },
 
         /**
-         * Overkill usage stats
+         * Overkill usage stats.
          */
         loginHistory: [loginHistorySchema],
 
         /**
-         * Notes: admin or internal notes about user
+         * Admin or internal notes.
          */
         adminNotes: { type: String, default: '' },
 
         /**
-         * Additional fields for meal preferences
+         * Meal preference fields.
          */
         preferredCuisines: [{ type: String }],
         dietaryRestrictions: [{ type: String }],
         dislikedIngredients: [{ type: String }],
 
         /**
-         * Favorites directly
+         * Favorites.
          */
         favoriteRecipes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Recipe' }],
         favoriteRestaurants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant' }],
 
         /**
-         * Because why not store a million booleans?
+         * Email notification preferences.
          */
         sendPulseEmailOnLogin: { type: Boolean, default: false },
         sendPulseEmailOnMealPlanCreation: { type: Boolean, default: false },
 
         /**
-         * Ephemeral tokens or statuses
+         * Ephemeral tokens or statuses.
          */
         ephemeralKeys: [
             {
@@ -259,12 +260,32 @@ const userSchema = new mongoose.Schema(
             },
         ],
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+        // Configure toJSON to remove sensitive fields before outputting.
+        toJSON: {
+            transform: function (doc, ret) {
+                // Remove sensitive data
+                delete ret.password;
+                delete ret.twoFactorSecret;
+                delete ret.emergencyBackupCodes;
+                delete ret.passwordResetToken;
+                delete ret.passwordResetTokenExpiry;
+                delete ret.magicLinkToken;
+                delete ret.magicLinkExpiry;
+                delete ret.updateEmailToken;
+                delete ret.updateEmailExpiry;
+                delete ret.newEmail;
+                return ret;
+            },
+        },
+    }
 );
 
 /* -------------------------------
  * Attaching Pre-Hooks
  * ------------------------------- */
+// Run userPreSave before saving (e.g. to hash passwords, validate changes)
 userSchema.pre('save', userPreSave);
 
 /* -------------------------------

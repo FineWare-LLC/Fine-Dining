@@ -7,209 +7,149 @@ import { test, expect } from '@playwright/test';
 
 /**
  * Fills in and submits the login form.
+ *
  * @param {import('@playwright/test').Page} page - The Playwright page object.
- * @param {string} username - The username to fill into the Name field.
+ * @param {string} email - The email to fill into the email field.
  * @param {string} password - The password to fill into the Password field.
  */
-async function fillAndSubmitLoginForm(page, username, password) {
-    await page.fill('input[name="name"]', username);
+async function fillAndSubmitLoginForm(page, email, password) {
+    await page.fill('input[name="email"]', email);
     await page.fill('input[name="password"]', password);
-    await page.click('text=LOG IN');
+    await page.click('button:text("Log In")');
 }
 
 test.describe('Sign In Page - Comprehensive Tests', () => {
-
     test.beforeEach(async ({ page }) => {
         // Navigate to the sign-in page before each test
         await page.goto('http://localhost:3000/signin');
     });
 
-    /**
-     * 1. Verify page loads with correct title & placeholders
-     */
     test('should load sign-in page with correct title & placeholders', async ({ page }) => {
         await expect(page).toHaveTitle(/Fine Dining/i);
-        await expect(page.locator('input[name="name"]')).toHaveAttribute('placeholder', /Name/i);
+        await expect(page.locator('input[name="email"]')).toHaveAttribute('placeholder', /Email/i);
         await expect(page.locator('input[name="password"]')).toHaveAttribute('placeholder', /Password/i);
     });
 
-    /**
-     * 2. Check the presence of Forgot Password link
-     */
     test('should display Forgot Password link', async ({ page }) => {
-        await expect(page.locator('text=Forgot Password')).toBeVisible();
+        await expect(page.locator('a[href="/forgot-password"]:text("Forgot Password?")')).toBeVisible();
     });
 
-    /**
-     * 3. Attempt log in with empty fields
-     */
     test('should show errors if trying to login with empty fields', async ({ page }) => {
-        await page.click('text=LOG IN');
-        // Check for an error or disabled button feedback
-        // This will depend on your actual error mechanism
-        // Example:
-        await expect(page.locator('.error-message')).toContainText(/required/i);
+        await page.click('button:text("Log In")');
+        await expect(page.locator('p[role="alert"]')).toBeVisible();
+        await expect(page.locator('input[name="email"]')).toHaveAttribute('aria-invalid', 'true');
+        await expect(page.locator('input[name="password"]')).toHaveAttribute('aria-invalid', 'true');
     });
 
-    /**
-     * 4. Attempt login with only username
-     */
     test('should show errors if password is missing', async ({ page }) => {
-        await fillAndSubmitLoginForm(page, 'testUser', '');
-        await expect(page.locator('.error-message')).toContainText(/password required/i);
+        await fillAndSubmitLoginForm(page, 'test@example.com', '');
+        await expect(page.locator('p[role="alert"]')).toContainText(/enter your password/i);
     });
 
-    /**
-     * 5. Attempt login with only password
-     */
-    test('should show errors if username is missing', async ({ page }) => {
+    test('should show errors if email is missing', async ({ page }) => {
         await fillAndSubmitLoginForm(page, '', 'testPass');
-        await expect(page.locator('.error-message')).toContainText(/username required/i);
+        await expect(page.locator('p[role="alert"]')).toContainText(/enter a valid email/i);
     });
 
-    /**
-     * 6. Attempt login with invalid credentials
-     */
     test('should display error with invalid credentials', async ({ page }) => {
-        await fillAndSubmitLoginForm(page, 'notAUser', 'wrongPassword');
-        await expect(page.locator('.error-message')).toContainText(/invalid credentials/i);
+        await fillAndSubmitLoginForm(page, 'notAUser@example.com', 'wrongPassword');
+        await expect(page.locator('p[role="alert"]')).toContainText(/invalid credentials/i);
     });
 
-    /**
-     * 7. Verify password input is type="password"
-     */
     test('should mask password input', async ({ page }) => {
         const passwordField = page.locator('input[name="password"]');
         await expect(passwordField).toHaveAttribute('type', 'password');
     });
 
-    /**
-     * 8. Successful login with correct credentials
-     */
     test('should successfully login with valid credentials', async ({ page }) => {
-        await fillAndSubmitLoginForm(page, 'validUser', 'validPass');
-        // Check for a successful navigation or success message
+        // NOTE: Replace with actual valid test credentials if needed
+        await fillAndSubmitLoginForm(page, 'validUser@example.com', 'validPass');
         await expect(page).toHaveURL(/dashboard/i);
     });
 
-    /**
-     * 9. Check the LOGIN button is initially enabled/disabled as expected
-     */
     test('should verify LOG IN button state before entering credentials', async ({ page }) => {
-        // If the button is disabled by default:
-        await expect(page.locator('text=LOG IN')).toBeDisabled();
-        // If it’s enabled, remove the line above and verify differently
+        // The button should be enabled initially (only disabled when loading).
+        await expect(page.locator('button:text("Log In")')).toBeEnabled();
     });
 
-    /**
-     * 10. Verify that user can navigate to Forgot Password page
-     */
     test('should navigate to forgot password page when link is clicked', async ({ page }) => {
-        await page.click('text=Forgot Password');
+        await page.click('a[href="/forgot-password"]:text("Forgot Password?")');
         await expect(page).toHaveURL(/forgot-password/i);
     });
 
-    /**
-     * 11. Check error styling is applied when invalid input is provided
-     */
     test('should have error styling for invalid inputs', async ({ page }) => {
-        await fillAndSubmitLoginForm(page, 'invalidUser', '');
-        const errorField = page.locator('input[name="password"].error-border');
+        await fillAndSubmitLoginForm(page, 'invalidUser@example.com', '');
+        const errorField = page.locator('input[name="password"][aria-invalid="true"]');
         await expect(errorField).toBeVisible();
     });
 
-    /**
-     * 12. Ensure form persists typed values when login fails
-     */
-    test('should persist typed username if login fails', async ({ page }) => {
-        const testUsername = 'someUser';
-        await fillAndSubmitLoginForm(page, testUsername, 'wrongPass');
-        await expect(page.locator('input[name="name"]')).toHaveValue(testUsername);
+    test('should persist typed email if login fails', async ({ page }) => {
+        const testEmail = 'someUser@example.com';
+        await fillAndSubmitLoginForm(page, testEmail, 'wrongPass');
+        await expect(page.locator('input[name="email"]')).toHaveValue(testEmail);
     });
 
-    /**
-     * 13. Check that pressing Enter key submits the form
-     */
     test('should submit form on Enter key press', async ({ page }) => {
-        await page.fill('input[name="name"]', 'enterKeyUser');
+        await page.fill('input[name="email"]', 'enterKeyUser@example.com');
         await page.fill('input[name="password"]', 'enterKeyPass');
         await page.press('input[name="password"]', 'Enter');
         await expect(page).toHaveURL(/dashboard/i);
     });
 
-    /**
-     * 14. Test UI responsiveness on small screen (mobile simulation)
-     */
     test('should display appropriately on a mobile viewport', async ({ browser }) => {
         const context = await browser.newContext({
-            viewport: { width: 375, height: 812 } // iPhone X-ish
+            viewport: { width: 375, height: 812 } // iPhone X dimensions
         });
         const page = await context.newPage();
         await page.goto('http://localhost:3000/signin');
-        // Validate certain mobile-specific layout or classes
-        await expect(page.locator('input[name="name"]')).toBeVisible();
+        await expect(page.locator('input[name="email"]')).toBeVisible();
         await context.close();
     });
 
-    /**
-     * 15. Verify that password is trimmed or not (depending on requirement)
-     */
-    test('should keep trailing spaces in password if that is the requirement', async ({ page }) => {
-        // Example: If trailing spaces are allowed:
-        await fillAndSubmitLoginForm(page, 'testUser', 'passWithSpace ');
-        // Check a response or error message that indicates acceptance or trimming
+    test('should handle trailing spaces in password if that is the requirement', async ({ page }) => {
+        // This test assumes that trailing spaces are trimmed.
+        await fillAndSubmitLoginForm(page, 'testUser@example.com', 'passWithSpace ');
+        // Depending on backend logic, verify either a success or error.
+        // Example (if spaces cause failure):
+        // await expect(page.locator('p[role="alert"]')).toContainText(/invalid credentials/i);
     });
 
-    /**
-     * 16. Attempt multiple failed logins to trigger potential lockout
-     */
     test('should lock user after multiple failed attempts (if feature exists)', async ({ page }) => {
         for (let i = 0; i < 3; i++) {
-            await fillAndSubmitLoginForm(page, 'lockedUser', 'wrongPassword');
+            await fillAndSubmitLoginForm(page, 'lockedUser@example.com', 'wrongPassword');
+            await page.waitForTimeout(100);
         }
-        // Expect a lockout message or disabled login
-        await expect(page.locator('.error-message')).toContainText(/account locked/i);
+        await expect(page.locator('p[role="alert"]')).toContainText(/account locked/i);
     });
 
-    /**
-     * 17. Verify that the sign-in form labels are correctly associated
-     */
-    test('should have correct label for the Name and Password fields', async ({ page }) => {
-        const nameLabel = await page.locator('label[for="name"]').innerText();
+    test('should have correct label for the Email and Password fields', async ({ page }) => {
+        const emailLabel = await page.locator('label[for="email"]').innerText();
         const passwordLabel = await page.locator('label[for="password"]').innerText();
-        expect(nameLabel).toMatch(/name/i);
+        expect(emailLabel).toMatch(/email/i);
         expect(passwordLabel).toMatch(/password/i);
     });
 
-    /**
-     * 18. Check accessibility attributes (aria-label, role, etc.)
-     */
     test('should have proper accessibility attributes', async ({ page }) => {
-        await expect(page.locator('form[role="form"]')).toBeVisible();
-        await expect(page.locator('input[name="name"]')).toHaveAttribute('aria-required', 'true');
+        await expect(page.locator('form')).toBeVisible();
+        await expect(page.locator('input[name="email"]')).toHaveAttribute('aria-required', 'true');
         await expect(page.locator('input[name="password"]')).toHaveAttribute('aria-required', 'true');
     });
 
-    /**
-     * 19. Validate that an error message disappears after correction
-     */
     test('should clear error message once the input is corrected', async ({ page }) => {
+        // Trigger an error.
         await fillAndSubmitLoginForm(page, '', '');
-        await expect(page.locator('.error-message')).toBeVisible();
-        await page.fill('input[name="name"]', 'correctedUser');
+        await expect(page.locator('p[role="alert"]')).toBeVisible();
+        // Correct the inputs.
+        await page.fill('input[name="email"]', 'correctedUser@example.com');
         await page.fill('input[name="password"]', 'correctedPass');
-        // Assume error clears automatically or upon new attempt
-        await expect(page.locator('.error-message')).toBeHidden();
+        // The error message should clear as the onChange handlers update the state.
+        await expect(page.locator('p[role="alert"]')).toBeHidden();
     });
 
-    /**
-     * 20. Confirm that reloading the page clears form state
-     */
     test('should reset form inputs upon page refresh', async ({ page }) => {
-        await fillAndSubmitLoginForm(page, 'reloadTestUser', 'reloadTestPass');
+        await fillAndSubmitLoginForm(page, 'reloadTestUser@example.com', 'reloadTestPass');
         await page.reload();
-        await expect(page.locator('input[name="name"]')).toHaveValue('');
+        await expect(page.locator('input[name="email"]')).toHaveValue('');
         await expect(page.locator('input[name="password"]')).toHaveValue('');
     });
-
 });

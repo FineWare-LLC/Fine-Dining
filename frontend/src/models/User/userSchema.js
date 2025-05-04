@@ -125,6 +125,20 @@ const userSchema = new mongoose.Schema(
         dailyCalories: { type: Number, default: 0 },
 
         /**
+         * Nutrition targets for meal optimization.
+         */
+        nutritionTargets: {
+            proteinMin: { type: Number, default: 0, min: 0 },
+            proteinMax: { type: Number, default: null, min: 0 },
+            carbohydratesMin: { type: Number, default: 0, min: 0 },
+            carbohydratesMax: { type: Number, default: null, min: 0 },
+            fatMin: { type: Number, default: 0, min: 0 },
+            fatMax: { type: Number, default: null, min: 0 },
+            sodiumMin: { type: Number, default: 0, min: 0 },
+            sodiumMax: { type: Number, default: null, min: 0 },
+        },
+
+        /**
          * Additional personal details.
          */
         birthDate: { type: Date, default: null },

@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import styles from '../../../styles/MealEntryForm.module.css';
+import { useMutation } from '@apollo/client';
+import { CreateMealDocument } from '@/gql/graphql';
 
 // --- MUI Imports ---
 import TextField from '@mui/material/TextField';
@@ -69,6 +71,27 @@ function MealEntryForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const formRef = useRef(null);
 
+    // GraphQL mutation hook
+    const [createMeal, { loading, error }] = useMutation(CreateMealDocument, {
+        onCompleted: (data) => {
+            alert('Meal created successfully!');
+            setFormData({
+                restaurantName: '', mealName: '', estPrice: '', calories: '', protein: '',
+                carbohydrates: '', fat: '', sodium: '', allergens: [], website: ''
+            });
+            setErrors({});
+            setIsSubmitting(false);
+        },
+        onError: (error) => {
+            console.error('Error creating meal:', error);
+            setErrors(prevErrors => ({
+                ...prevErrors,
+                submit: error.message || 'An error occurred while creating the meal.'
+            }));
+            setIsSubmitting(false);
+        }
+    });
+
     // Debounced validation (remains the same)
     const debouncedValidate = useCallback(debounce((data) => { /* ... */ if (!isSubmitting) { setErrors(prevErrors => ({...prevErrors, ...validate(data)})); } }, 500), [isSubmitting]);
 
@@ -81,8 +104,60 @@ function MealEntryForm() {
     // Allergen Autocomplete handler (remains the same)
     const handleAllergenChange = (event, newValue) => { /* ... */ let processedValues = []; if (Array.isArray(newValue)) { processedValues = newValue.map(item => { if (typeof item === 'string') { return item.trim(); } if (item && item.inputValue) { return item.inputValue.trim(); } return null; }).filter(value => value && value.length > 0); } const uniqueValues = [...new Set(processedValues)]; setFormData(prevState => { const newState = { ...prevState, allergens: uniqueValues.sort() }; const allergenValidationError = validate(newState).allergens; setErrors(prevErrors => ({ ...prevErrors, allergens: allergenValidationError })); return newState; }); };
 
-    // Submit handler (remains the same)
-    const handleSubmit = (event) => { /* ... */ event.preventDefault(); setIsSubmitting(true); const formErrors = validate(formData); setErrors(formErrors); if (Object.keys(formErrors).length === 0) { /* ... submit logic ... */ console.log('Form is valid...'); const submissionData = Object.keys(formData).reduce((acc, key) => { if (key === 'website') return acc; if (key === 'allergens') { acc[key] = Array.isArray(formData[key]) ? formData[key].map(a => a.trim()).filter(a => a) : []; } else { acc[key] = typeof formData[key] === 'string' ? formData[key].trim() : formData[key]; } return acc; }, {}); console.log('Submitting:', submissionData); setTimeout(() => { alert('Simulating submission...'); setFormData({ restaurantName: '', mealName: '', estPrice: '', calories: '', protein: '', carbohydrates: '', fat: '', sodium: '', allergens: [], website: '' }); setErrors({}); setIsSubmitting(false); }, 1000); } else { /* ... error handling ... */ console.log('Form errors:', formErrors); setIsSubmitting(false); const firstErrorField = Object.keys(formErrors)[0]; if (firstErrorField && formRef.current) { const el = formRef.current.querySelector(`[name="${firstErrorField}"]`) || formRef.current.querySelector('#allergens-autocomplete-input'); if (el) el.focus(); } } };
+    // Submit handler
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        setIsSubmitting(true);
+        const formErrors = validate(formData);
+        setErrors(formErrors);
+
+        if (Object.keys(formErrors).length === 0) {
+            console.log('Form is valid...');
+
+            // Prepare data for submission
+            const submissionData = Object.keys(formData).reduce((acc, key) => {
+                if (key === 'website') return acc; // Skip honeypot field
+                if (key === 'allergens') {
+                    acc[key] = Array.isArray(formData[key]) ? formData[key].map(a => a.trim()).filter(a => a) : [];
+                } else {
+                    acc[key] = typeof formData[key] === 'string' ? formData[key].trim() : formData[key];
+                }
+                return acc;
+            }, {});
+
+            console.log('Submitting:', submissionData);
+
+            // Prepare variables for GraphQL mutation
+            const variables = {
+                mealPlanId: "YOUR_MEAL_PLAN_ID", // This should be dynamically set based on the current user's meal plan
+                date: new Date().toISOString(), // This should be set based on user input or context
+                mealType: "DINNER", // This should be set based on user input or context
+                mealName: submissionData.mealName,
+                price: parseFloat(submissionData.estPrice) || 0,
+                ingredients: submissionData.ingredients || [],
+                nutrition: {
+                    carbohydrates: parseFloat(submissionData.carbohydrates) || 0,
+                    protein: parseFloat(submissionData.protein) || 0,
+                    fat: parseFloat(submissionData.fat) || 0,
+                    sodium: parseFloat(submissionData.sodium) || 0
+                },
+                allergens: submissionData.allergens || []
+            };
+
+            // Call the mutation
+            createMeal({ variables });
+
+        } else {
+            console.log('Form errors:', formErrors);
+            setIsSubmitting(false);
+            const firstErrorField = Object.keys(formErrors)[0];
+            if (firstErrorField && formRef.current) {
+                const el = formRef.current.querySelector(`[name="${firstErrorField}"]`) || 
+                          formRef.current.querySelector('#allergens-autocomplete-input');
+                if (el) el.focus();
+            }
+        }
+    };
 
     // --- Render Component ---
     return (

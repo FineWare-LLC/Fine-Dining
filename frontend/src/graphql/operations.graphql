@@ -233,7 +233,10 @@ mutation CreateMeal(
     $recipeId: ID
     $restaurantId: ID
     $mealName: String
+    $price: Float
     $ingredients: [String]
+    $nutrition: NutritionInput
+    $allergens: [String]
     $nutritionFacts: String
     $portionSize: String
     $notes: String
@@ -245,7 +248,10 @@ mutation CreateMeal(
         recipeId: $recipeId
         restaurantId: $restaurantId
         mealName: $mealName
+        price: $price
         ingredients: $ingredients
+        nutrition: $nutrition
+        allergens: $allergens
         nutritionFacts: $nutritionFacts
         portionSize: $portionSize
         notes: $notes
@@ -254,6 +260,14 @@ mutation CreateMeal(
         mealName
         mealType
         date
+        price
+        nutrition {
+            carbohydrates
+            protein
+            fat
+            sodium
+        }
+        allergens
     }
 }
 
@@ -264,7 +278,10 @@ mutation UpdateMeal(
     $recipeId: ID
     $restaurantId: ID
     $mealName: String
+    $price: Float
     $ingredients: [String]
+    $nutrition: NutritionInput
+    $allergens: [String]
     $nutritionFacts: String
     $portionSize: String
     $notes: String
@@ -276,7 +293,10 @@ mutation UpdateMeal(
         recipeId: $recipeId
         restaurantId: $restaurantId
         mealName: $mealName
+        price: $price
         ingredients: $ingredients
+        nutrition: $nutrition
+        allergens: $allergens
         nutritionFacts: $nutritionFacts
         portionSize: $portionSize
         notes: $notes
@@ -285,6 +305,14 @@ mutation UpdateMeal(
         mealName
         mealType
         date
+        price
+        nutrition {
+            carbohydrates
+            protein
+            fat
+            sodium
+        }
+        allergens
         updatedAt
     }
 }
@@ -472,6 +500,14 @@ query GetMealPlan($id: ID!) {
             mealName
             mealType
             date
+            price
+            nutrition {
+                carbohydrates
+                protein
+                fat
+                sodium
+            }
+            allergens
         }
     }
 }
@@ -545,4 +581,29 @@ query FindNearbyRestaurants($latitude: Float!, $longitude: Float!, $radius: Int,
 
 query Ping {
     ping
+}
+
+mutation GenerateOptimizedMealPlan {
+    generateOptimizedMealPlan {
+        meals {
+            mealId
+            mealName
+            servings
+            pricePerServing
+            totalPrice
+            nutrition {
+                carbohydrates
+                protein
+                fat
+                sodium
+            }
+        }
+        totalCost
+        totalNutrition {
+            carbohydrates
+            protein
+            fat
+            sodium
+        }
+    }
 }

@@ -4,15 +4,13 @@
  */
 import mongoose from 'mongoose';
 
-// Read from environment
-const MONGODB_URI = process.env.MONGODB_URI;
+// Read from environment or use default
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fineDiningApp';
 
-// Throw if there's no URI
-if (!MONGODB_URI) {
-    throw new Error(
-        'Please define MONGODB_URI in your .env.local file'
-    );
-}
+// Log the URI being used
+console.log('Using MongoDB URI:', MONGODB_URI.replace(/mongodb:\/\/([^:]+):([^@]+)@/, 'mongodb://***:***@'));
+
+// No need to throw an error as we now have a default
 
 /**
  * Global is used here to maintain a cached connection across hot reloads

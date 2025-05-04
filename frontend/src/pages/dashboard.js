@@ -1,9 +1,10 @@
 /**
  * Dashboard page — orchestrates all dashboard atoms.
  */
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
-import { Box, CssBaseline, useTheme } from '@mui/material';
+import { Box, Button, CssBaseline, useTheme, CircularProgress } from '@mui/material';
+import { useMutation, gql } from '@apollo/client';
 import NewHeader from '@/components/Dashboard/NewHeader';
 import GreetingSegment from '@/components/Dashboard/GreetingSegment';
 import DailySummary from '@/components/Dashboard/DailySummary';
@@ -12,7 +13,36 @@ import DiscoveryHeader from '@/components/Dashboard/DiscoveryHeader';
 import RestaurantCard from '@/components/Dashboard/RestaurantCard';
 import BottomSearchRail from "@/components/Dashboard/BottomSearchRail.js";
 import NewNavigationDrawer from '@/components/Dashboard/NewNavigationDrawer';
+import OptimizedMealPlanDisplay from '@/components/Dashboard/OptimizedMealPlanDisplay';
 import { useDashStore } from '@/components/Dashboard/store';
+
+// Define the mutation directly using gql tag
+const GENERATE_OPTIMIZED_MEAL_PLAN = gql`
+  mutation GenerateOptimizedMealPlan {
+    generateOptimizedMealPlan {
+      meals {
+        mealId
+        mealName
+        servings
+        pricePerServing
+        totalPrice
+        nutrition {
+          carbohydrates
+          protein
+          fat
+          sodium
+        }
+      }
+      totalCost
+      totalNutrition {
+        carbohydrates
+        protein
+        fat
+        sodium
+      }
+    }
+  }
+`;
 
 /* ------------------------------------------------------------------------ */
 /* Mock fetchers – replace with real data hooks or GraphQL queries.         */
@@ -39,6 +69,27 @@ export default function Dashboard() {
   const theme       = useTheme();
   const searchTerm  = useDashStore(s => s.searchTerm);
 
+  // State for optimized meal plan
+  const [optimizedMealPlan, setOptimizedMealPlan] = useState(null);
+
+  // GraphQL mutation for generating optimized meal plan
+  const [generateOptimizedMealPlan, { loading: optimizationLoading, error: optimizationError }] = 
+    useMutation(GENERATE_OPTIMIZED_MEAL_PLAN, {
+      onCompleted: (data) => {
+        setOptimizedMealPlan(data.generateOptimizedMealPlan);
+      },
+      onError: (error) => {
+        console.error('Error generating optimized meal plan:', error);
+        // You could add error handling UI here
+      }
+    });
+
+  // Handle generate button click
+  const handleGenerateOptimizedPlan = () => {
+    setOptimizedMealPlan(null); // Clear any previous results
+    generateOptimizedMealPlan();
+  };
+
   const filtered = useMemo(
     () => restaurants.filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase())),
     [restaurants, searchTerm],
@@ -62,6 +113,32 @@ export default function Dashboard() {
         <GreetingSegment userName="Anthony" />
         <DailySummary meal={meal} />
         <MealCard meal={meal} />
+
+        {/* Optimized Meal Plan Section */}
+        <Box sx={{ mt: 3, mb: 2, display: 'flex', justifyContent: 'center' }}>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={handleGenerateOptimizedPlan}
+            disabled={optimizationLoading}
+            startIcon={optimizationLoading ? <CircularProgress size={20} color="inherit" /> : null}
+          >
+            {optimizationLoading ? 'Generating...' : 'Generate Optimized Meal Plan'}
+          </Button>
+        </Box>
+
+        {/* Display optimization error if any */}
+        {optimizationError && (
+          <Box sx={{ mt: 2, color: 'error.main', textAlign: 'center' }}>
+            Error: {optimizationError.message || 'Failed to generate meal plan'}
+          </Box>
+        )}
+
+        {/* Display optimized meal plan if available */}
+        {optimizedMealPlan && (
+          <OptimizedMealPlanDisplay mealPlan={optimizedMealPlan} />
+        )}
+
         <DiscoveryHeader />
         {filtered.map(r => <RestaurantCard key={r.id} restaurant={r} />)}
       </Box>

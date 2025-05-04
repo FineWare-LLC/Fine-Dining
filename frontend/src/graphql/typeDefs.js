@@ -124,6 +124,7 @@ export const typeDefs = gql`
         foodGoals: [String]
         allergies: [String]
         dailyCalories: Int
+        nutritionTargets: NutritionTargets
         lastLogin: Date
         createdAt: Date!
         updatedAt: Date!
@@ -204,6 +205,105 @@ export const typeDefs = gql`
     }
 
     """
+    Represents nutrition information for a meal.
+    """
+    type Nutrition {
+        carbohydrates: Float
+        protein: Float
+        fat: Float
+        sodium: Float
+    }
+
+    """
+    Represents a meal in a generated optimized meal plan.
+    """
+    type GeneratedMeal {
+        mealId: ID!
+        mealName: String!
+        servings: Float!
+        pricePerServing: Float!
+        totalPrice: Float!
+        nutrition: Nutrition!
+    }
+
+    """
+    Represents the result of a meal plan optimization.
+    """
+    type GeneratedMealPlanPayload {
+        meals: [GeneratedMeal!]!
+        totalCost: Float!
+        totalNutrition: Nutrition!
+    }
+
+    """
+    Input type for nutrition information.
+    """
+    input NutritionInput {
+        carbohydrates: Float
+        protein: Float
+        fat: Float
+        sodium: Float
+    }
+
+    """
+    Represents nutrition targets for meal optimization.
+    """
+    type NutritionTargets {
+        proteinMin: Float
+        proteinMax: Float
+        carbohydratesMin: Float
+        carbohydratesMax: Float
+        fatMin: Float
+        fatMax: Float
+        sodiumMin: Float
+        sodiumMax: Float
+    }
+
+    """
+    Input type for nutrition targets.
+    """
+    input NutritionTargetsInput {
+        proteinMin: Float
+        proteinMax: Float
+        carbohydratesMin: Float
+        carbohydratesMax: Float
+        fatMin: Float
+        fatMax: Float
+        sodiumMin: Float
+        sodiumMax: Float
+    }
+
+    """
+    Input type for filtering meals by price range.
+    """
+    input PriceRangeInput {
+        min: Float
+        max: Float
+    }
+
+    """
+    Input type for filtering meals by nutrition values.
+    """
+    input NutritionRangeInput {
+        carbohydratesMin: Float
+        carbohydratesMax: Float
+        proteinMin: Float
+        proteinMax: Float
+        fatMin: Float
+        fatMax: Float
+        sodiumMin: Float
+        sodiumMax: Float
+    }
+
+    """
+    Input type for filtering meals by allergens.
+    """
+    input AllergensFilterInput {
+        includeAllergens: [String]
+        excludeAllergens: [String]
+    }
+
+    """
     Represents a Meal which can be tied to a recipe, restaurant, or be custom.
     """
     type Meal {
@@ -214,7 +314,10 @@ export const typeDefs = gql`
         recipe: Recipe
         restaurant: Restaurant
         mealName: String
+        price: Float
         ingredients: [String]
+        nutrition: Nutrition
+        allergens: [String]
         nutritionFacts: String
         portionSize: String
         notes: String
@@ -289,6 +392,14 @@ export const typeDefs = gql`
         searchRestaurants(keyword: String!): [Restaurant]
         getMealPlan(id: ID!): MealPlan
         getMealPlans(userId: ID, page: Int, limit: Int): [MealPlan]
+        getMeals(
+            mealPlanId: ID,
+            priceRange: PriceRangeInput,
+            nutritionRange: NutritionRangeInput,
+            allergensFilter: AllergensFilterInput,
+            page: Int,
+            limit: Int
+        ): [Meal]
         getStatsByUser(userId: ID!): [Stats]
         getReview(id: ID!): Review
         getReviewsForTarget(targetType: String!, targetId: ID!): [Review]
@@ -332,6 +443,7 @@ export const typeDefs = gql`
         foodGoals: [String]
         allergies: [String]
         dailyCalories: Int
+        nutritionTargets: NutritionTargetsInput
         accountStatus: AccountStatus
         role: UserRole
     }
@@ -355,6 +467,7 @@ export const typeDefs = gql`
         loginUser(email: String!, password: String!): AuthPayload
         requestPasswordReset(email: String!): Boolean
         resetPassword(resetToken: String!, newPassword: String!): Boolean
+        generateOptimizedMealPlan: GeneratedMealPlanPayload!
         createRecipe(
             recipeName: String!
             ingredients: [String]!
@@ -422,7 +535,10 @@ export const typeDefs = gql`
             recipeId: ID
             restaurantId: ID
             mealName: String
+            price: Float
             ingredients: [String]
+            nutrition: NutritionInput
+            allergens: [String]
             nutritionFacts: String
             portionSize: String
             notes: String
@@ -434,7 +550,10 @@ export const typeDefs = gql`
             recipeId: ID
             restaurantId: ID
             mealName: String
+            price: Float
             ingredients: [String]
+            nutrition: NutritionInput
+            allergens: [String]
             nutritionFacts: String
             portionSize: String
             notes: String

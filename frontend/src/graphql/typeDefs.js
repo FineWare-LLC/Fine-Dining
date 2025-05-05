@@ -400,6 +400,13 @@ export const typeDefs = gql`
             page: Int,
             limit: Int
         ): [Meal]
+        getAllMeals(
+            priceRange: PriceRangeInput,
+            nutritionRange: NutritionRangeInput,
+            allergensFilter: AllergensFilterInput,
+            page: Int,
+            limit: Int
+        ): [Meal]
         getStatsByUser(userId: ID!): [Stats]
         getReview(id: ID!): Review
         getReviewsForTarget(targetType: String!, targetId: ID!): [Review]
@@ -457,6 +464,20 @@ export const typeDefs = gql`
     }
 
     """
+    Input type for custom nutrition targets when generating an optimized meal plan.
+    """
+    input CustomNutritionTargetsInput {
+        proteinMin: Float
+        proteinMax: Float
+        carbohydratesMin: Float
+        carbohydratesMax: Float
+        fatMin: Float
+        fatMax: Float
+        sodiumMin: Float
+        sodiumMax: Float
+    }
+
+    """
     Mutation definitions for Fine Dining.
     Each mutation should implement robust security, input validations, and logging.
     """
@@ -467,7 +488,10 @@ export const typeDefs = gql`
         loginUser(email: String!, password: String!): AuthPayload
         requestPasswordReset(email: String!): Boolean
         resetPassword(resetToken: String!, newPassword: String!): Boolean
-        generateOptimizedMealPlan: GeneratedMealPlanPayload!
+        generateOptimizedMealPlan(
+            selectedMealIds: [ID],
+            customNutritionTargets: CustomNutritionTargetsInput
+        ): GeneratedMealPlanPayload!
         createRecipe(
             recipeName: String!
             ingredients: [String]!

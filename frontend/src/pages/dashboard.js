@@ -3,7 +3,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
-import { Box, Button, CssBaseline, useTheme, CircularProgress } from '@mui/material';
+import { Box, Button, CssBaseline, useTheme, CircularProgress, Typography, Tabs, Tab } from '@mui/material';
 import { useMutation, gql } from '@apollo/client';
 import NewHeader from '@/components/Dashboard/NewHeader';
 import GreetingSegment from '@/components/Dashboard/GreetingSegment';
@@ -14,12 +14,14 @@ import RestaurantCard from '@/components/Dashboard/RestaurantCard';
 import BottomSearchRail from "@/components/Dashboard/BottomSearchRail.js";
 import NewNavigationDrawer from '@/components/Dashboard/NewNavigationDrawer';
 import OptimizedMealPlanDisplay from '@/components/Dashboard/OptimizedMealPlanDisplay';
+import MealCatalog from '@/components/Dashboard/MealCatalog';
+import NutritionRequirementsForm from '@/components/Dashboard/NutritionRequirementsForm';
 import { useDashStore } from '@/components/Dashboard/store';
 
 // Define the mutation directly using gql tag
 const GENERATE_OPTIMIZED_MEAL_PLAN = gql`
-  mutation GenerateOptimizedMealPlan {
-    generateOptimizedMealPlan {
+  mutation GenerateOptimizedMealPlan($selectedMealIds: [ID], $customNutritionTargets: CustomNutritionTargetsInput) {
+    generateOptimizedMealPlan(selectedMealIds: $selectedMealIds, customNutritionTargets: $customNutritionTargets) {
       meals {
         mealId
         mealName
@@ -69,14 +71,25 @@ export default function Dashboard() {
   const theme       = useTheme();
   const searchTerm  = useDashStore(s => s.searchTerm);
 
+  // State for tabs
+  const [tabValue, setTabValue] = useState(0);
+
   // State for optimized meal plan
   const [optimizedMealPlan, setOptimizedMealPlan] = useState(null);
+
+  // State for selected meals
+  const [selectedMeals, setSelectedMeals] = useState([]);
+
+  // State for custom nutrition targets
+  const [customNutritionTargets, setCustomNutritionTargets] = useState(null);
 
   // GraphQL mutation for generating optimized meal plan
   const [generateOptimizedMealPlan, { loading: optimizationLoading, error: optimizationError }] = 
     useMutation(GENERATE_OPTIMIZED_MEAL_PLAN, {
       onCompleted: (data) => {
         setOptimizedMealPlan(data.generateOptimizedMealPlan);
+        // Switch to the results tab
+        setTabValue(2);
       },
       onError: (error) => {
         console.error('Error generating optimized meal plan:', error);
@@ -87,7 +100,33 @@ export default function Dashboard() {
   // Handle generate button click
   const handleGenerateOptimizedPlan = () => {
     setOptimizedMealPlan(null); // Clear any previous results
-    generateOptimizedMealPlan();
+    generateOptimizedMealPlan({
+      variables: {
+        selectedMealIds: selectedMeals.length > 0 ? selectedMeals : undefined,
+        customNutritionTargets: customNutritionTargets
+      }
+    });
+  };
+
+  // Handle meal selection
+  const handleMealSelection = (mealId) => {
+    setSelectedMeals(prev => {
+      if (prev.includes(mealId)) {
+        return prev.filter(id => id !== mealId);
+      } else {
+        return [...prev, mealId];
+      }
+    });
+  };
+
+  // Handle nutrition targets change
+  const handleNutritionTargetsChange = (values) => {
+    setCustomNutritionTargets(values);
+  };
+
+  // Handle tab change
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
   };
 
   const filtered = useMemo(
@@ -112,32 +151,74 @@ export default function Dashboard() {
       >
         <GreetingSegment userName="Anthony" />
         <DailySummary meal={meal} />
-        <MealCard meal={meal} />
 
-        {/* Optimized Meal Plan Section */}
-        <Box sx={{ mt: 3, mb: 2, display: 'flex', justifyContent: 'center' }}>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            onClick={handleGenerateOptimizedPlan}
-            disabled={optimizationLoading}
-            startIcon={optimizationLoading ? <CircularProgress size={20} color="inherit" /> : null}
+        {/* Tabs for Meal Plan Optimization */}
+        <Box sx={{ width: '100%', mt: 3 }}>
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            variant="fullWidth"
+            indicatorColor="primary"
+            textColor="primary"
+            aria-label="meal plan optimization tabs"
           >
-            {optimizationLoading ? 'Generating...' : 'Generate Optimized Meal Plan'}
-          </Button>
+            <Tab label="Meal Catalog" />
+            <Tab label="Nutrition Requirements" />
+            <Tab label="Results" />
+          </Tabs>
+
+          {/* Tab 1: Meal Catalog */}
+          {tabValue === 0 && (
+            <MealCatalog 
+              selectedMeals={selectedMeals} 
+              onSelectMeal={handleMealSelection} 
+            />
+          )}
+
+          {/* Tab 2: Nutrition Requirements */}
+          {tabValue === 1 && (
+            <NutritionRequirementsForm 
+              onChange={handleNutritionTargetsChange} 
+            />
+          )}
+
+          {/* Tab 3: Results */}
+          {tabValue === 2 && (
+            <>
+              {optimizedMealPlan ? (
+                <OptimizedMealPlanDisplay mealPlan={optimizedMealPlan} />
+              ) : (
+                <Box sx={{ mt: 3, textAlign: 'center' }}>
+                  <Typography variant="body1" color="text.secondary" gutterBottom>
+                    No optimized meal plan generated yet.
+                  </Typography>
+                </Box>
+              )}
+            </>
+          )}
+
+          {/* Generate Button */}
+          <Box sx={{ mt: 3, mb: 2, display: 'flex', justifyContent: 'center' }}>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              onClick={handleGenerateOptimizedPlan}
+              disabled={optimizationLoading}
+              startIcon={optimizationLoading ? <CircularProgress size={20} color="inherit" /> : null}
+            >
+              {optimizationLoading ? 'Generating...' : 'Generate Optimized Meal Plan'}
+            </Button>
+          </Box>
+
+          {/* Display optimization error if any */}
+          {optimizationError && (
+            <Box sx={{ mt: 2, color: 'error.main', textAlign: 'center' }}>
+              Error: {optimizationError.message || 'Failed to generate meal plan'}
+            </Box>
+          )}
         </Box>
 
-        {/* Display optimization error if any */}
-        {optimizationError && (
-          <Box sx={{ mt: 2, color: 'error.main', textAlign: 'center' }}>
-            Error: {optimizationError.message || 'Failed to generate meal plan'}
-          </Box>
-        )}
-
-        {/* Display optimized meal plan if available */}
-        {optimizedMealPlan && (
-          <OptimizedMealPlanDisplay mealPlan={optimizedMealPlan} />
-        )}
+        <MealCard meal={meal} />
 
         <DiscoveryHeader />
         {filtered.map(r => <RestaurantCard key={r.id} restaurant={r} />)}

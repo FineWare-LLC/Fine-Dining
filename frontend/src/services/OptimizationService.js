@@ -19,11 +19,19 @@ const STATUS_OPTIMAL = 7; // HiGHS status code for Optimal
  * Prepares data for the HiGHS solver by fetching user nutrition targets
  * and available meals, and filtering out meals containing user allergens.
  * 
+ * Note: Meals with a price of 0 are included in the filtering logic.
+ * Only meals with undefined or null prices are filtered out.
+ * Detailed logging is included to help debug issues with meal filtering.
+ * 
  * @param {string} userId - The ID of the user to generate a meal plan for
+ * @param {Array} selectedMealIds - Optional array of meal IDs to include in the optimization
+ * @param {Object} customNutritionTargets - Optional custom nutrition targets to override user's defaults
  * @returns {Promise<Object>} Object containing formatted meal data and user nutrition targets
  */
-export async function prepareSolverData(userId) {
+export async function prepareSolverData(userId, selectedMealIds = [], customNutritionTargets = null) {
   console.log(`Preparing solver data for user ${userId}...`);
+  console.log(`Selected meal IDs: ${selectedMealIds.length > 0 ? selectedMealIds.join(', ') : 'None'}`);
+  console.log(`Custom nutrition targets: ${customNutritionTargets ? 'Provided' : 'None'}`);
 
   // Fetch user data including nutrition targets and allergies
   const user = await User.findById(userId);
@@ -36,18 +44,33 @@ export async function prepareSolverData(userId) {
     allergy.toLowerCase().trim()
   );
 
-  // Fetch all available meals
-  const allMeals = await MealModel.find({});
-  console.log(`Found ${allMeals.length} total meals`);
+  // Fetch all available meals or just the selected ones
+  let allMeals;
+  if (selectedMealIds && selectedMealIds.length > 0) {
+    allMeals = await MealModel.find({ _id: { $in: selectedMealIds } });
+    console.log(`Found ${allMeals.length} selected meals out of ${selectedMealIds.length} requested`);
+  } else {
+    allMeals = await MealModel.find({});
+    console.log(`Found ${allMeals.length} total meals`);
+  }
+
+  // Count meals before filtering
+  console.log(`Starting with ${allMeals.length} total meals`);
+
+  // Track filtering reasons for debugging
+  let missingDataCount = 0;
+  let allergenCount = 0;
 
   // Filter out meals containing user allergens
   const filteredMeals = allMeals.filter(meal => {
     // Skip meals that don't have required data
-    if (!meal.price || !meal.nutrition || 
+    if (meal.price === undefined || meal.price === null || !meal.nutrition || 
         !meal.nutrition.carbohydrates || 
         !meal.nutrition.protein || 
         !meal.nutrition.fat || 
         !meal.nutrition.sodium) {
+      missingDataCount++;
+      console.log(`Skipping meal ${meal.mealName || meal._id} due to missing data: price=${meal.price}, nutrition=${!!meal.nutrition}`);
       return false;
     }
 
@@ -59,6 +82,7 @@ export async function prepareSolverData(userId) {
 
       // If any of the meal's allergens match user's allergies, filter it out
       if (userAllergies.some(allergy => mealAllergens.includes(allergy))) {
+        allergenCount++;
         return false;
       }
     }
@@ -66,7 +90,7 @@ export async function prepareSolverData(userId) {
     return true;
   });
 
-  console.log(`Filtered to ${filteredMeals.length} meals after removing allergens and meals with missing data`);
+  console.log(`Filtered to ${filteredMeals.length} meals after removing ${missingDataCount} meals with missing data and ${allergenCount} meals with allergens`);
 
   // Format the filtered meals for the HiGHS solver
   const mealIds = [];
@@ -88,7 +112,7 @@ export async function prepareSolverData(userId) {
   });
 
   // Get user's nutrition targets with reasonable defaults if not set
-  const nutritionTargets = {
+  let nutritionTargets = {
     proteinMin: user.nutritionTargets?.proteinMin || 50, // Default to 50g protein minimum
     proteinMax: user.nutritionTargets?.proteinMax || 150, // Default to 150g protein maximum
     carbohydratesMin: user.nutritionTargets?.carbohydratesMin || 100, // Default to 100g carbs minimum
@@ -98,6 +122,18 @@ export async function prepareSolverData(userId) {
     sodiumMin: user.nutritionTargets?.sodiumMin || 500, // Default to 500mg sodium minimum
     sodiumMax: user.nutritionTargets?.sodiumMax || 2300 // Default to 2300mg sodium maximum (FDA recommendation)
   };
+
+  // Override with custom nutrition targets if provided
+  if (customNutritionTargets) {
+    if (customNutritionTargets.proteinMin !== undefined) nutritionTargets.proteinMin = customNutritionTargets.proteinMin;
+    if (customNutritionTargets.proteinMax !== undefined) nutritionTargets.proteinMax = customNutritionTargets.proteinMax;
+    if (customNutritionTargets.carbohydratesMin !== undefined) nutritionTargets.carbohydratesMin = customNutritionTargets.carbohydratesMin;
+    if (customNutritionTargets.carbohydratesMax !== undefined) nutritionTargets.carbohydratesMax = customNutritionTargets.carbohydratesMax;
+    if (customNutritionTargets.fatMin !== undefined) nutritionTargets.fatMin = customNutritionTargets.fatMin;
+    if (customNutritionTargets.fatMax !== undefined) nutritionTargets.fatMax = customNutritionTargets.fatMax;
+    if (customNutritionTargets.sodiumMin !== undefined) nutritionTargets.sodiumMin = customNutritionTargets.sodiumMin;
+    if (customNutritionTargets.sodiumMax !== undefined) nutritionTargets.sodiumMax = customNutritionTargets.sodiumMax;
+  }
 
   console.log('Using nutrition targets:', nutritionTargets);
 
@@ -295,18 +331,22 @@ export async function runOptimization(data) {
  * Generates an optimized meal plan for a user.
  * 
  * @param {string} userId - The ID of the user to generate a meal plan for
+ * @param {Array} selectedMealIds - Optional array of meal IDs to include in the optimization
+ * @param {Object} customNutritionTargets - Optional custom nutrition targets to override user's defaults
  * @returns {Promise<Object>} Optimized meal plan
  */
-export async function generateOptimizedMealPlan(userId) {
+export async function generateOptimizedMealPlan(userId, selectedMealIds = [], customNutritionTargets = null) {
   try {
-    // Prepare data for the solver
-    const data = await prepareSolverData(userId);
+    // Prepare data for the solver with optional selected meals and custom nutrition targets
+    const data = await prepareSolverData(userId, selectedMealIds, customNutritionTargets);
 
     // If no meals are available after filtering, return a user-friendly error
     if (data.mealCount === 0) {
       // Check if there were any meals before filtering
       if (data.totalMealsCount === 0) {
         throw new Error('No meals found in the database. Please add some meals before generating an optimized meal plan.');
+      } else if (selectedMealIds && selectedMealIds.length > 0) {
+        throw new Error('No suitable meals found among your selected meals. Please ensure your selected meals have price and nutrition information and do not contain your allergens.');
       } else {
         throw new Error('No suitable meals found after filtering allergens and checking for required nutrition data. Please ensure your meals have price and nutrition information.');
       }

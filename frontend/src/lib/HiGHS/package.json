@@ -1,0 +1,22 @@
+{
+  "name": "highs-meal-pipeline",
+  "version": "1.0.0",
+  "description": "Data pipeline for processing and optimizing meal plans using HiGHS.",
+  "type": "module",
+  "main": "src/main_pipeline.mjs",
+  "scripts": {
+    "start": "node src/main_pipeline.mjs",
+    "setup": "node setup_pipeline.mjs",
+    "build-csv": "node tools/build-meal-csv.mjs",
+    "solve": "node src/solver/index.mjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "csv-parse": "^5.5.6",
+    "csv-stringify": "^6.5.0",
+    "dotenv": "^16.5.0",
+    "node-fetch": "^3.3.2"
+  }
+}

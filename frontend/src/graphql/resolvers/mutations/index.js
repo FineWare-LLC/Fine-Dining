@@ -6,6 +6,7 @@ import * as mealPlanMutations from './mealPlanMutations.js';
 import * as mealMutations from './mealMutations.js';
 import * as statsMutations from './statsMutations.js';
 import * as reviewMutations from './reviewMutations.js';
+import * as optimizationMutations from './optimizationMutations.js';
 
 export const Mutation = {
   ...userMutations,
@@ -16,4 +17,5 @@ export const Mutation = {
   ...mealMutations,
   ...statsMutations,
   ...reviewMutations,
+  ...optimizationMutations,
 };

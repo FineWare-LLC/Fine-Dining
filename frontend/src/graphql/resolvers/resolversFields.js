@@ -7,6 +7,7 @@ import { MealModel} from '@/models/Meal';
 import {RecipeModel} from '@/models/Recipe';
 import {RestaurantModel} from "@/models/Restaurant/index.js";
 import {MealPlanModel} from "@/models/MealPlan";
+import User from '@/models/User/index.js';
 
 /**
  * @constant DateScalar
@@ -31,7 +32,7 @@ export const DateScalar = {
  */
 export const MealPlan = {
     async user(parent) {
-        return UserModel.findById(parent.user);
+        return User.findById(parent.user);
     }, async meals(parent) {
         return MealModel.find({mealPlan: parent._id});
     },
@@ -59,7 +60,7 @@ export const Meal = {
  */
 export const Stats = {
     async user(parent) {
-        return UserModel.findById(parent.user);
+        return User.findById(parent.user);
     },
 };
 
@@ -69,6 +70,6 @@ export const Stats = {
  */
 export const Review = {
     async user(parent) {
-        return UserModel.findById(parent.user);
+        return User.findById(parent.user);
     },
 };

@@ -1,0 +1,51 @@
+chain,meal_name,price,calories,protein,carbohydrates,fat,sodium,allergens,protein_density,carb_protein_ratio,sodium_per_calorie,price_per_protein,health_score,protein_category
+McDonald's,Spicy McCrispy™,0,509,19,47,12,727,"[""Wheat""]",3.73,2.47,1.43,0,-3.59,medium
+McDonald's,Big Mac®,0,545,25,45,34,959,"[""Wheat"",""Milk"",""Soy"",""Sesame"",""Fish""]",4.59,1.8,1.76,0,-4.41,medium
+McDonald's,Chicken McNuggets®,0,328,30,10,20,885,"[""Wheat"",""Sesame""]",9.15,0.33,2.7,0,-8.88,high
+McDonald's,Quarter Pounder®* with Cheese,0,517,28,44,25,1106,"[""Wheat"",""Milk"",""Soy"",""Sesame""]",5.42,1.57,2.14,0,-5.21,medium
+McDonald's,McCafé® Iced Coffee,0,71,0,47,3,50,"[""Milk""]",0,,0.7,,0.07,low
+McDonald's,Egg McMuffin®,0,307,19,32,13,828,"[""Wheat"",""Milk"",""Eggs""]",6.19,1.68,2.7,0,-5.92,medium
+McDonald's,Sausage Burrito,0,307,15,27,19,771,"[""Wheat"",""Milk"",""Eggs"",""Shellfish"",""Soybeans""]",4.89,1.8,2.51,0,-4.64,medium
+McDonald's,"Bacon, Egg  & Cheese Biscuit",0,554,19,43,22,683,"[""Wheat"",""Soy""]",3.43,2.26,1.23,0,-3.31,medium
+McDonald's,Egg McMuffin®,0,305,18,33,12,817,"[""Wheat"",""Milk"",""Eggs""]",5.9,1.83,2.68,0,-5.63,medium
+McDonald's,Sausage McMuffin®,0,407,14,32,25,845,"[""Wheat"",""Milk""]",3.44,2.29,2.08,0,-3.23,low
+Walmart,Great Value Rotisserie Chicken,9,366,40,1,21,463,[],10.93,0.03,1.27,0.23,-10.8,high
+Walmart,Marketside Caesar Salad,7,205,7,10,17,381,"[""Milk"",""Eggs"",""Fish"",""Tree Nuts"",""Sesame""]",3.41,1.43,1.86,1,-3.22,low
+Walmart,Fresh Baked French Bread,7,152,5,32,2,366,"[""Wheat"",""Peanuts""]",3.29,6.4,2.41,1.4,-3.05,low
+Walmart,Deli Turkey Sandwich,13,356,23,40,11,1137,"[""Wheat"",""Milk"",""Soybeans"",""Shellfish""]",6.46,1.74,3.19,0.57,-6.14,medium
+Walmart,Marketside Pizza,11,315,16,37,15,752,"[""Wheat"",""Milk""]",5.08,2.31,2.39,0.69,-4.84,medium
+Walmart,Freshness Guaranteed Sushi,10,354,13,62,6,562,"[""Fish"",""Shellfish"",""Soy""]",3.67,4.77,1.59,0.77,-3.51,low
+Walmart,Great Value Mac & Cheese,13,333,15,40,12,775,"[""Wheat"",""Milk""]",4.5,2.67,2.33,0.87,-4.27,medium
+Walmart,Marketside Chicken Noodle Soup,9,127,9,18,5,899,"[""Wheat"",""Shellfish"",""Gluten""]",7.09,2,7.08,1,-6.38,low
+Walmart,Fresh Fruit Bowl,12,105,2,25,0,0,"[""Shellfish""]",1.9,12.5,0,6,-1.9,low
+Walmart,Bakery Chocolate Chip Cookies,9,216,4,28,11,188,"[""Wheat"",""Milk"",""Eggs"",""Soy""]",1.85,7,0.87,2.25,-1.76,low
+Taco Bell,Crunchy Taco Supreme,13,416,14,25,11,460,"[""Wheat"",""Eggs"",""Sesame""]",3.37,1.79,1.11,0.93,-3.26,low
+Taco Bell,Cheesy Gordita Crunch,10,427,15,30,23,613,"[""Wheat""]",3.51,2,1.44,0.67,-3.37,medium
+Taco Bell,Chalupa Supreme,14,228,20,33,22,672,"[""Wheat"",""Sesame"",""Milk""]",8.77,1.65,2.95,0.7,-8.47,medium
+Taco Bell,Quesarito,13,451,11,30,17,780,"[""Wheat"",""Eggs"",""Gluten""]",2.44,2.73,1.73,1.18,-2.27,low
+Taco Bell,Crunchwrap Supreme,6,453,17,49,24,490,"[""Wheat"",""Soybeans""]",3.75,2.88,1.08,0.35,-3.64,medium
+Taco Bell,Beefy 5-Layer Burrito,13,331,21,32,13,495,"[""Wheat"",""Tree Nuts""]",6.34,1.52,1.5,0.62,-6.19,medium
+Taco Bell,Nachos BellGrande,6,340,16,53,23,421,"[""Wheat"",""Sesame""]",4.71,3.31,1.24,0.38,-4.59,medium
+Taco Bell,Mexican Pizza,10,324,15,40,14,756,"[""Wheat"",""Milk""]",4.63,2.67,2.33,0.67,-4.4,medium
+Taco Bell,Doritos Locos Taco,14,407,15,23,25,787,"[""Wheat"",""Sesame""]",3.69,1.53,1.93,0.93,-3.5,medium
+Taco Bell,Quesadilla,14,409,17,21,14,749,"[""Wheat""]",4.16,1.24,1.83,0.82,-3.98,medium
+Subway,Italian B.M.T.,7,561,16,31,17,647,"[""Wheat"",""Milk""]",2.85,1.94,1.15,0.44,-2.74,medium
+Subway,Turkey Breast Sub,7,444,16,39,20,942,"[""Wheat"",""Soy"",""Sesame"",""Milk""]",3.6,2.44,2.12,0.44,-3.39,medium
+Subway,Meatball Marinara,8,566,19,45,30,794,"[""Wheat"",""Fish""]",3.36,2.37,1.4,0.42,-3.22,medium
+Subway,Spicy Italian,11,504,20,31,26,787,"[""Wheat""]",3.97,1.55,1.56,0.55,-3.81,medium
+Subway,Veggie Delite,13,348,30,31,22,568,"[""Wheat"",""Soybeans"",""Gluten""]",8.62,1.03,1.63,0.43,-8.46,high
+Subway,Steak & Cheese,11,246,1,58,0,49,"[""Shellfish"",""Peanuts""]",0.41,58,0.2,11,-0.39,low
+Subway,Tuna Sub,13,490,35,44,11,673,"[""Wheat"",""Soy""]",7.14,1.26,1.37,0.37,-7,high
+Subway,Sweet Onion Chicken Teriyaki,11,384,26,11,19,753,"[""Wheat""]",6.77,0.42,1.96,0.42,-6.57,medium
+Subway,Cold Cut Combo,12,549,27,34,21,597,"[""Wheat""]",4.92,1.26,1.09,0.44,-4.81,medium
+Subway,Chicken & Bacon Ranch,14,451,25,18,21,858,"[""Wheat"",""Gluten"",""Eggs""]",5.54,0.72,1.9,0.56,-5.35,medium
+Burger King,Whopper,5,667,30,52,41,988,"[""Wheat"",""Soy"",""Sesame""]",4.5,1.73,1.48,0.17,-4.35,high
+Burger King,Double Whopper,10,914,52,53,60,1135,"[""Wheat"",""Soy"",""Sesame"",""Peanuts"",""Fish""]",5.69,1.02,1.24,0.19,-5.57,high
+Burger King,Bacon King,8,1166,62,53,79,2207,"[""Wheat"",""Soy"",""Sesame"",""Peanuts""]",5.32,0.85,1.89,0.13,-5.13,high
+Burger King,Original Chicken Sandwich,5,680,25,50,41,1224,"[""Wheat"",""Soy""]",3.68,2,1.8,0.2,-3.5,medium
+Burger King,Chicken Fries,11,299,16,21,18,854,"[""Wheat"",""Peanuts"",""Tree Nuts""]",5.35,1.31,2.86,0.69,-5.06,medium
+Burger King,Impossible Whopper,8,637,26,59,34,1103,"[""Wheat"",""Soy"",""Sesame""]",4.08,2.27,1.73,0.31,-3.91,medium
+Burger King,Bacon Cheeseburger,10,323,21,30,16,736,"[""Wheat"",""Milk"",""Soy""]",6.5,1.43,2.28,0.48,-6.27,medium
+Burger King,Crispy Chicken Sandwich,12,483,26,49,27,1122,"[""Wheat"",""Soy""]",5.38,1.88,2.32,0.46,-5.15,medium
+Burger King,Onion Rings,7,425,5,53,23,1170,"[""Wheat"",""Milk"",""Shellfish""]",1.18,10.6,2.75,1.4,-0.9,low
+Burger King,Chicken Jr.,11,464,16,44,28,841,"[""Wheat"",""Soy"",""Eggs""]",3.45,2.75,1.81,0.69,-3.27,medium

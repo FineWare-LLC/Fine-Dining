@@ -1,0 +1,720 @@
+[
+  {
+    "chain": "McDonald's",
+    "meal_name": "Spicy McCrispy™",
+    "price": 0,
+    "calories": 438,
+    "protein": 27,
+    "carbohydrates": 57,
+    "fat": 29,
+    "sodium": 747,
+    "allergens": [
+      "Wheat"
+    ]
+  },
+  {
+    "chain": "McDonald's",
+    "meal_name": "Big Mac®",
+    "price": 0,
+    "calories": 544,
+    "protein": 30,
+    "carbohydrates": 49,
+    "fat": 31,
+    "sodium": 1043,
+    "allergens": [
+      "Wheat",
+      "Milk",
+      "Soy",
+      "Sesame"
+    ]
+  },
+  {
+    "chain": "McDonald's",
+    "meal_name": "Chicken McNuggets®",
+    "price": 0,
+    "calories": 285,
+    "protein": 29,
+    "carbohydrates": 11,
+    "fat": 24,
+    "sodium": 841,
+    "allergens": [
+      "Wheat"
+    ]
+  },
+  {
+    "chain": "McDonald's",
+    "meal_name": "Quarter Pounder®* with Cheese",
+    "price": 0,
+    "calories": 516,
+    "protein": 30,
+    "carbohydrates": 43,
+    "fat": 26,
+    "sodium": 1137,
+    "allergens": [
+      "Wheat",
+      "Milk",
+      "Soy",
+      "Sesame"
+    ]
+  },
+  {
+    "chain": "McDonald's",
+    "meal_name": "McCafé® Iced Coffee",
+    "price": 0,
+    "calories": 61,
+    "protein": 0,
+    "carbohydrates": 10,
+    "fat": 3,
+    "sodium": 35,
+    "allergens": [
+      "Eggs"
+    ]
+  },
+  {
+    "chain": "McDonald's",
+    "meal_name": "Egg McMuffin®",
+    "price": 0,
+    "calories": 317,
+    "protein": 20,
+    "carbohydrates": 32,
+    "fat": 15,
+    "sodium": 824,
+    "allergens": [
+      "Wheat",
+      "Milk",
+      "Eggs"
+    ]
+  },
+  {
+    "chain": "McDonald's",
+    "meal_name": "Sausage Burrito",
+    "price": 0,
+    "calories": 307,
+    "protein": 15,
+    "carbohydrates": 25,
+    "fat": 16,
+    "sodium": 809,
+    "allergens": [
+      "Wheat",
+      "Milk",
+      "Eggs"
+    ]
+  },
+  {
+    "chain": "McDonald's",
+    "meal_name": "Bacon, Egg  & Cheese Biscuit",
+    "price": 0,
+    "calories": 373,
+    "protein": 22,
+    "carbohydrates": 41,
+    "fat": 25,
+    "sodium": 988,
+    "allergens": [
+      "Wheat",
+      "Soy",
+      "Milk"
+    ]
+  },
+  {
+    "chain": "McDonald's",
+    "meal_name": "Egg McMuffin®",
+    "price": 0,
+    "calories": 302,
+    "protein": 18,
+    "carbohydrates": 33,
+    "fat": 13,
+    "sodium": 794,
+    "allergens": [
+      "Wheat",
+      "Milk",
+      "Eggs",
+      "Gluten"
+    ]
+  },
+  {
+    "chain": "McDonald's",
+    "meal_name": "Sausage McMuffin®",
+    "price": 0,
+    "calories": 414,
+    "protein": 14,
+    "carbohydrates": 31,
+    "fat": 27,
+    "sodium": 801,
+    "allergens": [
+      "Wheat",
+      "Milk"
+    ]
+  },
+  {
+    "chain": "Walmart",
+    "meal_name": "Great Value Rotisserie Chicken",
+    "price": 9,
+    "calories": 367,
+    "protein": 43,
+    "carbohydrates": 1,
+    "fat": 22,
+    "sodium": 474,
+    "allergens": [
+      "Shellfish",
+      "Sesame"
+    ]
+  },
+  {
+    "chain": "Walmart",
+    "meal_name": "Marketside Caesar Salad",
+    "price": 9,
+    "calories": 214,
+    "protein": 7,
+    "carbohydrates": 11,
+    "fat": 18,
+    "sodium": 434,
+    "allergens": [
+      "Milk",
+      "Eggs",
+      "Fish",
+      "Shellfish"
+    ]
+  },
+  {
+    "chain": "Walmart",
+    "meal_name": "Fresh Baked French Bread",
+    "price": 5,
+    "calories": 168,
+    "protein": 6,
+    "carbohydrates": 33,
+    "fat": 1,
+    "sodium": 304,
+    "allergens": [
+      "Wheat",
+      "Sesame"
+    ]
+  },
+  {
+    "chain": "Walmart",
+    "meal_name": "Deli Turkey Sandwich",
+    "price": 11,
+    "calories": 365,
+    "protein": 23,
+    "carbohydrates": 43,
+    "fat": 14,
+    "sodium": 1185,
+    "allergens": [
+      "Wheat",
+      "Milk"
+    ]
+  },
+  {
+    "chain": "Walmart",
+    "meal_name": "Marketside Pizza",
+    "price": 5,
+    "calories": 317,
+    "protein": 14,
+    "carbohydrates": 37,
+    "fat": 14,
+    "sodium": 775,
+    "allergens": [
+      "Wheat",
+      "Milk"
+    ]
+  },
+  {
+    "chain": "Walmart",
+    "meal_name": "Freshness Guaranteed Sushi",
+    "price": 5,
+    "calories": 352,
+    "protein": 13,
+    "carbohydrates": 60,
+    "fat": 9,
+    "sodium": 519,
+    "allergens": [
+      "Fish",
+      "Shellfish",
+      "Soy",
+      "Sesame"
+    ]
+  },
+  {
+    "chain": "Walmart",
+    "meal_name": "Great Value Mac & Cheese",
+    "price": 13,
+    "calories": 323,
+    "protein": 14,
+    "carbohydrates": 40,
+    "fat": 13,
+    "sodium": 740,
+    "allergens": [
+      "Wheat",
+      "Milk",
+      "Fish",
+      "Tree Nuts"
+    ]
+  },
+  {
+    "chain": "Walmart",
+    "meal_name": "Marketside Chicken Noodle Soup",
+    "price": 9,
+    "calories": 140,
+    "protein": 11,
+    "carbohydrates": 18,
+    "fat": 6,
+    "sodium": 804,
+    "allergens": [
+      "Wheat"
+    ]
+  },
+  {
+    "chain": "Walmart",
+    "meal_name": "Fresh Fruit Bowl",
+    "price": 9,
+    "calories": 120,
+    "protein": 3,
+    "carbohydrates": 27,
+    "fat": 0,
+    "sodium": 1,
+    "allergens": [
+      "Eggs"
+    ]
+  },
+  {
+    "chain": "Walmart",
+    "meal_name": "Bakery Chocolate Chip Cookies",
+    "price": 13,
+    "calories": 207,
+    "protein": 4,
+    "carbohydrates": 28,
+    "fat": 10,
+    "sodium": 176,
+    "allergens": [
+      "Wheat",
+      "Milk",
+      "Eggs",
+      "Soy",
+      "Gluten"
+    ]
+  },
+  {
+    "chain": "Taco Bell",
+    "meal_name": "Crunchy Taco Supreme",
+    "price": 6,
+    "calories": 280,
+    "protein": 25,
+    "carbohydrates": 33,
+    "fat": 20,
+    "sodium": 602,
+    "allergens": [
+      "Wheat",
+      "Shellfish"
+    ]
+  },
+  {
+    "chain": "Taco Bell",
+    "meal_name": "Cheesy Gordita Crunch",
+    "price": 14,
+    "calories": 347,
+    "protein": 19,
+    "carbohydrates": 52,
+    "fat": 25,
+    "sodium": 598,
+    "allergens": [
+      "Wheat",
+      "Fish"
+    ]
+  },
+  {
+    "chain": "Taco Bell",
+    "meal_name": "Chalupa Supreme",
+    "price": 7,
+    "calories": 243,
+    "protein": 10,
+    "carbohydrates": 29,
+    "fat": 19,
+    "sodium": 800,
+    "allergens": [
+      "Wheat"
+    ]
+  },
+  {
+    "chain": "Taco Bell",
+    "meal_name": "Quesarito",
+    "price": 14,
+    "calories": 444,
+    "protein": 14,
+    "carbohydrates": 48,
+    "fat": 24,
+    "sodium": 520,
+    "allergens": [
+      "Wheat",
+      "Tree Nuts"
+    ]
+  },
+  {
+    "chain": "Taco Bell",
+    "meal_name": "Crunchwrap Supreme",
+    "price": 7,
+    "calories": 432,
+    "protein": 26,
+    "carbohydrates": 32,
+    "fat": 18,
+    "sodium": 580,
+    "allergens": [
+      "Wheat",
+      "Gluten"
+    ]
+  },
+  {
+    "chain": "Taco Bell",
+    "meal_name": "Beefy 5-Layer Burrito",
+    "price": 10,
+    "calories": 267,
+    "protein": 12,
+    "carbohydrates": 20,
+    "fat": 12,
+    "sodium": 722,
+    "allergens": [
+      "Wheat",
+      "Sesame",
+      "Milk"
+    ]
+  },
+  {
+    "chain": "Taco Bell",
+    "meal_name": "Nachos BellGrande",
+    "price": 12,
+    "calories": 537,
+    "protein": 24,
+    "carbohydrates": 30,
+    "fat": 12,
+    "sodium": 742,
+    "allergens": [
+      "Wheat"
+    ]
+  },
+  {
+    "chain": "Taco Bell",
+    "meal_name": "Mexican Pizza",
+    "price": 5,
+    "calories": 348,
+    "protein": 19,
+    "carbohydrates": 31,
+    "fat": 11,
+    "sodium": 593,
+    "allergens": [
+      "Wheat",
+      "Milk"
+    ]
+  },
+  {
+    "chain": "Taco Bell",
+    "meal_name": "Doritos Locos Taco",
+    "price": 12,
+    "calories": 375,
+    "protein": 11,
+    "carbohydrates": 22,
+    "fat": 16,
+    "sodium": 579,
+    "allergens": [
+      "Wheat",
+      "Gluten",
+      "Peanuts"
+    ]
+  },
+  {
+    "chain": "Taco Bell",
+    "meal_name": "Quesadilla",
+    "price": 10,
+    "calories": 236,
+    "protein": 17,
+    "carbohydrates": 36,
+    "fat": 11,
+    "sodium": 560,
+    "allergens": [
+      "Wheat"
+    ]
+  },
+  {
+    "chain": "Subway",
+    "meal_name": "Italian B.M.T.",
+    "price": 10,
+    "calories": 496,
+    "protein": 16,
+    "carbohydrates": 36,
+    "fat": 19,
+    "sodium": 514,
+    "allergens": [
+      "Wheat"
+    ]
+  },
+  {
+    "chain": "Subway",
+    "meal_name": "Turkey Breast Sub",
+    "price": 9,
+    "calories": 577,
+    "protein": 22,
+    "carbohydrates": 33,
+    "fat": 22,
+    "sodium": 843,
+    "allergens": [
+      "Wheat",
+      "Soy",
+      "Tree Nuts"
+    ]
+  },
+  {
+    "chain": "Subway",
+    "meal_name": "Meatball Marinara",
+    "price": 7,
+    "calories": 600,
+    "protein": 13,
+    "carbohydrates": 36,
+    "fat": 13,
+    "sodium": 480,
+    "allergens": [
+      "Wheat",
+      "Milk"
+    ]
+  },
+  {
+    "chain": "Subway",
+    "meal_name": "Spicy Italian",
+    "price": 7,
+    "calories": 587,
+    "protein": 20,
+    "carbohydrates": 59,
+    "fat": 20,
+    "sodium": 490,
+    "allergens": [
+      "Wheat"
+    ]
+  },
+  {
+    "chain": "Subway",
+    "meal_name": "Veggie Delite",
+    "price": 6,
+    "calories": 455,
+    "protein": 30,
+    "carbohydrates": 53,
+    "fat": 18,
+    "sodium": 720,
+    "allergens": [
+      "Wheat",
+      "Eggs"
+    ]
+  },
+  {
+    "chain": "Subway",
+    "meal_name": "Steak & Cheese",
+    "price": 5,
+    "calories": 150,
+    "protein": 2,
+    "carbohydrates": 0,
+    "fat": 3,
+    "sodium": 7,
+    "allergens": [
+      "Peanuts"
+    ]
+  },
+  {
+    "chain": "Subway",
+    "meal_name": "Tuna Sub",
+    "price": 11,
+    "calories": 448,
+    "protein": 20,
+    "carbohydrates": 39,
+    "fat": 18,
+    "sodium": 1091,
+    "allergens": [
+      "Wheat",
+      "Soy"
+    ]
+  },
+  {
+    "chain": "Subway",
+    "meal_name": "Sweet Onion Chicken Teriyaki",
+    "price": 7,
+    "calories": 365,
+    "protein": 24,
+    "carbohydrates": 13,
+    "fat": 23,
+    "sodium": 807,
+    "allergens": [
+      "Wheat"
+    ]
+  },
+  {
+    "chain": "Subway",
+    "meal_name": "Cold Cut Combo",
+    "price": 12,
+    "calories": 519,
+    "protein": 12,
+    "carbohydrates": 56,
+    "fat": 28,
+    "sodium": 783,
+    "allergens": [
+      "Wheat"
+    ]
+  },
+  {
+    "chain": "Subway",
+    "meal_name": "Chicken & Bacon Ranch",
+    "price": 14,
+    "calories": 388,
+    "protein": 37,
+    "carbohydrates": 20,
+    "fat": 18,
+    "sodium": 891,
+    "allergens": [
+      "Wheat"
+    ]
+  },
+  {
+    "chain": "Burger King",
+    "meal_name": "Whopper",
+    "price": 11,
+    "calories": 677,
+    "protein": 30,
+    "carbohydrates": 51,
+    "fat": 39,
+    "sodium": 1008,
+    "allergens": [
+      "Wheat",
+      "Soy",
+      "Sesame"
+    ]
+  },
+  {
+    "chain": "Burger King",
+    "meal_name": "Double Whopper",
+    "price": 10,
+    "calories": 909,
+    "protein": 48,
+    "carbohydrates": 51,
+    "fat": 58,
+    "sodium": 1067,
+    "allergens": [
+      "Wheat",
+      "Soy",
+      "Sesame",
+      "Gluten"
+    ]
+  },
+  {
+    "chain": "Burger King",
+    "meal_name": "Bacon King",
+    "price": 9,
+    "calories": 1167,
+    "protein": 65,
+    "carbohydrates": 51,
+    "fat": 80,
+    "sodium": 2237,
+    "allergens": [
+      "Wheat",
+      "Soy",
+      "Sesame"
+    ]
+  },
+  {
+    "chain": "Burger King",
+    "meal_name": "Original Chicken Sandwich",
+    "price": 7,
+    "calories": 670,
+    "protein": 24,
+    "carbohydrates": 50,
+    "fat": 39,
+    "sodium": 1222,
+    "allergens": [
+      "Wheat",
+      "Soy",
+      "Peanuts",
+      "Eggs"
+    ]
+  },
+  {
+    "chain": "Burger King",
+    "meal_name": "Chicken Fries",
+    "price": 11,
+    "calories": 291,
+    "protein": 16,
+    "carbohydrates": 25,
+    "fat": 18,
+    "sodium": 859,
+    "allergens": [
+      "Wheat"
+    ]
+  },
+  {
+    "chain": "Burger King",
+    "meal_name": "Impossible Whopper",
+    "price": 7,
+    "calories": 644,
+    "protein": 27,
+    "carbohydrates": 59,
+    "fat": 35,
+    "sodium": 1180,
+    "allergens": [
+      "Wheat",
+      "Soy",
+      "Sesame",
+      "Eggs"
+    ]
+  },
+  {
+    "chain": "Burger King",
+    "meal_name": "Bacon Cheeseburger",
+    "price": 9,
+    "calories": 330,
+    "protein": 18,
+    "carbohydrates": 29,
+    "fat": 20,
+    "sodium": 799,
+    "allergens": [
+      "Wheat",
+      "Milk",
+      "Soy",
+      "Soybeans",
+      "Tree Nuts"
+    ]
+  },
+  {
+    "chain": "Burger King",
+    "meal_name": "Crispy Chicken Sandwich",
+    "price": 14,
+    "calories": 483,
+    "protein": 25,
+    "carbohydrates": 45,
+    "fat": 23,
+    "sodium": 1122,
+    "allergens": [
+      "Wheat",
+      "Soy"
+    ]
+  },
+  {
+    "chain": "Burger King",
+    "meal_name": "Onion Rings",
+    "price": 6,
+    "calories": 413,
+    "protein": 7,
+    "carbohydrates": 50,
+    "fat": 24,
+    "sodium": 1143,
+    "allergens": [
+      "Wheat",
+      "Milk",
+      "Eggs"
+    ]
+  },
+  {
+    "chain": "Burger King",
+    "meal_name": "Chicken Jr.",
+    "price": 5,
+    "calories": 460,
+    "protein": 16,
+    "carbohydrates": 45,
+    "fat": 29,
+    "sodium": 875,
+    "allergens": [
+      "Wheat",
+      "Soy"
+    ]
+  }
+]

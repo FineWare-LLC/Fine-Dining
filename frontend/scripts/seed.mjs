@@ -12,15 +12,23 @@ import {faker} from '@faker-js/faker/locale/en';
 import {dbConnect} from '../dbConnect.js';
 
 /* Mongoose Models */
-import UserModel from "@/models/User";
-import {RecipeModel} from "@/models/Recipe";
-import {RestaurantModel} from "@/models/Restaurant";
-import {MealPlanModel} from "@/models/MealPlan";
-import {MealModel} from "@/models/Meal";
-import {StatsModel} from "@/models/Stats";
-import {Review as ReviewModel} from "@/models/Review";
+import User from "../src/models/User/index.js";
+import {RecipeModel} from "../src/models/Recipe/index.js";
+import {RestaurantModel} from "../src/models/Restaurant/index.js";
+import {MealPlanModel} from "../src/models/MealPlan/index.js";
+import {MealModel} from "../src/models/Meal/index.js";
+import {StatsModel} from "../src/models/Stats/index.js";
+import {Review as ReviewModel} from "../src/models/Review/index.js";
 
+// Try to load both .env and .env.local files
 dotenv.config({path: '.env'});
+dotenv.config({path: '.env.local'});
+
+// Manually set MONGODB_URI if it's not loaded from .env files
+if (!process.env.MONGODB_URI) {
+    process.env.MONGODB_URI = 'mongodb://localhost:27017/fineDiningApp';
+    console.log('MONGODB_URI not found in environment, using default:', process.env.MONGODB_URI);
+}
 
 /* ------------------------------------------------------------------
    Adjustable Constants
@@ -78,11 +86,17 @@ function generateInstructions() {
  */
 async function seedDatabase() {
     console.log('Connecting to database...');
-    await dbConnect();
-    console.log('Connected! Clearing existing data...');
+    try {
+        await dbConnect();
+        console.log('Connected! Clearing existing data...');
+    } catch (error) {
+        console.error('Failed to connect to MongoDB. Please make sure MongoDB is running and accessible at the URI specified in .env.local');
+        console.error('Error details:', error.message);
+        process.exit(1);
+    }
 
     // Clear existing collections to avoid duplicates
-    await Promise.all([UserModel.deleteMany({}), RecipeModel.deleteMany({}), RestaurantModel.deleteMany({}), MealPlanModel.deleteMany({}), MealModel.deleteMany({}), StatsModel.deleteMany({}), ReviewModel.deleteMany({}),]);
+    await Promise.all([User.deleteMany({}), RecipeModel.deleteMany({}), RestaurantModel.deleteMany({}), MealPlanModel.deleteMany({}), MealModel.deleteMany({}), StatsModel.deleteMany({}), ReviewModel.deleteMany({}),]);
     console.log('Databases cleared. Generating data...');
 
     /* ---------------------------------------------
@@ -103,7 +117,7 @@ async function seedDatabase() {
         });
 
         if (userDocs.length >= BATCH_SIZE || i === NUM_USERS - 1) {
-            await UserModel.insertMany(userDocs);
+            await User.insertMany(userDocs);
             userDocs = [];
         }
     }
@@ -137,7 +151,7 @@ async function seedDatabase() {
        3) Create Recipes
     --------------------------------------------- */
     console.log(`Generating ${NUM_RECIPES} recipes...`);
-    const allUsers = await UserModel.find({}, {_id: 1});
+    const allUsers = await User.find({}, {_id: 1});
     const userIds = allUsers.map((u) => u._id.toString());
 
     let recipeDocs = [];
@@ -209,6 +223,12 @@ async function seedDatabase() {
             min: MIN_MEALS_PER_PLAN, max: MAX_MEALS_PER_PLAN,
         });
         for (let i = 0; i < mealCount; i++) {
+            // Generate nutrition values
+            const protein = faker.number.int({min: 10, max: 50});
+            const fat = faker.number.int({min: 5, max: 30});
+            const carbs = faker.number.int({min: 20, max: 100});
+            const sodium = faker.number.int({min: 100, max: 1000});
+
             mealDocs.push({
                 mealPlan: new mongoose.Types.ObjectId(mealPlanId),
                 date: faker.date.future(),
@@ -217,11 +237,24 @@ async function seedDatabase() {
                 restaurant: null,
                 mealName: faker.lorem.words({min: 1, max: 3}),
                 ingredients: [faker.commerce.product(), faker.commerce.product()],
+                // Add price field
+                price: generateCost(),
+                // Add nutrition object with required fields
+                nutrition: {
+                    carbohydrates: carbs,
+                    protein: protein,
+                    fat: fat,
+                    sodium: sodium
+                },
+                // Add allergens array (randomly include some allergens)
+                allergens: faker.datatype.boolean(0.3) ? 
+                    [faker.helpers.arrayElement(['Gluten', 'Dairy', 'Nuts', 'Soy', 'Eggs', 'Fish', 'Shellfish'])] : 
+                    [],
                 nutritionFacts: JSON.stringify({
                     calories: faker.number.int({min: 200, max: 1000}),
-                    fat: faker.number.int({min: 0, max: 50}),
-                    protein: faker.number.int({min: 0, max: 50}),
-                    carbs: faker.number.int({min: 0, max: 100}),
+                    fat: fat,
+                    protein: protein,
+                    carbs: carbs,
                 }),
                 portionSize: generatePortionSize(),
                 notes: faker.lorem.sentence(), // if you want to store notes

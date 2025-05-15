@@ -15,7 +15,7 @@ import { RestaurantModel } from '@/models/Restaurant/index.js';
  */
 export const createMeal = withErrorHandling(async (
   _parent,
-  { mealPlanId, date, mealType, recipeId, restaurantId, mealName, ingredients, nutritionFacts, portionSize, notes },
+  { mealPlanId, date, mealType, recipeId, restaurantId, mealName, price, ingredients, nutrition, allergens, nutritionFacts, portionSize, notes },
   context
 ) => {
   if (!context.user?.userId) {
@@ -26,6 +26,34 @@ export const createMeal = withErrorHandling(async (
   if (mealPlan.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
     throw new Error('Authorization required: You can only create meals for your own meal plans or be an admin.');
   }
+
+  // Validate price if provided
+  if (price !== undefined && price < 0) {
+    throw new Error('Price cannot be negative');
+  }
+
+  // Validate nutrition values if provided
+  if (nutrition) {
+    const { carbohydrates, protein, fat, sodium } = nutrition;
+    if (carbohydrates !== undefined && carbohydrates < 0) {
+      throw new Error('Carbohydrates cannot be negative');
+    }
+    if (protein !== undefined && protein < 0) {
+      throw new Error('Protein cannot be negative');
+    }
+    if (fat !== undefined && fat < 0) {
+      throw new Error('Fat cannot be negative');
+    }
+    if (sodium !== undefined && sodium < 0) {
+      throw new Error('Sodium cannot be negative');
+    }
+  }
+
+  // Validate allergens if provided
+  if (allergens && !Array.isArray(allergens)) {
+    throw new Error('Allergens must be an array of strings');
+  }
+
   const recipe = recipeId ? await RecipeModel.findById(recipeId) : null;
   const restaurant = restaurantId ? await RestaurantModel.findById(restaurantId) : null;
   const newMeal = await MealModel.create({
@@ -35,7 +63,10 @@ export const createMeal = withErrorHandling(async (
     recipe: recipe ? recipe._id : null,
     restaurant: restaurant ? restaurant._id : null,
     mealName,
+    price,
     ingredients,
+    nutrition,
+    allergens,
     nutritionFacts,
     portionSize,
     notes,
@@ -56,7 +87,7 @@ export const createMeal = withErrorHandling(async (
  */
 export const updateMeal = withErrorHandling(async (
   _parent,
-  { id, date, mealType, recipeId, restaurantId, mealName, ingredients, nutritionFacts, portionSize, notes },
+  { id, date, mealType, recipeId, restaurantId, mealName, price, ingredients, nutrition, allergens, nutritionFacts, portionSize, notes },
   context
 ) => {
   if (!context.user?.userId) {
@@ -68,12 +99,43 @@ export const updateMeal = withErrorHandling(async (
   if (mealPlan.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
     throw new Error('Authorization required: You can only update meals in your own meal plans or be an admin.');
   }
+
+  // Validate price if provided
+  if (price !== undefined && price < 0) {
+    throw new Error('Price cannot be negative');
+  }
+
+  // Validate nutrition values if provided
+  if (nutrition) {
+    const { carbohydrates, protein, fat, sodium } = nutrition;
+    if (carbohydrates !== undefined && carbohydrates < 0) {
+      throw new Error('Carbohydrates cannot be negative');
+    }
+    if (protein !== undefined && protein < 0) {
+      throw new Error('Protein cannot be negative');
+    }
+    if (fat !== undefined && fat < 0) {
+      throw new Error('Fat cannot be negative');
+    }
+    if (sodium !== undefined && sodium < 0) {
+      throw new Error('Sodium cannot be negative');
+    }
+  }
+
+  // Validate allergens if provided
+  if (allergens && !Array.isArray(allergens)) {
+    throw new Error('Allergens must be an array of strings');
+  }
+
   if (date !== undefined) meal.date = date;
   if (mealType !== undefined) meal.mealType = mealType;
   if (recipeId !== undefined) meal.recipe = recipeId;
   if (restaurantId !== undefined) meal.restaurant = restaurantId;
   if (mealName !== undefined) meal.mealName = mealName;
+  if (price !== undefined) meal.price = price;
   if (ingredients !== undefined) meal.ingredients = ingredients;
+  if (nutrition !== undefined) meal.nutrition = nutrition;
+  if (allergens !== undefined) meal.allergens = allergens;
   if (nutritionFacts !== undefined) meal.nutritionFacts = nutritionFacts;
   if (portionSize !== undefined) meal.portionSize = portionSize;
   if (notes !== undefined) meal.notes = notes;

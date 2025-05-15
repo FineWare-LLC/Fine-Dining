@@ -29,6 +29,9 @@
 7. [Folder Structure (Frontend)](#folder-structure-frontend)
 8. [Available Scripts](#available-scripts)
 9. [Testing](#testing)
+    - [End-to-End Testing](#end-to-end-testing)
+    - [Component Testing](#component-testing)
+    - [Component Testing Guide](./docs/testing/component-testing.md)
 10. [Contact](#contact)
 
 ---
@@ -132,3 +135,85 @@ Create a `.env.local` file in the `frontend` directory. Add your MongoDB connect
 ```dotenv
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_very_strong_and_secret_key_here
+```
+
+## Testing
+
+The project uses Playwright for both end-to-end and component testing.
+
+### End-to-End Testing
+
+End-to-end tests are configured in `playwright.config.js` and can be run with:
+
+```bash
+npm run test:playwright
+```
+
+### Component Testing
+
+Component tests allow you to test React components in isolation. The setup includes:
+
+1. **Configuration**: `playwright-ct.config.js` in the project root
+2. **Test Fixtures**: `playwright/index.js` for setting up the component testing environment
+3. **Component Tests**: Located in `src/tests/components/`
+
+To run component tests:
+
+```bash
+npm run test:components
+```
+
+#### Writing Component Tests
+
+Component tests use the `@playwright/experimental-ct-react` package. Here's a basic example:
+
+```javascript
+import { test, expect } from '@playwright/experimental-ct-react';
+import YourComponent from '../../components/YourComponent';
+
+test.describe('YourComponent', () => {
+  test('renders correctly', async ({ mount }) => {
+    const component = await mount(<YourComponent prop="value" />);
+    await expect(component).toContainText('Expected text');
+  });
+});
+```
+
+For more robust error handling, use the `mountWithGuard` utility:
+
+```javascript
+import { test, expect } from '@playwright/experimental-ct-react';
+import { mountWithGuard } from '../utils/mountWithGuard';
+import YourComponent from '../../components/YourComponent';
+
+test('renders correctly', async ({ mount, page }) => {
+  const component = await mountWithGuard(page, mount, <YourComponent prop="value" />);
+  await expect(component).toContainText('Expected text');
+});
+```
+
+For detailed information on component testing setup, common pitfalls, and debugging tips, see our [Component Testing Guide](./docs/testing/component-testing.md).
+
+### Known Issues and Workarounds
+
+#### Deprecated Packages
+
+The project has dependencies on some packages that are marked as deprecated:
+
+- **npmlog**: Used by cmake-js, which is an optional dependency of highs-addon
+- **are-we-there-yet**: A dependency of npmlog
+- **gauge**: A dependency of npmlog
+
+These packages are marked as "no longer supported" but don't have direct replacements. Since they're dependencies of other packages in the ecosystem, we can't completely remove them. To minimize potential issues, we've added overrides in package.json to use older, more stable versions of these packages:
+
+```
+{
+  "overrides": {
+    "npmlog": "4.1.2",
+    "are-we-there-yet": "1.1.5",
+    "gauge": "2.7.4"
+  }
+}
+```
+
+You may still see deprecation warnings when running npm commands, but these can be safely ignored as they don't affect the functionality of the application.

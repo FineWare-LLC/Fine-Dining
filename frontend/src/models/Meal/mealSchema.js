@@ -55,6 +55,11 @@ export const mealSchema = new Schema(
             default: '',
             maxlength: [120, 'Meal name cannot exceed 120 characters'],
         },
+        price: {
+            type: Number,
+            default: 0,
+            min: [0, 'Price cannot be negative'],
+        },
         ingredients: {
             type: [String],
             default: [],
@@ -62,6 +67,32 @@ export const mealSchema = new Schema(
                 validator: validateNonEmptyIngredients,
                 message: 'Ingredients must not contain empty strings.',
             },
+        },
+        nutrition: {
+            carbohydrates: {
+                type: Number,
+                default: 0,
+                min: [0, 'Carbohydrates cannot be negative'],
+            },
+            protein: {
+                type: Number,
+                default: 0,
+                min: [0, 'Protein cannot be negative'],
+            },
+            fat: {
+                type: Number,
+                default: 0,
+                min: [0, 'Fat cannot be negative'],
+            },
+            sodium: {
+                type: Number,
+                default: 0,
+                min: [0, 'Sodium cannot be negative'],
+            },
+        },
+        allergens: {
+            type: [String],
+            default: [],
         },
         nutritionFacts: {
             type: String,

@@ -10,10 +10,20 @@ export default function RestaurantCard({ restaurant }) {
       elevation={0}
       sx={{ borderColor:'surface.light', borderWidth:1, borderStyle:'solid', borderRadius:2, mt:1 }}
     >
-      <CardMedia component="img" height="100" image={restaurant.imageUrl} alt={restaurant.name} />
+      <CardMedia
+        component="img"
+        height="100"
+        image={restaurant.imageUrl || '/favicon.ico'}
+        alt={restaurant.name}
+      />
       <CardContent>
         <Typography variant="subtitle1" fontWeight={600}>{restaurant.name}</Typography>
-        <Typography variant="body2" color="text.secondary">{restaurant.cuisine}</Typography>
+        {restaurant.vicinity && (
+          <Typography variant="body2" color="text.secondary">{restaurant.vicinity}</Typography>
+        )}
+        {restaurant.rating && (
+          <Typography variant="body2" color="text.secondary">Rating: {restaurant.rating}</Typography>
+        )}
       </CardContent>
     </Card>
   );

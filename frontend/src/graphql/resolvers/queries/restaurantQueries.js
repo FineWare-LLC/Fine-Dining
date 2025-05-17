@@ -42,3 +42,20 @@ export const searchRestaurants = withErrorHandling(async (_parent, { keyword }, 
     restaurantName: { $regex: keyword, $options: 'i' }
   });
 });
+/**
+ * Finds nearby restaurants using the Google Places API.
+ *
+ * @function findNearbyRestaurants
+ * @param {object} _parent
+ * @param {object} args - { latitude, longitude, radius, keyword }
+ * @param {object} context - GraphQL context
+ * @returns {Promise<Object[]>} Array of ExternalRestaurant objects
+ */
+export const findNearbyRestaurants = withErrorHandling(async (
+  _parent,
+  { latitude, longitude, radius, keyword },
+  context
+) => {
+  const service = await import('@/services/places.service.js');
+  return service.findNearbyRestaurants(latitude, longitude, radius, keyword);
+});

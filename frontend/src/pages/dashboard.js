@@ -4,7 +4,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import { Box, Button, CssBaseline, useTheme, CircularProgress, Typography, Tabs, Tab } from '@mui/material';
-import { useMutation, gql } from '@apollo/client';
+import { useMutation, useLazyQuery, gql } from '@apollo/client';
+import { FindNearbyRestaurantsDocument } from '@/gql';
 import NewHeader from '@/components/Dashboard/NewHeader';
 import GreetingSegment from '@/components/Dashboard/GreetingSegment';
 import DailySummary from '@/components/Dashboard/DailySummary';
@@ -55,10 +56,6 @@ const useMeal = () => ({
   imageUrl:'https://source.unsplash.com/800x600/?salmon',
   tags:['Omega‑3','Low Carb'],
 });
-const useRestaurants = () => [
-  { id:1, name:'Blue Lagoon', cuisine:'Seafood', imageUrl:'https://source.unsplash.com/400x300/?restaurant' },
-  { id:2, name:'Teal Taco',  cuisine:'Mexican', imageUrl:'https://source.unsplash.com/400x300/?taco' },
-];
 /* ------------------------------------------------------------------------ */
 
 export default function Dashboard() {
@@ -67,9 +64,31 @@ export default function Dashboard() {
   useEffect(()=>{ if (!loading && !isAuthenticated) router.push('/login'); },[loading]); */
 
   const meal        = useMeal();
-  const restaurants = useRestaurants();
+  const [restaurants, setRestaurants] = useState([]);
+  const [fetchRestaurants] = useLazyQuery(FindNearbyRestaurantsDocument, {
+    onCompleted: (data) => setRestaurants(data.findNearbyRestaurants || [])
+  });
   const theme       = useTheme();
   const searchTerm  = useDashStore(s => s.searchTerm);
+
+  // Fetch nearby restaurants based on browser geolocation
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        fetchRestaurants({
+          variables: {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            radius: 1500
+          }
+        });
+      },
+      (err) => {
+        console.error('Geolocation error', err);
+      }
+    );
+  }, [fetchRestaurants]);
 
   // State for tabs
   const [tabValue, setTabValue] = useState(0);
@@ -130,7 +149,10 @@ export default function Dashboard() {
   };
 
   const filtered = useMemo(
-    () => restaurants.filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase())),
+    () =>
+      restaurants.filter((r) =>
+        (r.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+      ),
     [restaurants, searchTerm],
   );
 
@@ -221,7 +243,9 @@ export default function Dashboard() {
         <MealCard meal={meal} />
 
         <DiscoveryHeader />
-        {filtered.map(r => <RestaurantCard key={r.id} restaurant={r} />)}
+        {filtered.map(r => (
+          <RestaurantCard key={r.placeId || r.id} restaurant={r} />
+        ))}
       </Box>
       <BottomSearchRail />
       <NewNavigationDrawer />

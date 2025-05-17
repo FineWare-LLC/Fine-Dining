@@ -1,0 +1,74 @@
+# --- NODE/JS PROJECT FILES ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# --- BUILD OUTPUT ---
+dist/
+build/
+.next/
+out/
+coverage/
+.vite/
+.cache/
+.eslintcache
+*.tsbuildinfo
+*.tgz
+
+# --- TEST ARTIFACTS ---
+test-results/
+playwright-report/
+cypress/videos/
+cypress/screenshots/
+jest-coverage/
+.nyc_output/
+.vitest/
+*.lcov
+*.log
+
+# --- ENVIRONMENT / SECRETS ---
+.env
+.env.*
+!.env.example
+!.envrc
+!.env.sample
+
+# --- OS / EDITOR / IDE FILES ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+desktop.ini
+
+# --- VS CODE ---
+.vscode/
+.history/
+.code-workspace
+
+# --- JETBRAINS / WEBSTORM ---
+.idea/
+*.iml
+
+# --- MAC OS ---
+*.DS_Store
+
+# --- LOGS ---
+logs/
+
+# --- BUNDLER/COMPILED FILES ---
+*.map
+*.gz
+*.br
+
+# --- CUSTOM PROJECT FILES ---
+# (Add any project-specific ignores below)
+
+# --- DO NOT IGNORE THESE EXAMPLES ---
+
+# --- GITIGNORED BY DESIGN, NOT BY MISTAKE ---
+# (No trailing slashes for files, trailing slashes for folders)

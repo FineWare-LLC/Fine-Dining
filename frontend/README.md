@@ -135,6 +135,7 @@ Create a `.env.local` file in the `frontend` directory. Add your MongoDB connect
 ```dotenv
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_very_strong_and_secret_key_here
+GOOGLE_PLACES_API_KEY=your_google_places_api_key
 ```
 
 ## Testing
@@ -148,6 +149,7 @@ End-to-end tests are configured in `playwright.config.js` and can be run with:
 ```bash
 npm run test:playwright
 ```
+This command automatically installs Playwright browsers if they haven't been installed.
 
 ### Component Testing
 

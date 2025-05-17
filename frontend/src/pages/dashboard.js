@@ -5,7 +5,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import { Box, Button, CssBaseline, useTheme, CircularProgress, Typography, Tabs, Tab } from '@mui/material';
 import { useMutation, useLazyQuery, gql } from '@apollo/client';
-import { FindNearbyRestaurantsDocument } from '@/gql';
 import NewHeader from '@/components/Dashboard/NewHeader';
 import GreetingSegment from '@/components/Dashboard/GreetingSegment';
 import DailySummary from '@/components/Dashboard/DailySummary';
@@ -19,7 +18,6 @@ import MealCatalog from '@/components/Dashboard/MealCatalog';
 import NutritionRequirementsForm from '@/components/Dashboard/NutritionRequirementsForm';
 import { useDashStore } from '@/components/Dashboard/store';
 
-// Define the mutation directly using gql tag
 const GENERATE_OPTIMIZED_MEAL_PLAN = gql`
   mutation GenerateOptimizedMealPlan($selectedMealIds: [ID], $customNutritionTargets: CustomNutritionTargetsInput) {
     generateOptimizedMealPlan(selectedMealIds: $selectedMealIds, customNutritionTargets: $customNutritionTargets) {
@@ -47,6 +45,18 @@ const GENERATE_OPTIMIZED_MEAL_PLAN = gql`
   }
 `;
 
+const FIND_NEARBY_RESTAURANTS = gql`
+  query FindNearbyRestaurants($latitude: Float!, $longitude: Float!, $radius: Int!) {
+    findNearbyRestaurants(latitude: $latitude, longitude: $longitude, radius: $radius) {
+      id
+      placeId
+      name
+      address
+      rating
+    }
+  }
+`;
+
 /* ------------------------------------------------------------------------ */
 /* Mock fetchers – replace with real data hooks or GraphQL queries.         */
 const useMeal = () => ({
@@ -65,8 +75,9 @@ export default function Dashboard() {
 
   const meal        = useMeal();
   const [restaurants, setRestaurants] = useState([]);
-  const [fetchRestaurants] = useLazyQuery(FindNearbyRestaurantsDocument, {
-    onCompleted: (data) => setRestaurants(data.findNearbyRestaurants || [])
+  const [fetchRestaurants, { loading: restaurantsLoading, error: restaurantsError }] =
+    useLazyQuery(FIND_NEARBY_RESTAURANTS, {
+      onCompleted: (data) => setRestaurants(data.findNearbyRestaurants || [])
   });
   const theme       = useTheme();
   const searchTerm  = useDashStore(s => s.searchTerm);
@@ -85,7 +96,15 @@ export default function Dashboard() {
         });
       },
       (err) => {
-        console.error('Geolocation error', err);
+        console.warn('Geolocation error — falling back to Newport, TN coords:', err);
+        // Newport, TN approximate coordinates
+        fetchRestaurants({
+          variables: {
+            latitude: 35.968,
+            longitude: -83.187,
+            radius: 1500
+          }
+        });
       }
     );
   }, [fetchRestaurants]);
@@ -103,7 +122,7 @@ export default function Dashboard() {
   const [customNutritionTargets, setCustomNutritionTargets] = useState(null);
 
   // GraphQL mutation for generating optimized meal plan
-  const [generateOptimizedMealPlan, { loading: optimizationLoading, error: optimizationError }] = 
+  const [generateOptimizedMealPlan, { loading: optimizationLoading, error: optimizationError }] =
     useMutation(GENERATE_OPTIMIZED_MEAL_PLAN, {
       onCompleted: (data) => {
         setOptimizedMealPlan(data.generateOptimizedMealPlan);
@@ -191,16 +210,16 @@ export default function Dashboard() {
 
           {/* Tab 1: Meal Catalog */}
           {tabValue === 0 && (
-            <MealCatalog 
-              selectedMeals={selectedMeals} 
-              onSelectMeal={handleMealSelection} 
+            <MealCatalog
+              selectedMeals={selectedMeals}
+              onSelectMeal={handleMealSelection}
             />
           )}
 
           {/* Tab 2: Nutrition Requirements */}
           {tabValue === 1 && (
-            <NutritionRequirementsForm 
-              onChange={handleNutritionTargetsChange} 
+            <NutritionRequirementsForm
+              onChange={handleNutritionTargetsChange}
             />
           )}
 
@@ -221,9 +240,9 @@ export default function Dashboard() {
 
           {/* Generate Button */}
           <Box sx={{ mt: 3, mb: 2, display: 'flex', justifyContent: 'center' }}>
-            <Button 
-              variant="contained" 
-              color="primary" 
+            <Button
+              variant="contained"
+              color="primary"
               onClick={handleGenerateOptimizedPlan}
               disabled={optimizationLoading}
               startIcon={optimizationLoading ? <CircularProgress size={20} color="inherit" /> : null}
@@ -243,6 +262,25 @@ export default function Dashboard() {
         <MealCard meal={meal} />
 
         <DiscoveryHeader />
+
+        {restaurantsLoading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+            <CircularProgress />
+          </Box>
+        )}
+
+        {restaurantsError && (
+          <Typography color="error" align="center" sx={{ my: 2 }}>
+            Failed to load nearby restaurants.
+          </Typography>
+        )}
+
+        {!restaurantsLoading && !restaurantsError && filtered.length === 0 && (
+          <Typography variant="body2" color="text.secondary" align="center" sx={{ my: 2 }}>
+            No nearby restaurants found.
+          </Typography>
+        )}
+
         {filtered.map(r => (
           <RestaurantCard key={r.placeId || r.id} restaurant={r} />
         ))}

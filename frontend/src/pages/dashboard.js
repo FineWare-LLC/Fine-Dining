@@ -48,11 +48,15 @@ const GENERATE_OPTIMIZED_MEAL_PLAN = gql`
 const FIND_NEARBY_RESTAURANTS = gql`
   query FindNearbyRestaurants($latitude: Float!, $longitude: Float!, $radius: Int!) {
     findNearbyRestaurants(latitude: $latitude, longitude: $longitude, radius: $radius) {
-      id
       placeId
       name
-      address
+      vicinity
       rating
+      userRatingsTotal
+      location {
+        latitude
+        longitude
+      }
     }
   }
 `;
@@ -270,9 +274,53 @@ export default function Dashboard() {
         )}
 
         {restaurantsError && (
-          <Typography color="error" align="center" sx={{ my: 2 }}>
-            Failed to load nearby restaurants.
-          </Typography>
+          <Box sx={{ my: 2, textAlign: 'center' }}>
+            <Typography color="error" gutterBottom>
+              Failed to load nearby restaurants.
+            </Typography>
+            <Button 
+              variant="outlined" 
+              size="small" 
+              onClick={() => {
+                // Retry with current location or fallback
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                      fetchRestaurants({
+                        variables: {
+                          latitude: pos.coords.latitude,
+                          longitude: pos.coords.longitude,
+                          radius: 1500
+                        }
+                      });
+                    },
+                    (err) => {
+                      console.warn('Geolocation error on retry — falling back to Newport, TN coords:', err);
+                      // Newport, TN approximate coordinates
+                      fetchRestaurants({
+                        variables: {
+                          latitude: 35.968,
+                          longitude: -83.187,
+                          radius: 1500
+                        }
+                      });
+                    }
+                  );
+                } else {
+                  // Fallback if geolocation is not available
+                  fetchRestaurants({
+                    variables: {
+                      latitude: 35.968,
+                      longitude: -83.187,
+                      radius: 1500
+                    }
+                  });
+                }
+              }}
+            >
+              Retry
+            </Button>
+          </Box>
         )}
 
         {!restaurantsLoading && !restaurantsError && filtered.length === 0 && (
@@ -282,7 +330,7 @@ export default function Dashboard() {
         )}
 
         {filtered.map(r => (
-          <RestaurantCard key={r.placeId || r.id} restaurant={r} />
+          <RestaurantCard key={r.placeId} restaurant={r} />
         ))}
       </Box>
       <BottomSearchRail />

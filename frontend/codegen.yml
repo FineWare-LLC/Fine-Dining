@@ -1,10 +1,7 @@
 schema: "http://localhost:3000/api/graphql"
-documents: "src/graphql/operations.graphql" # Point to your operation definitions file
+documents: "src/graphql/operations.graphql"
 generates:
   src/gql/:
     preset: client
     presetConfig:
-    # Optional: If you ONLY want JS and no TS types, you might try configuring the preset further,
-    # but often it's easier to just let it generate both and ignore the .d.ts files.
-    # Check the client-preset documentation if needed.
-    # Example (might vary): useTypeImports: false
+      useTypeImports: false

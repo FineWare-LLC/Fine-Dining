@@ -6,7 +6,7 @@
 
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import { dbConnect } from '../dbConnect.js';
+import { dbConnect } from '../src/lib/dbConnect.js';
 import User from "../src/models/User/index.js";
 import { MealModel } from "../src/models/Meal/index.js";
 import OptimizationService from "./OptimizationService.js";

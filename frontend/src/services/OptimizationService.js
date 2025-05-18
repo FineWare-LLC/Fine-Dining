@@ -152,11 +152,11 @@ export async function prepareSolverData(userId, selectedMealIds = [], customNutr
     totalMealsCount,
     mealIds,
     mealNames,
-    prices: Float64Array.from(prices),
-    carbohydrates: Float64Array.from(carbs),
-    proteins: Float64Array.from(proteins),
-    fats: Float64Array.from(fats),
-    sodiums: Float64Array.from(sodiums),
+    prices: Float32Array.from(prices),
+    carbohydrates: Float32Array.from(carbs),
+    proteins: Float32Array.from(proteins),
+    fats: Float32Array.from(fats),
+    sodiums: Float32Array.from(sodiums),
     nutritionTargets
   };
 }
@@ -180,11 +180,11 @@ function buildOptimizationModel(data) {
 
   // Variables x_i = number of HALF-servings of meal i
   const columnCount = mealCount;
-  const columnLowerBounds = new Float64Array(mealCount).fill(0);
-  const columnUpperBounds = new Float64Array(mealCount).fill(4); // max 2 servings = 4 half-servings
+  const columnLowerBounds = new Float32Array(mealCount).fill(0);
+  const columnUpperBounds = new Float32Array(mealCount).fill(4); // max 2 servings = 4 half-servings
 
   // Objective: minimize total price
-  const objectiveWeights = new Float64Array(mealCount);
+  const objectiveWeights = new Float32Array(mealCount);
   for (let i = 0; i < mealCount; i++) {
     objectiveWeights[i] = prices[i] * 0.5; // price per half-serving
   }
@@ -192,14 +192,14 @@ function buildOptimizationModel(data) {
 
   // Nutrient constraints
   const rowCount = 4;
-  const rowLowerBounds = new Float64Array([
+  const rowLowerBounds = new Float32Array([
     nutritionTargets.carbohydratesMin,
     nutritionTargets.proteinMin,
     nutritionTargets.fatMin,
     nutritionTargets.sodiumMin
   ]);
 
-  const rowUpperBounds = new Float64Array([
+  const rowUpperBounds = new Float32Array([
     nutritionTargets.carbohydratesMax === Infinity ? 1e10 : nutritionTargets.carbohydratesMax,
     nutritionTargets.proteinMax === Infinity ? 1e10 : nutritionTargets.proteinMax,
     nutritionTargets.fatMax === Infinity ? 1e10 : nutritionTargets.fatMax,
@@ -209,14 +209,14 @@ function buildOptimizationModel(data) {
   // Sparse matrix: for each half-serving variable we halve its nutrient
   const offsets = new Int32Array([0, mealCount, 2*mealCount, 3*mealCount, 4*mealCount]);
 
-  const indices = new Int32Array(4 * mealCount);
+  const indices = mealCount < 65536 ? new Int16Array(4 * mealCount) : new Int32Array(4 * mealCount);
   for (let r = 0; r < 4; ++r) {
     for (let c = 0; c < mealCount; ++c) {
       indices[r * mealCount + c] = c;
     }
   }
 
-  const values = new Float64Array(4 * mealCount);
+  const values = new Float32Array(4 * mealCount);
   // Row 0: carbs per HALF-serving = carbohydrates[i] * 0.5
   // Row 1: protein per HALF-serving = proteins[i] * 0.5
   // Row 2: fat per HALF-serving = fats[i] * 0.5

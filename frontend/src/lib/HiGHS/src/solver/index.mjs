@@ -60,10 +60,10 @@ async function readMeals() {
             resolve({
                 mealCount: n,
                 mealNames,
-                calories: Float64Array.from(cals),
-                protein:  Float64Array.from(prots),
-                carbs:    Float64Array.from(carbs),
-                sodium:   Float64Array.from(sods),
+                calories: Float32Array.from(cals),
+                protein:  Float32Array.from(prots),
+                carbs:    Float32Array.from(carbs),
+                sodium:   Float32Array.from(sods),
             });
         });
 
@@ -79,15 +79,15 @@ async function readMeals() {
 function buildMealPlanModel({ mealCount, calories, protein, carbs, sodium }) {
     // Variables x_i = number of HALF-servings of meal i
     const columnCount       = mealCount;
-    const columnLowerBounds = new Float64Array(mealCount).fill(0);
-    const columnUpperBounds = new Float64Array(mealCount).fill(6); // max 3 servings = 6 half-servings
-    const objectiveWeights  = new Float64Array(mealCount).fill(0);
+    const columnLowerBounds = new Float32Array(mealCount).fill(0);
+    const columnUpperBounds = new Float32Array(mealCount).fill(6); // max 3 servings = 6 half-servings
+    const objectiveWeights  = new Float32Array(mealCount).fill(0);
     const isMaximization    = false;  // minimize 0
 
     // Nutrient constraints (unchanged)
     const rowCount       = 4;
-    const rowLowerBounds = new Float64Array([2200, 100, 250, 1500]);
-    const rowUpperBounds = new Float64Array([2600, 160, 350, 2300]);
+    const rowLowerBounds = new Float32Array([2200, 100, 250, 1500]);
+    const rowUpperBounds = new Float32Array([2600, 160, 350, 2300]);
 
     // Sparse matrix: for each half-serving variable we halve its nutrient
     const offsets = new Int32Array([0,
@@ -104,7 +104,7 @@ function buildMealPlanModel({ mealCount, calories, protein, carbs, sodium }) {
         }
     }
 
-    const values = new Float64Array(4 * mealCount);
+    const values = new Float32Array(4 * mealCount);
     // Row 0: calories per HALF-serving = calories[i] * 0.5
     // Row 1: protein per HALF-serving = protein[i] * 0.5
     // etc.

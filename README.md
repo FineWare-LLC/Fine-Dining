@@ -72,7 +72,7 @@ The application includes various code implementations, such as:
 **Prerequisites:**
 * Node.js (>=18.18.0 based on `frontend/package.json`) and npm (or Yarn/pnpm/bun).
 * MongoDB instance (local or cloud, e.g., MongoDB Atlas) with a valid connection URI.
-* Environment variables in a `.env.local` file in the `frontend` directory (e.g., `MONGODB_URI`, `JWT_SECRET`, `GOOGLE_PLACES_API_KEY`).
+* Environment variables in a `.env.local` file in the `frontend` directory (e.g., `MONGODB_URI`, `JWT_SECRET`, `GOOGLE_PLACES_API_KEY`, `OVERPASS_URL`). The app uses Google Places when a valid key is supplied and falls back to Overpass otherwise.
 
 **Setup & Installation (Frontend):**
 1.  Clone the repository: `git clone https://github.com/FineWare-LLC/Fine-Dining.fineware.git`
@@ -80,6 +80,37 @@ The application includes various code implementations, such as:
 3.  Install dependencies: `npm install`
 4.  Seed the database: `npm run seed`
 5.  Generate GraphQL types: `npm run codegen`
+
+### Environment Variables
+
+Create a `.env.local` file in the `frontend` directory with your database connection string and secrets:
+
+```dotenv
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_very_strong_and_secret_key_here
+GOOGLE_PLACES_API_KEY=
+# Optional custom Overpass endpoint used when Google Places fails
+OVERPASS_URL=https://overpass-api.de/api/interpreter
+```
+
+### Overpass API Example
+
+If you want to test restaurant lookups without Google Places, use the demo script
+located in `frontend/scripts/overpass-demo.mjs`:
+
+```bash
+node scripts/overpass-demo.mjs <latitude> <longitude> [radius] [keyword]
+```
+
+Example (search for pizza within 1.5 km of New York City):
+
+```bash
+node scripts/overpass-demo.mjs 40.7128 -74.0060 1500 pizza
+```
+
+The script relies on `OVERPASS_URL` from your `.env.local` file (defaults to
+`https://overpass-api.de/api/interpreter`) and prints the resulting restaurant
+list as JSON.
 
 **Development (Frontend):**
 * Run the Next.js development server: `npm run dev`

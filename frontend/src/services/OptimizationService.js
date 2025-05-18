@@ -15,6 +15,13 @@ import User from '@/models/User/index.js';
 const { Solver, solverVersion } = highsDefault;
 const STATUS_OPTIMAL = 7; // HiGHS status code for Optimal
 
+// Solver configuration via environment variables
+const {
+  HIGHS_THREADS,
+  HIGHS_PRESOLVE,
+  HIGHS_TIME_LIMIT
+} = process.env;
+
 /**
  * Prepares data for the HiGHS solver by fetching user nutrition targets
  * and available meals, and filtering out meals containing user allergens.
@@ -260,6 +267,9 @@ export async function runOptimization(data) {
 
       // Initialize the solver
       const solver = new Solver();
+      if (HIGHS_THREADS) solver.setOptionValue('threads', parseInt(HIGHS_THREADS, 10));
+      if (HIGHS_PRESOLVE) solver.setOptionValue('presolve', HIGHS_PRESOLVE);
+      if (HIGHS_TIME_LIMIT) solver.setOptionValue('time_limit', parseFloat(HIGHS_TIME_LIMIT));
       solver.passModel(model);
       console.log('Model transferred to HiGHS – solving...');
 

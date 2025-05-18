@@ -59,3 +59,10 @@ Future improvements could include:
 - Handling pagination and dynamic content loading
 - Adding error recovery and retry mechanisms
 - Implementing rate limiting to avoid being blocked by websites
+
+## Solver Data Loading
+
+The solver at `src/solver/index.mjs` now streams the processed CSV using
+`csv-parse` rather than reading the entire file into memory. Rows are processed
+incrementally and appended to typed arrays. This reduces peak memory
+consumption when working with large meal catalogs.

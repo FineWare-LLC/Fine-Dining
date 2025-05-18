@@ -11,7 +11,8 @@
  */
 
 import highsDefault from 'highs-addon';
-import fs              from 'fs/promises';
+import fs              from 'fs';
+import { parse }       from 'csv-parse';
 import path            from 'path';
 import { fileURLToPath } from 'url';
 
@@ -35,35 +36,41 @@ const __dirname  = path.dirname(__filename);
 const MEAL_FILE = path.join(__dirname, '../../data/processed/restaurant_meals_processed.csv');
 
 async function readMeals() {
-    const raw    = await fs.readFile(MEAL_FILE, 'utf8');
-    const lines  = raw.trim().split(/\r?\n/);
-    const headers= lines.shift().split(',');
-    const idx    = Object.fromEntries(headers.map((h,i)=>[h,i]));
+    return new Promise((resolve, reject) => {
+        const mealNames = [];
+        const cals      = [];
+        const prots     = [];
+        const carbs     = [];
+        const sods      = [];
 
-    const mealNames = [];
-    const cals      = [];
-    const prots     = [];
-    const carbs     = [];
-    const sods      = [];
+        const parser = parse({ columns: true, trim: true });
 
-    for (const line of lines) {
-        const p = line.split(',');
-        mealNames.push(p[idx.meal_name]);
-        cals.push   (parseFloat(p[idx.calories]));
-        prots.push  (parseFloat(p[idx.protein]));
-        carbs.push  (parseFloat(p[idx.carbohydrates]));
-        sods.push   (parseFloat(p[idx.sodium]));
-    }
+        parser.on('data', row => {
+            mealNames.push(row.meal_name);
+            cals.push   (parseFloat(row.calories));
+            prots.push  (parseFloat(row.protein));
+            carbs.push  (parseFloat(row.carbohydrates));
+            sods.push   (parseFloat(row.sodium));
+        });
 
-    const n = mealNames.length;
-    return {
-        mealCount: n,
-        mealNames,
-        calories:       Float64Array.from(cals),
-        protein:        Float64Array.from(prots),
-        carbs:          Float64Array.from(carbs),
-        sodium:         Float64Array.from(sods),
-    };
+        parser.on('error', err => reject(err));
+
+        parser.on('end', () => {
+            const n = mealNames.length;
+            resolve({
+                mealCount: n,
+                mealNames,
+                calories: Float64Array.from(cals),
+                protein:  Float64Array.from(prots),
+                carbs:    Float64Array.from(carbs),
+                sodium:   Float64Array.from(sods),
+            });
+        });
+
+        fs.createReadStream(MEAL_FILE)
+            .on('error', err => reject(err))
+            .pipe(parser);
+    });
 }
 
 // ─────────────────────────────────────────────────────────────

@@ -11,6 +11,7 @@
 import highsDefault from 'highs-addon';
 import { MealModel } from '@/models/Meal/index.js';
 import User from '@/models/User/index.js';
+import { createSolverError } from '../io/solverOutput.js';
 
 const { Solver, solverVersion } = highsDefault;
 const STATUS_OPTIMAL = 7; // HiGHS status code for Optimal
@@ -274,11 +275,7 @@ export async function runOptimization(data) {
         console.log(`Solver status code: ${status}`);
 
         if (status !== STATUS_OPTIMAL) {
-          if (status === 8) { // Infeasible
-            return reject(new Error('No feasible meal plan found with the given constraints. Try relaxing your nutritional targets.'));
-          } else {
-            return reject(new Error(`Solver did not reach Optimal solution (status code: ${status})`));
-          }
+          return reject(createSolverError(status));
         }
 
         const info = solver.getInfo();

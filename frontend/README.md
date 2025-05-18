@@ -128,6 +128,14 @@ This repository contains the **Frontend** of the Fine Dining application:
     bun install
     ```
 
+3.  **Generate GraphQL Types**
+
+    After installing dependencies, run the GraphQL code generator to create TypeScript types:
+
+    ```bash
+    npm run codegen
+    ```
+
 ### Environment Variables
 
 Create a `.env.local` file in the `frontend` directory. Add your MongoDB connection string and a secure JWT secret:

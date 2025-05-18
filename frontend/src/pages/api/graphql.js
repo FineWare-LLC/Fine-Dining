@@ -46,34 +46,66 @@ const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute window
 const RATE_LIMIT_MAX_REQUESTS_PER_IP = 100; // Max requests per IP per window
 const rateLimitStore = new Map();
 
+class Mutex {
+    constructor() {
+        this.locked = false;
+        this.queue = [];
+    }
+
+    async lock() {
+        if (!this.locked) {
+            this.locked = true;
+            return;
+        }
+        await new Promise(resolve => this.queue.push(resolve));
+        this.locked = true;
+    }
+
+    unlock() {
+        const next = this.queue.shift();
+        if (next) {
+            next();
+        } else {
+            this.locked = false;
+        }
+    }
+}
+
+const rateLimitMutex = new Mutex();
+
 /**
  * Checks and updates the request count for the given IP.
  *
  * @param {string} ip - Client IP address.
  * @returns {boolean} - True if request is allowed; false if limit exceeded.
  */
-function checkRateLimit(ip) {
+async function checkRateLimit(ip) {
     if (!ip) return true;
-    const now = Date.now();
-    const record = rateLimitStore.get(ip) || { count: 0, startTime: now };
+    await rateLimitMutex.lock();
+    try {
+        const now = Date.now();
+        const record = rateLimitStore.get(ip) || { count: 0, startTime: now };
 
-    if (now - record.startTime > RATE_LIMIT_WINDOW_MS) {
-        record.count = 1;
-        record.startTime = now;
-    } else {
-        record.count += 1;
-    }
-    rateLimitStore.set(ip, record);
+        if (now - record.startTime > RATE_LIMIT_WINDOW_MS) {
+            record.count = 1;
+            record.startTime = now;
+        } else {
+            record.count += 1;
+        }
+        rateLimitStore.set(ip, record);
 
-    // Basic cleanup of stale records (1% chance per request)
-    if (Math.random() < 0.01) {
-        rateLimitStore.forEach((rec, key) => {
-            if (now - rec.startTime > RATE_LIMIT_WINDOW_MS * 5) {
-                rateLimitStore.delete(key);
-            }
-        });
+        // Basic cleanup of stale records (1% chance per request)
+        if (Math.random() < 0.01) {
+            rateLimitStore.forEach((rec, key) => {
+                if (now - rec.startTime > RATE_LIMIT_WINDOW_MS * 5) {
+                    rateLimitStore.delete(key);
+                }
+            });
+        }
+        return record.count <= RATE_LIMIT_MAX_REQUESTS_PER_IP;
+    } finally {
+        rateLimitMutex.unlock();
     }
-    return record.count <= RATE_LIMIT_MAX_REQUESTS_PER_IP;
 }
 
 /**
@@ -242,6 +274,13 @@ export default async function handler(req, res) {
     assignRequestId(res);
     setSecurityHeaders(res);
     setCORSHeaders(res, req.headers.origin || '');
+
+    const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+    if (!(await checkRateLimit(ip))) {
+        res.statusCode = 429;
+        res.setHeader('Content-Type', 'application/json');
+        return res.end(JSON.stringify({ errors: [{ message: 'Too many requests' }] }));
+    }
 
     // Handle CORS preflight request
     if (req.method === 'OPTIONS') {

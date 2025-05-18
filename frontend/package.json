@@ -10,6 +10,7 @@
     "lint": "next lint",
     "test:playwright": "node scripts/run-playwright.mjs",
     "test:components": "cross-env NODE_ENV=test-ct playwright test --config=playwright-ct.config.js",
+    "test:solver": "node --test src/tests/solver/concurrency.test.js",
     "seed": "node src/lib/HiGHS/seed_database.mjs",
     "codegen": "graphql-codegen --config codegen.yml"
   },

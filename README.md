@@ -104,12 +104,6 @@ The application includes various code implementations, such as:
 * `npm run seed`: Populates the database with sample data (uses `frontend/src/lib/HiGHS/seed_database.mjs`).
 * `npm run codegen`: Generates GraphQL types from your schema (`codegen.yml`).
 
-## Deployment
-The application is designed for deployment on AWS EC2 instances, managed by an Application Load Balancer for scalability and high availability.
-
-## Contributing
-Contributions are welcome! Please follow the standard fork, branch, and pull request workflow. Ensure your code adheres to the existing style and that all tests pass.
-
 ## License
 This project is currently not licensed under an open-source license.
 © 2025 FineWare LLC. All rights reserved.

@@ -47,63 +47,43 @@ export async function prepareSolverData(userId, selectedMealIds = [], customNutr
     i.toLowerCase().trim()
   );
 
-  // Fetch all available meals or just the selected ones
-  let allMeals;
-  if (selectedMealIds && selectedMealIds.length > 0) {
-    allMeals = await MealModel.find({ _id: { $in: selectedMealIds } });
-    console.log(`Found ${allMeals.length} selected meals out of ${selectedMealIds.length} requested`);
-  } else {
-    allMeals = await MealModel.find({});
-    console.log(`Found ${allMeals.length} total meals`);
+  // Base query for counting all meals before filtering
+  const baseQuery = selectedMealIds && selectedMealIds.length > 0
+    ? { _id: { $in: selectedMealIds } }
+    : {};
+
+  const totalMealsCount = await MealModel.countDocuments(baseQuery);
+
+  // Build query to exclude meals missing price or nutrient data and meals
+  // containing allergens or disallowed ingredients
+  const mealQuery = {
+    ...baseQuery,
+    price: { $ne: null },
+    'nutrition.carbohydrates': { $ne: null },
+    'nutrition.protein': { $ne: null },
+    'nutrition.fat': { $ne: null },
+    'nutrition.sodium': { $ne: null }
+  };
+
+  if (userAllergies.length > 0) {
+    mealQuery.allergens = { $not: { $elemMatch: { $in: userAllergies } } };
   }
 
-  // Count meals before filtering
-  console.log(`Starting with ${allMeals.length} total meals`);
+  if (disallowedIngredients.length > 0) {
+    mealQuery.ingredients = { $not: { $elemMatch: { $in: disallowedIngredients } } };
+  }
 
-  // Track filtering reasons for debugging
-  let missingDataCount = 0;
-  let allergenCount = 0;
-  let ingredientBlockCount = 0;
+  const filteredMealsRaw = await MealModel.find(mealQuery);
+  console.log(`Query returned ${filteredMealsRaw.length} meals out of ${totalMealsCount} total`);
 
-  // Filter out meals containing user allergens
-  const filteredMeals = allMeals.filter(meal => {
-    // Skip meals that don't have required data
-    if (meal.price === undefined || meal.price === null || !meal.nutrition || 
-        !meal.nutrition.carbohydrates || 
-        !meal.nutrition.protein || 
-        !meal.nutrition.fat || 
-        !meal.nutrition.sodium) {
-      missingDataCount++;
-      console.log(`Skipping meal ${meal.mealName || meal._id} due to missing data: price=${meal.price}, nutrition=${!!meal.nutrition}`);
-      return false;
-    }
-
-    // Skip meals containing user allergens
-    if (meal.allergens && meal.allergens.length > 0) {
-      const mealAllergens = meal.allergens.map(allergy =>
-        allergy.toLowerCase().trim()
-      );
-
-      // If any of the meal's allergens match user's allergies, filter it out
-      if (userAllergies.some(allergy => mealAllergens.includes(allergy))) {
-        allergenCount++;
-        return false;
-      }
-    }
-
-    // Skip meals containing disallowed ingredients
-    if (disallowedIngredients.length > 0 && meal.ingredients && meal.ingredients.length > 0) {
-      const mealIngs = meal.ingredients.map(i => i.toLowerCase().trim());
-      if (disallowedIngredients.some(ing => mealIngs.includes(ing))) {
-        ingredientBlockCount++;
-        return false;
-      }
-    }
-
-    return true;
-  });
-
-  console.log(`Filtered to ${filteredMeals.length} meals after removing ${missingDataCount} meals with missing data, ${allergenCount} meals with allergens and ${ingredientBlockCount} meals with blocked ingredients`);
+  // Final sanity check filtering – should normally pass all meals
+  const filteredMeals = filteredMealsRaw.filter(meal =>
+    meal.price !== undefined && meal.price !== null && meal.nutrition &&
+    meal.nutrition.carbohydrates !== undefined &&
+    meal.nutrition.protein !== undefined &&
+    meal.nutrition.fat !== undefined &&
+    meal.nutrition.sodium !== undefined
+  );
 
   // Format the filtered meals for the HiGHS solver
   const mealIds = [];
@@ -152,7 +132,7 @@ export async function prepareSolverData(userId, selectedMealIds = [], customNutr
 
   return {
     mealCount: filteredMeals.length,
-    totalMealsCount: allMeals.length,
+    totalMealsCount,
     mealIds,
     mealNames,
     prices: Float64Array.from(prices),

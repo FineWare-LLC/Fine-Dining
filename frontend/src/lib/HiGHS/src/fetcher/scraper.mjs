@@ -1,6 +1,7 @@
 // src/fetcher/scraper.mjs
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
+import pLimit from 'p-limit';
 
 /**
  * Web scraper for collecting nutrition, price, and allergen information
@@ -216,9 +217,20 @@ async function scrapeChain(chain) {
     }
 
     // For each menu item, fetch nutrition and allergen information
-    for (const item of menuItems) {
-      await enrichItemWithNutritionAndAllergens(item, chain);
-    }
+    // Limit concurrency to avoid overwhelming target sites
+    const limit = pLimit(5);
+    await Promise.all(
+      menuItems.map(item =>
+        limit(() =>
+          enrichItemWithNutritionAndAllergens(item, chain).catch(error => {
+            console.error(
+              `Error enriching ${item.meal_name} from ${chain.name}:`,
+              error
+            );
+          })
+        )
+      )
+    );
 
     console.log(`Scraped ${menuItems.length} items from ${chain.name}`);
     return menuItems;

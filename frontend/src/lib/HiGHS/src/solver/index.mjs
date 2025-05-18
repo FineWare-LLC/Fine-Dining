@@ -15,6 +15,7 @@ import fs              from 'fs';
 import { parse }       from 'csv-parse';
 import path            from 'path';
 import { fileURLToPath } from 'url';
+import { autoTune, loadConfig } from '../tuner/index.mjs';
 
 const { Solver, solverVersion } = highsDefault;
 const STATUS_OPTIMAL = 7; // HiGHS status code for Optimal
@@ -34,6 +35,9 @@ console.log(`🔍 HiGHS version: ${solverVersion()}`);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 const MEAL_FILE = path.join(__dirname, '../../data/processed/restaurant_meals_processed.csv');
+const CONFIG_FILE = path.join(__dirname, '../tuner/config.json');
+const ARGS = process.argv.slice(2);
+const DO_TUNE = ARGS.includes('--tune');
 
 async function readMeals() {
     return new Promise((resolve, reject) => {
@@ -136,7 +140,16 @@ async function main() {
     console.log(`🥗 Loaded ${data.mealCount} meals from CSV.`);
     const model = buildMealPlanModel(data);
 
+    let options = loadConfig(CONFIG_FILE);
+    if (DO_TUNE) {
+        console.log('🔧 Auto-tuning solver parameters...');
+        options = await autoTune(data, buildMealPlanModel, CONFIG_FILE);
+    }
+
     const solver = new Solver();
+    Object.entries(options).forEach(([k, v]) => {
+        try { solver.setOptionValue(k, v); } catch (_) {}
+    });
     solver.passModel(model);
     console.log('✅ Model transferred to HiGHS – solving…');
 

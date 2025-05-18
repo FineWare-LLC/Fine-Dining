@@ -11,6 +11,10 @@ import {
     Button,
     Typography,
     CircularProgress,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Select,
 } from '@mui/material';
 import { useMutation } from '@apollo/client';
 // Import the generated mutation document from your codegen output.
@@ -30,9 +34,9 @@ function CreateAccountForm() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
 
-    // Default values for fields not collected in the form.
-    const defaultGender = "OTHER"; // Options: 'MALE', 'FEMALE', 'OTHER'
-    const defaultMeasurementSystem = "METRIC"; // Options: 'METRIC', 'IMPERIAL'
+    // Gender and measurement system selections.
+    const [gender, setGender] = useState('OTHER');
+    const [measurementSystem, setMeasurementSystem] = useState('METRIC');
 
     // Local state for error and success messages.
     const [formError, setFormError] = useState('');
@@ -86,6 +90,14 @@ function CreateAccountForm() {
             setFormError('Passwords do not match.');
             return;
         }
+        if (!gender) {
+            setFormError('Please select a gender.');
+            return;
+        }
+        if (!measurementSystem) {
+            setFormError('Please select a measurement system.');
+            return;
+        }
 
         try {
             await createAccount({
@@ -94,8 +106,8 @@ function CreateAccountForm() {
                         name: trimmedUsername,
                         email: trimmedEmail,
                         password: trimmedPassword,
-                        gender: defaultGender,
-                        measurementSystem: defaultMeasurementSystem,
+                        gender,
+                        measurementSystem,
                     },
                 },
             });
@@ -140,7 +152,37 @@ function CreateAccountForm() {
                 required
                 aria-label="Email Address"
             />
-            {/* TODO: Add proper inputs for gender and measurement system */}
+            <FormControl fullWidth>
+                <InputLabel id="gender-label">Gender</InputLabel>
+                <Select
+                    labelId="gender-label"
+                    id="gender"
+                    value={gender}
+                    label="Gender"
+                    onChange={(e) => setGender(e.target.value)}
+                    name="gender"
+                    data-testid="gender-select"
+                >
+                    <MenuItem value="MALE">Male</MenuItem>
+                    <MenuItem value="FEMALE">Female</MenuItem>
+                    <MenuItem value="OTHER">Other</MenuItem>
+                </Select>
+            </FormControl>
+            <FormControl fullWidth>
+                <InputLabel id="measurement-label">Measurement System</InputLabel>
+                <Select
+                    labelId="measurement-label"
+                    id="measurementSystem"
+                    value={measurementSystem}
+                    label="Measurement System"
+                    onChange={(e) => setMeasurementSystem(e.target.value)}
+                    name="measurementSystem"
+                    data-testid="measurement-system-select"
+                >
+                    <MenuItem value="METRIC">Metric</MenuItem>
+                    <MenuItem value="IMPERIAL">Imperial</MenuItem>
+                </Select>
+            </FormControl>
             <TextField
                 name="password"
                 label="Password"

@@ -18,10 +18,14 @@ async function fillAndSubmitCreateAccountForm(
     username,
     email,
     password,
-    confirmPassword
+    confirmPassword,
+    gender = 'OTHER',
+    measurementSystem = 'METRIC'
 ) {
     await page.fill('input[name="username"]', username);
     await page.fill('input[name="email"]', email);
+    await page.selectOption('[data-testid="gender-select"]', gender);
+    await page.selectOption('[data-testid="measurement-system-select"]', measurementSystem);
     await page.fill('input[name="password"]', password);
     await page.fill('input[name="confirmPassword"]', confirmPassword);
     await page.click('text=CREATE ACCOUNT');
@@ -43,6 +47,8 @@ test.describe('Create Account Page - Comprehensive Tests', () => {
         await expect(page.locator('input[name="email"]')).toHaveAttribute('placeholder', /email/i);
         await expect(page.locator('input[name="password"]')).toHaveAttribute('placeholder', /password/i);
         await expect(page.locator('input[name="confirmPassword"]')).toHaveAttribute('placeholder', /confirm password/i);
+        await expect(page.locator('[data-testid="gender-select"]')).toBeVisible();
+        await expect(page.locator('[data-testid="measurement-system-select"]')).toBeVisible();
     });
 
     /**
@@ -64,7 +70,7 @@ test.describe('Create Account Page - Comprehensive Tests', () => {
      * 4. Attempt account creation with only username
      */
     test('should show errors if other fields are missing', async ({ page }) => {
-        await fillAndSubmitCreateAccountForm(page, 'testUser', '', '', '');
+        await fillAndSubmitCreateAccountForm(page, 'testUser', '', '', '', 'OTHER', 'METRIC');
         await expect(page.locator('.error-message')).toContainText(/required/i);
     });
 
@@ -72,7 +78,7 @@ test.describe('Create Account Page - Comprehensive Tests', () => {
      * 5. Attempt account creation with invalid email format
      */
     test('should show error for invalid email format', async ({ page }) => {
-        await fillAndSubmitCreateAccountForm(page, 'someUser', 'notAnEmail', 'testPass', 'testPass');
+        await fillAndSubmitCreateAccountForm(page, 'someUser', 'notAnEmail', 'testPass', 'testPass', 'OTHER', 'METRIC');
         await expect(page.locator('.error-message')).toContainText(/invalid email/i);
     });
 
@@ -80,7 +86,7 @@ test.describe('Create Account Page - Comprehensive Tests', () => {
      * 6. Check password vs. confirm password mismatch
      */
     test('should show mismatch error if passwords do not match', async ({ page }) => {
-        await fillAndSubmitCreateAccountForm(page, 'mismatchUser', 'test@example.com', 'passOne', 'passTwo');
+        await fillAndSubmitCreateAccountForm(page, 'mismatchUser', 'test@example.com', 'passOne', 'passTwo', 'OTHER', 'METRIC');
         await expect(page.locator('.error-message')).toContainText(/do not match/i);
     });
 
@@ -96,7 +102,7 @@ test.describe('Create Account Page - Comprehensive Tests', () => {
      * 8. Successful account creation with valid credentials
      */
     test('should successfully create an account with valid inputs', async ({ page }) => {
-        await fillAndSubmitCreateAccountForm(page, 'validUser', 'validUser@example.com', 'validPass', 'validPass');
+        await fillAndSubmitCreateAccountForm(page, 'validUser', 'validUser@example.com', 'validPass', 'validPass', 'OTHER', 'METRIC');
         await expect(page).toHaveURL(/welcome/i); // or whichever page you navigate to
     });
 
@@ -113,7 +119,7 @@ test.describe('Create Account Page - Comprehensive Tests', () => {
      * 10. Verify email uniqueness error (if applicable)
      */
     test('should show error if email is already taken', async ({ page }) => {
-        await fillAndSubmitCreateAccountForm(page, 'newUser', 'taken@example.com', 'test123', 'test123');
+        await fillAndSubmitCreateAccountForm(page, 'newUser', 'taken@example.com', 'test123', 'test123', 'OTHER', 'METRIC');
         await expect(page.locator('.error-message')).toContainText(/already in use/i);
     });
 
@@ -121,7 +127,7 @@ test.describe('Create Account Page - Comprehensive Tests', () => {
      * 11. Check error styling for mandatory fields
      */
     test('should apply error styling when fields are invalid', async ({ page }) => {
-        await fillAndSubmitCreateAccountForm(page, '', '', '', '');
+        await fillAndSubmitCreateAccountForm(page, '', '', '', '', 'OTHER', 'METRIC');
         await expect(page.locator('input[name="username"].error-border')).toBeVisible();
         await expect(page.locator('input[name="email"].error-border')).toBeVisible();
         await expect(page.locator('input[name="password"].error-border')).toBeVisible();
@@ -132,7 +138,7 @@ test.describe('Create Account Page - Comprehensive Tests', () => {
      * 12. Ensure typed values persist if submission fails
      */
     test('should preserve user entries on submission failure', async ({ page }) => {
-        await fillAndSubmitCreateAccountForm(page, 'preserveUser', 'wrongFormat', 'testPass', 'testPass');
+        await fillAndSubmitCreateAccountForm(page, 'preserveUser', 'wrongFormat', 'testPass', 'testPass', 'OTHER', 'METRIC');
         await expect(page.locator('input[name="username"]')).toHaveValue('preserveUser');
         await expect(page.locator('input[name="email"]')).toHaveValue('wrongFormat');
     });
@@ -168,7 +174,7 @@ test.describe('Create Account Page - Comprehensive Tests', () => {
      */
     test('should show error if password does not meet complexity requirements', async ({ page }) => {
         // Example rule: must include a number, uppercase, 8+ chars, etc.
-        await fillAndSubmitCreateAccountForm(page, 'compUser', 'compUser@example.com', 'short', 'short');
+        await fillAndSubmitCreateAccountForm(page, 'compUser', 'compUser@example.com', 'short', 'short', 'OTHER', 'METRIC');
         await expect(page.locator('.error-message')).toContainText(/complexity requirement/i);
     });
 
@@ -176,7 +182,7 @@ test.describe('Create Account Page - Comprehensive Tests', () => {
      * 16. Validate special characters in username if allowed or not
      */
     test('should handle special characters in username properly', async ({ page }) => {
-        await fillAndSubmitCreateAccountForm(page, 'special!@#', 'test@example.com', 'test1234', 'test1234');
+        await fillAndSubmitCreateAccountForm(page, 'special!@#', 'test@example.com', 'test1234', 'test1234', 'OTHER', 'METRIC');
         // Expect success or error based on your validation rules
         await expect(page.locator('.error-message')).not.toBeVisible();
     });
@@ -203,9 +209,9 @@ test.describe('Create Account Page - Comprehensive Tests', () => {
      * 19. Confirm error message disappears after correction
      */
     test('should remove error message once invalid fields are corrected', async ({ page }) => {
-        await fillAndSubmitCreateAccountForm(page, '', '', '', '');
+        await fillAndSubmitCreateAccountForm(page, '', '', '', '', 'OTHER', 'METRIC');
         await expect(page.locator('.error-message')).toBeVisible();
-        await fillAndSubmitCreateAccountForm(page, 'correctUser', 'correct@example.com', 'validPass', 'validPass');
+        await fillAndSubmitCreateAccountForm(page, 'correctUser', 'correct@example.com', 'validPass', 'validPass', 'OTHER', 'METRIC');
         await expect(page.locator('.error-message')).toBeHidden();
     });
 
@@ -213,7 +219,7 @@ test.describe('Create Account Page - Comprehensive Tests', () => {
      * 20. Confirm that reloading the page clears any form data
      */
     test('should reset form fields on page reload', async ({ page }) => {
-        await fillAndSubmitCreateAccountForm(page, 'reloadUser', 'reload@example.com', 'reloadPass', 'reloadPass');
+        await fillAndSubmitCreateAccountForm(page, 'reloadUser', 'reload@example.com', 'reloadPass', 'reloadPass', 'OTHER', 'METRIC');
         await page.reload();
         await expect(page.locator('input[name="username"]')).toHaveValue('');
         await expect(page.locator('input[name="email"]')).toHaveValue('');

@@ -9,7 +9,7 @@ import mongoose from 'mongoose';
 import { dbConnect } from '../src/lib/dbConnect.js';
 import User from "../src/models/User/index.js";
 import { MealModel } from "../src/models/Meal/index.js";
-import OptimizationService from "./OptimizationService.js";
+import OptimizationService from "../src/services/OptimizationService.js";
 
 // Try to load both .env and .env.local files
 dotenv.config({ path: '.env' });

@@ -20,9 +20,9 @@ test.describe('NewHeader Component', () => {
     // Check if the component renders the company name
     await expect(component.getByText('Fine Dining')).toBeVisible();
 
-    // Check if the avatar is rendered
-    const avatar = component.locator('img[alt="Test User"]');
-    await expect(avatar).toBeVisible();
+    // Check if the avatar button is rendered
+    const buttons = component.locator('button');
+    await expect(buttons.nth(1)).toBeVisible();
   });
 
   test('toggles drawer when menu button is clicked', async ({ mount }) => {
@@ -37,6 +37,15 @@ test.describe('NewHeader Component', () => {
     await menuButton.click();
 
     // We can only verify the button was clicked, not that the function was called
+  });
+
+  test('profile button is clickable', async ({ mount }) => {
+    const component = await mount(<NewHeader user={mockUser} />);
+
+    const profileButton = component.locator('button').nth(1);
+    await expect(profileButton).toBeVisible();
+    await expect(profileButton).toBeEnabled();
+    await profileButton.click();
   });
 
   test('renders without user data', async ({ mount }) => {

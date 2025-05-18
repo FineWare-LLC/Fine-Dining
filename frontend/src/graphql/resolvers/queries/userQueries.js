@@ -57,3 +57,17 @@ export const searchUsers = withErrorHandling(async (_parent, { keyword }, contex
     ]
   });
 });
+
+export const getQuestionnaire = withErrorHandling(async (_parent, { id }, context) => {
+  if (!context.user?.userId) {
+    throw new Error('Authentication required');
+  }
+  if (context.user.userId !== id && context.user.role !== 'ADMIN') {
+    throw new Error('Authorization required: You can only access your own questionnaire or be an admin.');
+  }
+  const user = await User.findById(id);
+  if (!user) {
+    throw new Error(`User with ID ${id} not found`);
+  }
+  return user.questionnaire || {};
+});

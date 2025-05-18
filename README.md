@@ -98,3 +98,11 @@ This repository contains the **Frontend** of the Fine Dining application:
 ## Getting Started
 
 
+The main application lives in the **frontend** directory.
+
+1. Change into the folder:
+   ```bash
+   cd frontend
+   ```
+2. See [frontend/README.md](frontend/README.md) for detailed setup and usage instructions.
+

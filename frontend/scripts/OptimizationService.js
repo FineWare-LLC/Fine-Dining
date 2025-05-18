@@ -39,45 +39,38 @@ export async function prepareSolverData(userId) {
     i.toLowerCase().trim()
   );
 
-  // Fetch all available meals
-  const allMeals = await MealModel.find({});
-  console.log(`Found ${allMeals.length} total meals`);
+  // Count all meals before filtering for better error messages
+  const totalMealsCount = await MealModel.countDocuments();
 
-  // Filter out meals containing user allergens or disallowed ingredients
-  const filteredMeals = allMeals.filter(meal => {
-    // Skip meals that don't have required data
-    if (!meal.price || !meal.nutrition || 
-        !meal.nutrition.carbohydrates || 
-        !meal.nutrition.protein || 
-        !meal.nutrition.fat || 
-        !meal.nutrition.sodium) {
-      return false;
-    }
+  // Query meals while excluding those lacking required data or containing
+  // allergens/disallowed ingredients
+  const mealQuery = {
+    price: { $ne: null },
+    'nutrition.carbohydrates': { $ne: null },
+    'nutrition.protein': { $ne: null },
+    'nutrition.fat': { $ne: null },
+    'nutrition.sodium': { $ne: null }
+  };
 
-    // Skip meals containing user allergens
-    if (meal.allergens && meal.allergens.length > 0) {
-      const mealAllergens = meal.allergens.map(allergy =>
-        allergy.toLowerCase().trim()
-      );
+  if (userAllergies.length > 0) {
+    mealQuery.allergens = { $not: { $elemMatch: { $in: userAllergies } } };
+  }
 
-      // If any of the meal's allergens match user's allergies, filter it out
-      if (userAllergies.some(allergy => mealAllergens.includes(allergy))) {
-        return false;
-      }
-    }
+  if (disallowedIngredients.length > 0) {
+    mealQuery.ingredients = { $not: { $elemMatch: { $in: disallowedIngredients } } };
+  }
 
-    // Skip meals containing disallowed ingredients
-    if (disallowedIngredients.length > 0 && meal.ingredients && meal.ingredients.length > 0) {
-      const mealIngs = meal.ingredients.map(i => i.toLowerCase().trim());
-      if (disallowedIngredients.some(ing => mealIngs.includes(ing))) {
-        return false;
-      }
-    }
+  const filteredMealsRaw = await MealModel.find(mealQuery);
+  console.log(`Query returned ${filteredMealsRaw.length} meals out of ${totalMealsCount} total`);
 
-    return true;
-  });
-
-  console.log(`Filtered to ${filteredMeals.length} meals after removing allergens, disallowed ingredients and meals with missing data`);
+  // Minimal post-query filtering for any edge cases
+  const filteredMeals = filteredMealsRaw.filter(meal =>
+    meal.price !== undefined && meal.price !== null && meal.nutrition &&
+    meal.nutrition.carbohydrates !== undefined &&
+    meal.nutrition.protein !== undefined &&
+    meal.nutrition.fat !== undefined &&
+    meal.nutrition.sodium !== undefined
+  );
 
   // Format the filtered meals for the HiGHS solver
   const mealIds = [];
@@ -114,7 +107,7 @@ export async function prepareSolverData(userId) {
 
   return {
     mealCount: filteredMeals.length,
-    totalMealsCount: allMeals.length,
+    totalMealsCount,
     mealIds,
     mealNames,
     prices: Float64Array.from(prices),

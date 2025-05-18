@@ -15,6 +15,8 @@ import fs              from 'fs';
 import { parse }       from 'csv-parse';
 import path            from 'path';
 import { fileURLToPath } from 'url';
+import { interpretStatus } from '../../../../io/solverOutput.js';
+import { autoTune, loadConfig } from '../tuner/index.mjs';
 
 const { Solver, solverVersion } = highsDefault;
 const STATUS_OPTIMAL = 7; // HiGHS status code for Optimal
@@ -34,6 +36,9 @@ console.log(`🔍 HiGHS version: ${solverVersion()}`);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 const MEAL_FILE = path.join(__dirname, '../../data/processed/restaurant_meals_processed.csv');
+const CONFIG_FILE = path.join(__dirname, '../tuner/config.json');
+const ARGS = process.argv.slice(2);
+const DO_TUNE = ARGS.includes('--tune');
 
 async function readMeals() {
     return new Promise((resolve, reject) => {
@@ -60,10 +65,10 @@ async function readMeals() {
             resolve({
                 mealCount: n,
                 mealNames,
-                calories: Float64Array.from(cals),
-                protein:  Float64Array.from(prots),
-                carbs:    Float64Array.from(carbs),
-                sodium:   Float64Array.from(sods),
+                calories: Float32Array.from(cals),
+                protein:  Float32Array.from(prots),
+                carbs:    Float32Array.from(carbs),
+                sodium:   Float32Array.from(sods),
             });
         });
 
@@ -79,15 +84,15 @@ async function readMeals() {
 function buildMealPlanModel({ mealCount, calories, protein, carbs, sodium }) {
     // Variables x_i = number of HALF-servings of meal i
     const columnCount       = mealCount;
-    const columnLowerBounds = new Float64Array(mealCount).fill(0);
-    const columnUpperBounds = new Float64Array(mealCount).fill(6); // max 3 servings = 6 half-servings
-    const objectiveWeights  = new Float64Array(mealCount).fill(0);
+    const columnLowerBounds = new Float32Array(mealCount).fill(0);
+    const columnUpperBounds = new Float32Array(mealCount).fill(6); // max 3 servings = 6 half-servings
+    const objectiveWeights  = new Float32Array(mealCount).fill(0);
     const isMaximization    = false;  // minimize 0
 
     // Nutrient constraints (unchanged)
     const rowCount       = 4;
-    const rowLowerBounds = new Float64Array([2200, 100, 250, 1500]);
-    const rowUpperBounds = new Float64Array([2600, 160, 350, 2300]);
+    const rowLowerBounds = new Float32Array([2200, 100, 250, 1500]);
+    const rowUpperBounds = new Float32Array([2600, 160, 350, 2300]);
 
     // Sparse matrix: for each half-serving variable we halve its nutrient
     const offsets = new Int32Array([0,
@@ -104,7 +109,7 @@ function buildMealPlanModel({ mealCount, calories, protein, carbs, sodium }) {
         }
     }
 
-    const values = new Float64Array(4 * mealCount);
+    const values = new Float32Array(4 * mealCount);
     // Row 0: calories per HALF-serving = calories[i] * 0.5
     // Row 1: protein per HALF-serving = protein[i] * 0.5
     // etc.
@@ -136,7 +141,16 @@ async function main() {
     console.log(`🥗 Loaded ${data.mealCount} meals from CSV.`);
     const model = buildMealPlanModel(data);
 
+    let options = loadConfig(CONFIG_FILE);
+    if (DO_TUNE) {
+        console.log('🔧 Auto-tuning solver parameters...');
+        options = await autoTune(data, buildMealPlanModel, CONFIG_FILE);
+    }
+
     const solver = new Solver();
+    Object.entries(options).forEach(([k, v]) => {
+        try { solver.setOptionValue(k, v); } catch (_) {}
+    });
     solver.passModel(model);
     console.log('✅ Model transferred to HiGHS – solving…');
 
@@ -149,7 +163,8 @@ async function main() {
         const status = solver.getModelStatus();
         console.log(`📊 Solver status code: ${status}`);
         if (status !== STATUS_OPTIMAL) {
-            console.warn(`⚠️ Solver did not reach Optimal (code ${status}).`);
+            const { message } = interpretStatus(status);
+            console.warn(`⚠ ${message}`);
         }
 
         const info = solver.getInfo();
@@ -183,7 +198,11 @@ async function main() {
     });
 }
 
-main().catch(e => {
-    console.error('❌ Unexpected failure:', e);
-    process.exit(1);
-});
+export { readMeals, buildMealPlanModel, main };
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    main().catch(e => {
+        console.error('❌ Unexpected failure:', e);
+        process.exit(1);
+    });
+}

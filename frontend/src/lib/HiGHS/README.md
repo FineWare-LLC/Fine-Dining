@@ -66,3 +66,14 @@ The solver at `src/solver/index.mjs` now streams the processed CSV using
 `csv-parse` rather than reading the entire file into memory. Rows are processed
 incrementally and appended to typed arrays. This reduces peak memory
 consumption when working with large meal catalogs.
+
+## Solver Auto-Tuning
+
+Run the solver with the `--tune` flag to automatically benchmark a few solver
+settings. The best configuration is saved to `src/tuner/config.json` and loaded
+on subsequent runs.
+
+```bash
+node src/solver/index.mjs --tune
+```
+

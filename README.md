@@ -1,108 +1,118 @@
-planning docs:
-https://drive.google.com/drive/folders/1t1SxHa2YT07hpVdvWlDYXtR0oEftb9Sp?usp=drive_link
-
-designs:
- https://www.canva.com/design/DAGb9hD06yg/OBGfzJ5Tc3A1LDYlEH0Msw/view?mode=prototype
- https://www.canva.com/design/DAGb9gj3T0A/gShpCjKK3pJla-BF_2VNvw/view?mode=prototype
-
 # Fine Dining
 
-> **Elevate your mealtime experience with personalized planning, cost-efficient optimization, and real-time nutritional tracking.**
+## Overview
+**Fine Dining** leverages advanced algorithms to address the challenges of meal planning, combining cost optimization with personalized dietary requirements. The system integrates nutritional data, user-specific dietary restrictions, and budget constraints to provide tailored meal plans that are cost-effective and nutritionally balanced. It dynamically adjusts its recommendations based on each user’s individual budget, ensuring affordability without sacrificing nutritional goals. Fine Dining is designed to be accessible and easy to use for individuals and scalable for organizations like schools, hospitals, and corporations. The application also allows users to incorporate flexible dietary preferences such as allergen filtering and cheat-day tracking.
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#)
-[![License](https://img.shields.io/badge/license-MIT-blue)](#)
-[![Coverage](https://img.shields.io/badge/coverage-90%25-yellowgreen)](#)
+**Homepage:** [https://fine-dining.fineware.tech](https://fine-dining.fineware.tech)
+**Planning Documents:** [Google Drive Folder](https://drive.google.com/drive/folders/1t1SxHa2YT07hpVdvWlDYXtR0oEftb9Sp?usp=drive_link)
 
-Fine Dining is a web application offering:
-- **Personalized Meal Planning**
-- **Nutritional Tracking**
-- **Restaurant Recommendations**
-- **Grocery List Generation**
-- **Cost Optimization** (*Note: Google OR-Tools integration planned*)
-
-> **Note**: This repository is in active development. Features and documentation will evolve over time.
-
----
-
-## Table of Contents
-1. [Key Features](#key-features)  
-2. [Architecture Overview](#architecture-overview)  
-3. [Tech Stack](#tech-stack)  
-4. [Getting Started](#getting-started)  
-    - [Prerequisites](#prerequisites)  
-    - [Installation](#installation)  
-5. [Usage](#usage)  
-6. [Folder Structure](#folder-structure)  
-7. [Testing](#testing)  
-8. [Contact](#contact)  
-
----
+## Project Background
+Human diet planning is complex and costly, and current applications often lack simultaneous cost and nutrition optimization using advanced algorithms. This project applies advanced algorithms for cost and nutrient optimization to human meal planning, taking into account both dietary needs and budgetary limits. Fine Dining emphasizes ethical resource use, aiming for universally accessible, healthy, and affordable meals.
 
 ## Key Features
+* Personalized meal planning based on dietary needs and budget.
+* Nutritional Tracking: Log meals and monitor calories, macros, vitamins.
+* Cost optimization using advanced algorithms (HiGHS solver addon).
+* Integration of nutritional data.
+* Dynamic adjustment of recommendations.
+* Allergen filtering.
+* Cheat-day tracking.
+* Restaurant Recommendations (powered by external APIs).
+* Automatic Grocery List Generation.
+* Scalable for individual and organizational use.
 
-- **Personalized Meal Plans**  
-  Weekly meal plans based on calories, allergies, budget, and other preferences.
-- **Nutritional Tracking**  
-  Log meals in real-time and monitor calories, macros, vitamins, and more.
-- **Restaurant Recommendations**  
-  Find nearby restaurants that satisfy your dietary constraints (powered by external APIs).
-- **Automatic Grocery Lists**  
-  Automatically compile ingredients from planned recipes.
-- **Cost Optimization**  
-  Use linear programming to minimize meal-plan expenses while honoring nutritional and user-defined constraints.
+## Implementation Details
 
----
+### Architecture & Design
+* **Presentation Layer**: Next.js (v15.3.2) & React (v19.1.0) with a modular directory structure (`pages/`, `components/`, `lib/`). Apollo Client handles GraphQL queries; Zustand manages local state. Routing follows the sitemap: Home → Login/Registration → Dashboard → Meal Plan Creation → Preferences → Reports & Analytics → Settings → Help. MUI (Material UI) and Emotion are used for UI components and styling, along with Tailwind CSS.
+* **Business Logic Layer**: Next.js API routes powered by Apollo Server for GraphQL mutations/queries. A dedicated optimization module uses the HiGHS solver addon (`highs-addon`) to run cost & nutrition planning—flowing: Input → Validation → Data Fetch → Solver → Plan Generation → Output.
+* **Data Layer**: MongoDB Atlas stores food items, user credentials, preferences, and generated meal plans using Mongoose as the ODM. External integrations pull in nutrition metrics and grocery pricing for accurate solver inputs. Authentication is handled using JWT (jsonwebtoken) and bcrypt for password hashing.
+* **Deployment & Infrastructure**: All services hosted on AWS EC2 instances behind an Application Load Balancer for scalability. Data encrypted in transit (TLS/SSL), OAuth/JWT for secure user authentication, and MongoDB Atlas providing cloud-based, high-availability storage.
+* **Dev & CI/CD**: Key npm scripts (in `frontend/package.json`): `npm run dev` (Next.js dev server), `npm run build` & `npm start` (production), `npm run seed` (populate HiGHS test data), `npm run codegen` (GraphQL types), `npm run test:playwright` (end-to-end tests), and `npm run test:components` (component tests). ESLint is used for linting and GraphQL Code Generator for type generation.
 
-## Architecture Overview (Frontend)
+### Diagrams
+The project includes the following diagrams for better understanding:
+* **Logical Solution Design**: This mind-map shows the Logical Solution Design of Fine Dining, breaking down the Presentation Layer (UI, Dashboard), Business Logic Layer (API Endpoints, LP Module, Authentication), and Data Layer (MongoDB storage and external integrations).
+* **Sitemap**: The sitemap outlines the main user flow: Home → Login/Registration → Dashboard → Meal Plan Creation → Preferences → Reports & Analytics → Settings → Help, with key sub-pages for each stage.
+* **Process Flowchart**: This flowchart depicts the runtime sequence: Start → Collect Inputs → Input Validation → Data Fetching → Linear Programming Solver → Plan Generation → Output delivery.
 
-This repository contains the **Frontend** of the Fine Dining application:
+*(Note: The actual image files for these diagrams (`Logical.png`, `Sitemap.png`, `Process.png`) should be present in the repository, typically in a `public` or `assets` folder to be rendered correctly if this README is viewed on a platform like GitHub.)*
 
-1.  **Web Application**
-    * Built with [Next.js](https://nextjs.org/) and [React](https://react.dev/). [cite: frontend/package.json]
-    * Provides a user-friendly interface for meal planning, nutritional stats, etc.
-    * Includes an integrated GraphQL API endpoint built using Apollo Server within Next.js API routes. [cite: frontend/src/pages/api/graphql.js, frontend/package.json]
+### Prototypes
+* **Web Design:** [View Fine Dining Web Prototype](https://www.canva.com/design/DAGb9hD06yg/LQo6YS0kU5UxmEU7uu1kmQ/watch?utm_content=DAGb9hD06yg)
+* **Mobile Design:** [View Fine Dining Mobile Prototype](https://www.canva.com/design/DAGb9gj3T0A/aLKr0KFmlWvbGTcCdOq7QQ/watch?utm_content=DAGb9gj3T0A)
 
-2.  **Data Layer**
-    * Connects directly to [MongoDB](https://www.mongodb.com/) using [Mongoose](https://mongoosejs.com/) for storing user profiles, recipes, meal plans, etc. [cite: frontend/dbConnect.js, frontend/src/lib/dbConnect.js, frontend/package.json]
+### Code Snippets
+The application includes various code implementations, such as:
+* Dynamic Restaurant Recommendations (React)
+* Meal Catalog Search + Filter (GraphQL & JavaScript)
 
-3.  **Security**
-    * Uses JWT for session management via the GraphQL API. [cite: frontend/src/graphql/resolvers/mutations.js]
-    * *Note: Firebase Auth mentioned in the Tech Stack below refers to the overall project plan, but is not currently implemented in this specific `frontend` codebase.*
+*(Refer to the `frontend/src/` directory for code examples, particularly within `components/` and `pages/`.)*
 
----
+## Technologies Used
+* **Framework**: Next.js (v15.3.2)
+* **UI Library**: React (v19.1.0)
+* **Component Library**: Material UI (MUI)
+* **Styling**: Emotion, Tailwind CSS
+* **API Layer**: GraphQL
+* **API Server**: Apollo Server (integrated with Next.js API routes)
+* **GraphQL Client**: Apollo Client
+* **State Management (Client)**: Zustand
+* **Database**: MongoDB Atlas
+* **ODM**: Mongoose
+* **Optimization Solver**: HiGHS solver addon (`highs-addon`)
+* **Testing**: Playwright (End-to-end & Component Testing)
+* **Linting**: ESLint
+* **Type Generation**: GraphQL Code Generator
+* **Authentication**: JWT (jsonwebtoken), bcrypt
+* **Deployment**: AWS (EC2, Application Load Balancer)
 
-## Tech Stack (Frontend)
+## Running Fine Dining (Frontend)
 
-*(Based on the analyzed `frontend` codebase)*
+**Prerequisites:**
+* Node.js (>=18.18.0 based on `frontend/package.json`) and npm (or Yarn/pnpm/bun).
+* MongoDB instance (local or cloud, e.g., MongoDB Atlas) with a valid connection URI.
+* Environment variables in a `.env.local` file in the `frontend` directory (e.g., `MONGODB_URI`, `JWT_SECRET`, `GOOGLE_PLACES_API_KEY`).
 
-| **Category** | **Technology** | **Description** | **Source File(s)** |
-|--------------|----------------|-----------------|-------------------|
-| Framework | Next.js (v15+) | React framework for web applications. | `frontend/package.json` |
-| UI Library | React (v19+) | Core library for building user interfaces. | `frontend/package.json` |
-| Component Lib | Material UI (MUI) | UI components and theming. | `frontend/package.json`, `frontend/src/pages/_app.js` |
-| Styling | Emotion | CSS-in-JS library used by MUI. | `frontend/package.json`, `frontend/src/pages/_app.js` |
-| Styling | Tailwind CSS | Utility-first CSS framework. | `frontend/package.json`, `frontend/tailwind.config.js`, `frontend/src/styles/globals.css` |
-| API Layer | GraphQL | Query language for APIs. | `frontend/src/graphql/typeDefs.js` |
-| API Server | Apollo Server (integrated) | GraphQL server running within Next.js API routes. | `frontend/package.json`, `frontend/src/pages/api/graphql.js` |
-| GraphQL Client | Apollo Client | State management and client for GraphQL. | `frontend/package.json`, `frontend/src/pages/_app.js` |
-| Database ODM | Mongoose | MongoDB object modeling. | `frontend/package.json`, `frontend/src/models/` |
-| Database Driver | MongoDB Node.js Driver | Underlying driver used by Mongoose. | `frontend/package.json` (via Mongoose) |
-| Testing | Playwright | End-to-end and component testing. | `frontend/package.json`, `frontend/playwright.config.js`, `frontend/src/tests/` |
-| Linting | ESLint | Code linting. | `frontend/package.json`, `frontend/eslint.config.mjs` |
-| Type Generation | GraphQL Code Generator | Generates types from GraphQL schema. | `frontend/package.json`, `frontend/codegen.yml` |
-| Authentication | JWT (jsonwebtoken) | Token generation/verification (via API). | `frontend/package.json`, `frontend/src/graphql/resolvers/mutations.js` |
-| Password Hashing | bcrypt | Library for hashing user passwords. | `frontend/package.json`, `frontend/src/graphql/resolvers/mutations.js` |
+**Setup & Installation (Frontend):**
+1.  Clone the repository: `git clone https://github.com/FineWare-LLC/Fine-Dining.fineware.git`
+2.  Navigate to the frontend project directory: `cd Fine-Dining.fineware/frontend`
+3.  Install dependencies: `npm install`
+4.  Seed the database: `npm run seed`
+5.  Generate GraphQL types: `npm run codegen`
 
----
+**Development (Frontend):**
+* Run the Next.js development server: `npm run dev`
+* Access at `http://localhost:3000` (or as specified by Next.js).
 
-## Getting Started
+**Production Build (Frontend):**
+* Build the application: `npm run build`
+* Start the production server: `npm start`
 
+**Testing (Frontend):**
+* End-to-end & component tests: `npm run test:playwright`
+* Component tests only: `npm run test:components`
+* For detailed component testing guidance, refer to `frontend/docs/testing/component-testing.md`.
 
-The main application lives in the **frontend** directory.
+## Available Scripts (Frontend - from `package.json`)
+* `npm run dev`: Starts the Next.js development server.
+* `npm run build`: Builds the Next.js application for production.
+* `npm start`: Starts the Next.js production server.
+* `npm run lint`: Lints the codebase using Next.js's ESLint configuration.
+* `npm run test:playwright`: Runs Playwright end-to-end tests.
+* `npm run test:components`: Runs Playwright component tests.
+* `npm run seed`: Populates the database with sample data (uses `frontend/src/lib/HiGHS/seed_database.mjs`).
+* `npm run codegen`: Generates GraphQL types from your schema (`codegen.yml`).
 
-1. Change into the folder:
-   ```bash
-   cd frontend
-   ```
-2. See [frontend/README.md](frontend/README.md) for detailed setup and usage instructions.
+## Deployment
+The application is designed for deployment on AWS EC2 instances, managed by an Application Load Balancer for scalability and high availability.
 
+## Contributing
+Contributions are welcome! Please follow the standard fork, branch, and pull request workflow. Ensure your code adheres to the existing style and that all tests pass.
+
+## License
+This project is currently not licensed under an open-source license.
+© 2025 FineWare LLC. All rights reserved.
+
+## Contact
+FineWare LLC

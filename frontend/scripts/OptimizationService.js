@@ -31,16 +31,19 @@ export async function prepareSolverData(userId) {
     throw new Error('User not found');
   }
 
-  // Extract user's allergies (case-insensitive)
-  const userAllergies = (user.allergies || []).map(allergy => 
-    allergy.toLowerCase().trim()
+  // Extract user's allergies and disallowed ingredients (case-insensitive)
+  const userAllergies = (user.questionnaire?.allergies || user.allergies || []).map(a =>
+    a.toLowerCase().trim()
+  );
+  const disallowedIngredients = (user.questionnaire?.disallowedIngredients || user.dislikedIngredients || []).map(i =>
+    i.toLowerCase().trim()
   );
 
   // Fetch all available meals
   const allMeals = await MealModel.find({});
   console.log(`Found ${allMeals.length} total meals`);
 
-  // Filter out meals containing user allergens
+  // Filter out meals containing user allergens or disallowed ingredients
   const filteredMeals = allMeals.filter(meal => {
     // Skip meals that don't have required data
     if (!meal.price || !meal.nutrition || 
@@ -53,7 +56,7 @@ export async function prepareSolverData(userId) {
 
     // Skip meals containing user allergens
     if (meal.allergens && meal.allergens.length > 0) {
-      const mealAllergens = meal.allergens.map(allergy => 
+      const mealAllergens = meal.allergens.map(allergy =>
         allergy.toLowerCase().trim()
       );
 
@@ -63,10 +66,18 @@ export async function prepareSolverData(userId) {
       }
     }
 
+    // Skip meals containing disallowed ingredients
+    if (disallowedIngredients.length > 0 && meal.ingredients && meal.ingredients.length > 0) {
+      const mealIngs = meal.ingredients.map(i => i.toLowerCase().trim());
+      if (disallowedIngredients.some(ing => mealIngs.includes(ing))) {
+        return false;
+      }
+    }
+
     return true;
   });
 
-  console.log(`Filtered to ${filteredMeals.length} meals after removing allergens and meals with missing data`);
+  console.log(`Filtered to ${filteredMeals.length} meals after removing allergens, disallowed ingredients and meals with missing data`);
 
   // Format the filtered meals for the HiGHS solver
   const mealIds = [];

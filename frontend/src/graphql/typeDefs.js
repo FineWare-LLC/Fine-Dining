@@ -123,6 +123,7 @@ export const typeDefs = gql`
         weightGoal: WeightGoal
         foodGoals: [String]
         allergies: [String]
+        questionnaire: Questionnaire
         dailyCalories: Int
         nutritionTargets: NutritionTargets
         lastLogin: Date
@@ -303,6 +304,20 @@ export const typeDefs = gql`
         excludeAllergens: [String]
     }
 
+    type Questionnaire {
+        allergies: [String]
+        disallowedIngredients: [String]
+        dietaryPattern: String
+        activityLevel: Int
+    }
+
+    input QuestionnaireInput {
+        allergies: [String]
+        disallowedIngredients: [String]
+        dietaryPattern: String
+        activityLevel: Int
+    }
+
     """
     Represents a Meal which can be tied to a recipe, restaurant, or be custom.
     """
@@ -389,6 +404,7 @@ export const typeDefs = gql`
         getUser(id: ID!): User
         getUsers(page: Int, limit: Int): [User]
         searchUsers(keyword: String!): [User]
+        getQuestionnaire(id: ID!): Questionnaire
         getRecipe(id: ID!): Recipe
         getRecipes(page: Int, limit: Int): [Recipe]
         searchRecipes(keyword: String!): [Recipe]
@@ -493,6 +509,7 @@ export const typeDefs = gql`
         loginUser(email: String!, password: String!): AuthPayload
         requestPasswordReset(email: String!): Boolean
         resetPassword(resetToken: String!, newPassword: String!): Boolean
+        upsertQuestionnaire(id: ID!, input: QuestionnaireInput!): Questionnaire
         generateOptimizedMealPlan(
             selectedMealIds: [ID],
             customNutritionTargets: CustomNutritionTargetsInput

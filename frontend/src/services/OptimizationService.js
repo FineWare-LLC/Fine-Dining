@@ -40,11 +40,15 @@ export async function prepareSolverData(userId, selectedMealIds = [], customNutr
   }
 
   // Extract user's allergies and disallowed ingredients (case-insensitive)
-  const userAllergies = (user.questionnaire?.allergies || user.allergies || []).map(a =>
-    a.toLowerCase().trim()
+  const userAllergies = new Set(
+    (user.questionnaire?.allergies || user.allergies || []).map(a =>
+      a.toLowerCase().trim()
+    )
   );
-  const disallowedIngredients = (user.questionnaire?.disallowedIngredients || user.dislikedIngredients || []).map(i =>
-    i.toLowerCase().trim()
+  const disallowedIngredients = new Set(
+    (user.questionnaire?.disallowedIngredients || user.dislikedIngredients || []).map(i =>
+      i.toLowerCase().trim()
+    )
   );
 
   // Fetch all available meals or just the selected ones
@@ -80,23 +84,26 @@ export async function prepareSolverData(userId, selectedMealIds = [], customNutr
 
     // Skip meals containing user allergens
     if (meal.allergens && meal.allergens.length > 0) {
-      const mealAllergens = meal.allergens.map(allergy =>
-        allergy.toLowerCase().trim()
+      const mealAllergens = new Set(
+        meal.allergens.map(allergy => allergy.toLowerCase().trim())
       );
 
-      // If any of the meal's allergens match user's allergies, filter it out
-      if (userAllergies.some(allergy => mealAllergens.includes(allergy))) {
-        allergenCount++;
-        return false;
+      for (const allergy of userAllergies) {
+        if (mealAllergens.has(allergy)) {
+          allergenCount++;
+          return false;
+        }
       }
     }
 
     // Skip meals containing disallowed ingredients
-    if (disallowedIngredients.length > 0 && meal.ingredients && meal.ingredients.length > 0) {
-      const mealIngs = meal.ingredients.map(i => i.toLowerCase().trim());
-      if (disallowedIngredients.some(ing => mealIngs.includes(ing))) {
-        ingredientBlockCount++;
-        return false;
+    if (disallowedIngredients.size > 0 && meal.ingredients && meal.ingredients.length > 0) {
+      const mealIngs = new Set(meal.ingredients.map(i => i.toLowerCase().trim()));
+      for (const ing of disallowedIngredients) {
+        if (mealIngs.has(ing)) {
+          ingredientBlockCount++;
+          return false;
+        }
       }
     }
 

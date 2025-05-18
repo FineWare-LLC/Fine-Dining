@@ -375,6 +375,11 @@ export const typeDefs = gql`
         location: LatLng       # Using the simple LatLng type defined above
     }
 
+    type NearbyRestaurantsResult {
+        source: String
+        restaurants: [ExternalRestaurant]
+    }
+
     """
     Query definitions for retrieving data in Fine Dining.
     Each query includes security and validation considerations.
@@ -415,7 +420,7 @@ export const typeDefs = gql`
             longitude: Float!,
             radius: Int,
             keyword: String
-        ): [ExternalRestaurant]
+        ): NearbyRestaurantsResult
     }
 
     """

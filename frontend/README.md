@@ -136,7 +136,11 @@ Create a `.env.local` file in the `frontend` directory. Add your MongoDB connect
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_very_strong_and_secret_key_here
 GOOGLE_PLACES_API_KEY=your_google_places_api_key
+# Optional custom Overpass endpoint used when Google Places fails
+OVERPASS_URL=https://overpass-api.de/api/interpreter
 ```
+
+If `GOOGLE_PLACES_API_KEY` is missing or a request fails, the service falls back to OpenStreetMap Overpass. Results may be less complete and lack ratings.
 
 ## Testing
 

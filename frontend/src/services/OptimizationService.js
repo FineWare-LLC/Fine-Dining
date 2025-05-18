@@ -40,11 +40,15 @@ export async function prepareSolverData(userId, selectedMealIds = [], customNutr
   }
 
   // Extract user's allergies and disallowed ingredients (case-insensitive)
-  const userAllergies = (user.questionnaire?.allergies || user.allergies || []).map(a =>
-    a.toLowerCase().trim()
+  const userAllergies = new Set(
+    (user.questionnaire?.allergies || user.allergies || []).map(a =>
+      a.toLowerCase().trim()
+    )
   );
-  const disallowedIngredients = (user.questionnaire?.disallowedIngredients || user.dislikedIngredients || []).map(i =>
-    i.toLowerCase().trim()
+  const disallowedIngredients = new Set(
+    (user.questionnaire?.disallowedIngredients || user.dislikedIngredients || []).map(i =>
+      i.toLowerCase().trim()
+    )
   );
 
   // Base query for counting all meals before filtering
@@ -54,24 +58,30 @@ export async function prepareSolverData(userId, selectedMealIds = [], customNutr
 
   const totalMealsCount = await MealModel.countDocuments(baseQuery);
 
-  // Build query to exclude meals missing price or nutrient data and meals
-  // containing allergens or disallowed ingredients
-  const mealQuery = {
-    ...baseQuery,
-    price: { $ne: null },
-    'nutrition.carbohydrates': { $ne: null },
-    'nutrition.protein': { $ne: null },
-    'nutrition.fat': { $ne: null },
-    'nutrition.sodium': { $ne: null }
-  };
+    // Skip meals containing user allergens
+    if (meal.allergens && meal.allergens.length > 0) {
+      const mealAllergens = new Set(
+        meal.allergens.map(allergy => allergy.toLowerCase().trim())
+      );
 
-  if (userAllergies.length > 0) {
-    mealQuery.allergens = { $not: { $elemMatch: { $in: userAllergies } } };
-  }
+      for (const allergy of userAllergies) {
+        if (mealAllergens.has(allergy)) {
+          allergenCount++;
+          return false;
+        }
+      }
+    }
 
-  if (disallowedIngredients.length > 0) {
-    mealQuery.ingredients = { $not: { $elemMatch: { $in: disallowedIngredients } } };
-  }
+    // Skip meals containing disallowed ingredients
+    if (disallowedIngredients.size > 0 && meal.ingredients && meal.ingredients.length > 0) {
+      const mealIngs = new Set(meal.ingredients.map(i => i.toLowerCase().trim()));
+      for (const ing of disallowedIngredients) {
+        if (mealIngs.has(ing)) {
+          ingredientBlockCount++;
+          return false;
+        }
+      }
+    }
 
   const filteredMealsRaw = await MealModel.find(mealQuery);
   console.log(`Query returned ${filteredMealsRaw.length} meals out of ${totalMealsCount} total`);

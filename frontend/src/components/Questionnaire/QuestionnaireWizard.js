@@ -16,10 +16,20 @@ import {
 // Measurement system context -------------------------------------------------
 const MeasurementContext = createContext();
 export const MeasurementProvider = ({ children }) => {
-  const defaultSystem = navigator?.language === 'en-US' ? 'imperial' : 'metric';
-  const [system, setSystem] = useState(() => sessionStorage.getItem('measureSys') || defaultSystem);
+  const defaultSystem =
+    typeof navigator !== 'undefined' && navigator.language === 'en-US'
+      ? 'imperial'
+      : 'metric';
+  const [system, setSystem] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('measureSys') || defaultSystem;
+    }
+    return defaultSystem;
+  });
   useEffect(() => {
-    sessionStorage.setItem('measureSys', system);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('measureSys', system);
+    }
   }, [system]);
   return (
     <MeasurementContext.Provider value={{ system, setSystem }}>
@@ -33,11 +43,16 @@ export const useMeasurement = () => useContext(MeasurementContext);
 // Helper --------------------------------------------------------------------
 const useSessionState = (key, initial) => {
   const [state, setState] = useState(() => {
-    const saved = sessionStorage.getItem(key);
-    return saved !== null ? JSON.parse(saved) : initial;
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem(key);
+      return saved !== null ? JSON.parse(saved) : initial;
+    }
+    return initial;
   });
   useEffect(() => {
-    sessionStorage.setItem(key, JSON.stringify(state));
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(key, JSON.stringify(state));
+    }
   }, [key, state]);
   return [state, setState];
 };

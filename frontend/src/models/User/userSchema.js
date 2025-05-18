@@ -16,6 +16,7 @@ import paymentMethodSchema from './subSchemas/paymentMethodSchema.js';
 import loginHistorySchema from './subSchemas/loginHistorySchema.js';
 import addressSchema from './subSchemas/addressSchema.js';
 import preferencesSchema from './subSchemas/preferencesSchema.js';
+import questionnaireSchema from './subSchemas/questionnaireSchema.js';
 import securityQuestionSchema from './subSchemas/securityQuestionSchema.js';
 import socialAccountSchema from './subSchemas/socialAccountSchema.js';
 
@@ -208,6 +209,11 @@ const userSchema = new mongoose.Schema(
          * Preferences.
          */
         preferences: preferencesSchema,
+
+        /**
+         * Last-completed questionnaire.
+         */
+        questionnaire: questionnaireSchema,
 
         /**
          * Follower/Following or blocked users.

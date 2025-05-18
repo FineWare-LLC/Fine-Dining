@@ -104,3 +104,19 @@ export const deleteUser = withErrorHandling(async (_parent, { id }, context) => 
   const result = await User.findByIdAndDelete(id);
   return Boolean(result);
 });
+
+export const upsertQuestionnaire = withErrorHandling(async (_parent, { id, input }, context) => {
+  if (!context.user?.userId) {
+    throw new Error('Authentication required');
+  }
+  if (context.user.userId !== id && context.user.role !== 'ADMIN') {
+    throw new Error('Authorization required: You can only update your own questionnaire or be an admin.');
+  }
+  const user = await User.findById(id);
+  if (!user) {
+    throw new Error(`User with ID ${id} not found`);
+  }
+  user.questionnaire = { ...(user.questionnaire || {}), ...input };
+  await user.save();
+  return user.questionnaire;
+});

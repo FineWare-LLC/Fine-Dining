@@ -39,9 +39,12 @@ export async function prepareSolverData(userId, selectedMealIds = [], customNutr
     throw new Error('User not found');
   }
 
-  // Extract user's allergies (case-insensitive)
-  const userAllergies = (user.allergies || []).map(allergy => 
-    allergy.toLowerCase().trim()
+  // Extract user's allergies and disallowed ingredients (case-insensitive)
+  const userAllergies = (user.questionnaire?.allergies || user.allergies || []).map(a =>
+    a.toLowerCase().trim()
+  );
+  const disallowedIngredients = (user.questionnaire?.disallowedIngredients || user.dislikedIngredients || []).map(i =>
+    i.toLowerCase().trim()
   );
 
   // Fetch all available meals or just the selected ones
@@ -60,6 +63,7 @@ export async function prepareSolverData(userId, selectedMealIds = [], customNutr
   // Track filtering reasons for debugging
   let missingDataCount = 0;
   let allergenCount = 0;
+  let ingredientBlockCount = 0;
 
   // Filter out meals containing user allergens
   const filteredMeals = allMeals.filter(meal => {
@@ -76,7 +80,7 @@ export async function prepareSolverData(userId, selectedMealIds = [], customNutr
 
     // Skip meals containing user allergens
     if (meal.allergens && meal.allergens.length > 0) {
-      const mealAllergens = meal.allergens.map(allergy => 
+      const mealAllergens = meal.allergens.map(allergy =>
         allergy.toLowerCase().trim()
       );
 
@@ -87,10 +91,19 @@ export async function prepareSolverData(userId, selectedMealIds = [], customNutr
       }
     }
 
+    // Skip meals containing disallowed ingredients
+    if (disallowedIngredients.length > 0 && meal.ingredients && meal.ingredients.length > 0) {
+      const mealIngs = meal.ingredients.map(i => i.toLowerCase().trim());
+      if (disallowedIngredients.some(ing => mealIngs.includes(ing))) {
+        ingredientBlockCount++;
+        return false;
+      }
+    }
+
     return true;
   });
 
-  console.log(`Filtered to ${filteredMeals.length} meals after removing ${missingDataCount} meals with missing data and ${allergenCount} meals with allergens`);
+  console.log(`Filtered to ${filteredMeals.length} meals after removing ${missingDataCount} meals with missing data, ${allergenCount} meals with allergens and ${ingredientBlockCount} meals with blocked ingredients`);
 
   // Format the filtered meals for the HiGHS solver
   const mealIds = [];

@@ -3,7 +3,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
-import { Box, Button, CssBaseline, useTheme, CircularProgress, Typography, Tabs, Tab } from '@mui/material';
+import { Box, Button, CssBaseline, useTheme, CircularProgress, Typography, Tabs, Tab, Alert } from '@mui/material';
 import { useMutation, useLazyQuery, gql } from '@apollo/client';
 import NewHeader from '@/components/Dashboard/NewHeader';
 import GreetingSegment from '@/components/Dashboard/GreetingSegment';
@@ -78,13 +78,15 @@ export default function Dashboard() {
   useEffect(()=>{ if (!loading && !isAuthenticated) router.push('/login'); },[loading]); */
 
   const meal        = useMeal();
-  const [restaurants, setRestaurants] = useState([]);
-  const [fetchRestaurants, { loading: restaurantsLoading, error: restaurantsError }] =
-    useLazyQuery(FIND_NEARBY_RESTAURANTS, {
-      onCompleted: (data) => setRestaurants(data.findNearbyRestaurants || [])
-  });
+  const [fetchRestaurants, {
+    loading: restaurantsLoading,
+    error: restaurantsError,
+    data: restaurantsData,
+  }] = useLazyQuery(FIND_NEARBY_RESTAURANTS);
   const theme       = useTheme();
   const searchTerm  = useDashStore(s => s.searchTerm);
+  const { restaurants = [], source } =
+    restaurantsData?.findNearbyRestaurants || {};
 
   // Fetch nearby restaurants based on browser geolocation
   useEffect(() => {
@@ -267,6 +269,12 @@ export default function Dashboard() {
 
         <DiscoveryHeader />
 
+        {source === 'overpass' && (
+          <Alert severity="warning" sx={{ my: 2 }}>
+            Live results retrieved from OpenStreetMap; ratings unavailable.
+          </Alert>
+        )}
+
         {restaurantsLoading && (
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
             <CircularProgress />
@@ -330,7 +338,7 @@ export default function Dashboard() {
         )}
 
         {filtered.map(r => (
-          <RestaurantCard key={r.placeId} restaurant={r} />
+          <RestaurantCard key={r.placeId} restaurant={r} source={source} />
         ))}
       </Box>
       <BottomSearchRail />

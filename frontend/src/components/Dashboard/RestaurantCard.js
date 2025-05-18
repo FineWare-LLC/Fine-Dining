@@ -4,7 +4,7 @@
 import React from 'react';
 import { Card, CardContent, Typography, CardMedia } from '@mui/material';
 
-export default function RestaurantCard({ restaurant }) {
+export default function RestaurantCard({ restaurant, source }) {
   return (
     <Card
       elevation={0}
@@ -21,8 +21,13 @@ export default function RestaurantCard({ restaurant }) {
         {restaurant.vicinity && (
           <Typography variant="body2" color="text.secondary">{restaurant.vicinity}</Typography>
         )}
-        {restaurant.rating && (
-          <Typography variant="body2" color="text.secondary">Rating: {restaurant.rating}</Typography>
+        <Typography variant="body2" color="text.secondary">
+          Rating: {restaurant.rating ?? 'N/A'}
+        </Typography>
+        {source && (
+          <Typography variant="caption" color="text.secondary">
+            Data source: {source === 'google' ? 'Google Places' : 'OpenStreetMap'}
+          </Typography>
         )}
       </CardContent>
     </Card>

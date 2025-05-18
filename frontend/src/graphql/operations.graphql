@@ -565,18 +565,31 @@ query GetReviewsForTarget($targetType: String!, $targetId: ID!) {
     }
 }
 
-query FindNearbyRestaurants($latitude: Float!, $longitude: Float!, $radius: Int, $keyword: String) {
-    findNearbyRestaurants(latitude: $latitude, longitude: $longitude, radius: $radius, keyword: $keyword) {
-        placeId
-        name
-        vicinity
-        rating
-        userRatingsTotal
-        location {
-            latitude
-            longitude
-        }
+query FindNearbyRestaurants(
+  $latitude: Float!
+  $longitude: Float!
+  $radius: Int!
+  $keyword: String
+) {
+  findNearbyRestaurants(
+    latitude: $latitude
+    longitude: $longitude
+    radius: $radius
+    keyword: $keyword
+  ) {
+    source
+    restaurants {
+      placeId
+      name
+      vicinity
+      rating
+      userRatingsTotal
+      location {
+        latitude
+        longitude
+      }
     }
+  }
 }
 
 query Ping {

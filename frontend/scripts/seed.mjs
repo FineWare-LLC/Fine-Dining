@@ -9,7 +9,7 @@ import mongoose from 'mongoose';
 import {faker} from '@faker-js/faker/locale/en';
 
 /* Adjust if your dbConnect is in a different path or uses a different name. */
-import {dbConnect} from '../dbConnect.js';
+import {dbConnect} from '../src/lib/dbConnect.js';
 
 /* Mongoose Models */
 import User from "../src/models/User/index.js";

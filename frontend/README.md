@@ -70,7 +70,7 @@ This repository contains the **Frontend** of the Fine Dining application:
     * Includes an integrated GraphQL API endpoint built using Apollo Server within Next.js API routes. [cite: frontend/src/pages/api/graphql.js, frontend/package.json]
 
 2.  **Data Layer**
-    * Connects directly to [MongoDB](https://www.mongodb.com/) using [Mongoose](https://mongoosejs.com/) for storing user profiles, recipes, meal plans, etc. [cite: frontend/dbConnect.js, frontend/src/lib/dbConnect.js, frontend/package.json]
+    * Connects directly to [MongoDB](https://www.mongodb.com/) using [Mongoose](https://mongoosejs.com/) for storing user profiles, recipes, meal plans, etc. [cite: frontend/src/lib/dbConnect.js, frontend/package.json]
 
 3.  **Security**
     * Uses JWT for session management via the GraphQL API. [cite: frontend/src/graphql/resolvers/mutations.js]

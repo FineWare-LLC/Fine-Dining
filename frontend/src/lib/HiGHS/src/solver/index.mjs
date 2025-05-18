@@ -183,7 +183,11 @@ async function main() {
     });
 }
 
-main().catch(e => {
-    console.error('❌ Unexpected failure:', e);
-    process.exit(1);
-});
+export { readMeals, buildMealPlanModel, main };
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    main().catch(e => {
+        console.error('❌ Unexpected failure:', e);
+        process.exit(1);
+    });
+}

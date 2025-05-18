@@ -8,7 +8,8 @@
     "start": "node src/main_pipeline.mjs",
     "setup": "node setup_pipeline.mjs",
     "build-csv": "node tools/build-meal-csv.mjs",
-    "solve": "node src/solver/index.mjs"
+    "solve": "node src/solver/index.mjs",
+    "benchmark:presolve": "node src/presolve/benchmark.mjs"
   },
   "author": "",
   "license": "ISC",

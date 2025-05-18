@@ -341,6 +341,14 @@ export const typeDefs = gql`
     }
 
     """
+    Statistics on presolve reduction.
+    """
+    type PresolveStats {
+        before: Int!
+        after: Int!
+    }
+
+    """
     Represents nutritional and activity statistics logged by a user.
     """
     type Stats {
@@ -401,6 +409,7 @@ export const typeDefs = gql`
     """
     type Query {
         ping: String
+        presolveStats: PresolveStats
         getUser(id: ID!): User
         getUsers(page: Int, limit: Int): [User]
         searchUsers(keyword: String!): [User]

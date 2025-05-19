@@ -6,6 +6,7 @@ import * as mealPlanQueries from './mealPlanQueries.js';
 import * as mealQueries from './mealQueries.js';
 import * as statsQueries from './statsQueries.js';
 import * as reviewQueries from './reviewQueries.js';
+import * as menuItemQueries from './menuItemQueries.js';
 
 export const Query = {
   ...generalQueries,
@@ -16,4 +17,5 @@ export const Query = {
   ...mealQueries,
   ...statsQueries,
   ...reviewQueries,
+  ...menuItemQueries,
 };

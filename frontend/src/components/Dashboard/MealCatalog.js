@@ -4,7 +4,7 @@
  * Component to display the meal catalog and allow users to select meals.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, gql } from '@apollo/client';
 import {
   Box,
@@ -51,6 +51,19 @@ const GET_ALL_MEALS = gql`
   }
 `;
 
+// GraphQL query to fetch menu items for a restaurant
+const GET_MENU_ITEMS = gql`
+  query GetMenuItems($restaurantId: ID!, $page: Int, $limit: Int) {
+    getMenuItemsByRestaurant(restaurantId: $restaurantId, page: $page, limit: $limit) {
+      id
+      mealName
+      price
+      allergens
+      nutritionFacts
+    }
+  }
+`;
+
 /**
  * Displays the meal catalog with search, filtering, and selection capabilities.
  * 
@@ -59,20 +72,24 @@ const GET_ALL_MEALS = gql`
  * @param {Function} props.onSelectMeal - Callback function when a meal is selected/deselected
  * @returns {JSX.Element} The rendered component
  */
-const MealCatalog = ({ selectedMeals = [], onSelectMeal }) => {
+const MealCatalog = ({ selectedMeals = [], onSelectMeal, restaurantId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
 
-  // Fetch meals from the server
-  const { loading, error, data } = useQuery(GET_ALL_MEALS, {
-    variables: { page, limit },
-    fetchPolicy: 'network-only' // Don't use cache for this query
-  });
+  // Fetch meals or menu items from the server
+  const { loading, error, data } = useQuery(
+    restaurantId ? GET_MENU_ITEMS : GET_ALL_MEALS,
+    {
+      variables: restaurantId ? { restaurantId, page, limit } : { page, limit },
+      fetchPolicy: 'network-only'
+    }
+  );
 
   // Filter meals based on search term
-  const filteredMeals = data?.getAllMeals?.filter(meal => 
+  const allItems = restaurantId ? data?.getMenuItemsByRestaurant : data?.getAllMeals;
+  const filteredMeals = allItems?.filter(meal =>
     meal.mealName.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 

@@ -342,6 +342,21 @@ export const typeDefs = gql`
     }
 
     """
+    Represents a menu item belonging to a restaurant.
+    """
+    type MenuItem {
+        id: ID!
+        restaurant: Restaurant!
+        mealName: String!
+        price: Float
+        description: String
+        allergens: [String]
+        nutritionFacts: String
+        createdAt: Date!
+        updatedAt: Date!
+    }
+
+    """
     Statistics on presolve reduction.
     """
     type PresolveStats {
@@ -441,6 +456,8 @@ export const typeDefs = gql`
         getStatsByUser(userId: ID!): [Stats]
         getReview(id: ID!): Review
         getReviewsForTarget(targetType: String!, targetId: ID!): [Review]
+        getMenuItem(id: ID!): MenuItem
+        getMenuItemsByRestaurant(restaurantId: ID!, page: Int, limit: Int): [MenuItem]
         findNearbyRestaurants(
             latitude: Float!,
             longitude: Float!,
@@ -567,6 +584,23 @@ export const typeDefs = gql`
             priceRange: PriceRange
         ): Restaurant
         deleteRestaurant(id: ID!): Boolean
+        createMenuItem(
+            restaurantId: ID!,
+            mealName: String!,
+            price: Float,
+            description: String,
+            allergens: [String],
+            nutritionFacts: String
+        ): MenuItem!
+        updateMenuItem(
+            id: ID!,
+            mealName: String,
+            price: Float,
+            description: String,
+            allergens: [String],
+            nutritionFacts: String
+        ): MenuItem
+        deleteMenuItem(id: ID!): Boolean
         createMealPlan(
             userId: ID!
             startDate: Date!

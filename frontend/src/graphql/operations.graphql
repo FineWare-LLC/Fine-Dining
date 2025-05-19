@@ -371,6 +371,10 @@ mutation DeleteReview($id: ID!) {
     deleteReview(id: $id)
 }
 
+mutation SubmitFeedback($message: String!, $rating: Int, $email: String) {
+    submitFeedback(message: $message, rating: $rating, email: $email)
+}
+
 
 # --- Queries ---
 

@@ -27,6 +27,10 @@ This tutorial walks you through setting up **Fine Dining** for local development
    OVERPASS_URL=https://overpass-api.de/api/interpreter
    # Disable GPU acceleration even when USE_GPU is set
    DISABLE_GPU=1
+   # Optional: forward logs to CloudWatch instead of MongoDB
+   AWS_REGION=
+   CLOUDWATCH_LOG_GROUP=
+   CLOUDWATCH_LOG_STREAM=
    ```
    Set `USE_GPU=1` to enable OpenCL acceleration if supported. In production you
    can set `DISABLE_GPU=1` to force CPU mode.
@@ -83,3 +87,8 @@ The pipeline fetches menu items, normalizes them, and writes
 `data/processed/restaurant_meals_processed.csv`. Progress messages are printed
 to the console. No additional environment variables are required beyond those
 defined earlier.
+
+## Submitting Feedback
+
+Authenticated users can submit feedback through the GraphQL mutation
+`submitFeedback`. This stores feedback in MongoDB and logs an analytics event.

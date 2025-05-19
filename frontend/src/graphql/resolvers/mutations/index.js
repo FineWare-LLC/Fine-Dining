@@ -8,6 +8,7 @@ import * as statsMutations from './statsMutations.js';
 import * as reviewMutations from './reviewMutations.js';
 import * as optimizationMutations from './optimizationMutations.js';
 import * as menuItemMutations from './menuItemMutations.js';
+import * as feedbackMutations from './feedbackMutations.js';
 
 export const Mutation = {
   ...userMutations,
@@ -20,4 +21,5 @@ export const Mutation = {
   ...reviewMutations,
   ...optimizationMutations,
   ...menuItemMutations,
+  ...feedbackMutations,
 };

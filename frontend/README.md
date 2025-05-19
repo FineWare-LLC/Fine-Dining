@@ -149,6 +149,10 @@ GOOGLE_PLACES_API_KEY=your_google_places_api_key
 # Optional custom Overpass endpoint used when Google Places fails
 # Defaults to https://overpass-api.de/api/interpreter when omitted
 OVERPASS_URL=https://overpass-api.de/api/interpreter
+# Optional CloudWatch settings for centralized logging
+AWS_REGION=
+CLOUDWATCH_LOG_GROUP=
+CLOUDWATCH_LOG_STREAM=
 ```
 
 `MONGO_ENCRYPTION_KEY` must be 32 bytes and `MONGO_ENCRYPTION_SIGNING_KEY` must be 64 bytes. Generate them using `openssl rand -hex 32` and `openssl rand -hex 64`.

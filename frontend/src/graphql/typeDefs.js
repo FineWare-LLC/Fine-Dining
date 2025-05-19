@@ -665,5 +665,10 @@ export const typeDefs = gql`
             comment: String
         ): Review!
         deleteReview(id: ID!): Boolean
+        submitFeedback(
+            message: String!
+            rating: Int
+            email: String
+        ): Boolean
     }
 `;

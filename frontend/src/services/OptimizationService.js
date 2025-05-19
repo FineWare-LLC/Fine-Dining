@@ -11,6 +11,7 @@
 import highsDefault from 'highs-addon';
 import { MealModel } from '@/models/Meal/index.js';
 import User from '@/models/User/index.js';
+import { applyPlugins } from '../../../plugins/registry.mjs';
 
 const { Solver, solverVersion } = highsDefault;
 const STATUS_OPTIMAL = 7; // HiGHS status code for Optimal
@@ -260,6 +261,8 @@ export async function runOptimization(data) {
       if (HIGHS_THREADS) solver.setOptionValue('threads', parseInt(HIGHS_THREADS, 10));
       if (HIGHS_PRESOLVE) solver.setOptionValue('presolve', HIGHS_PRESOLVE);
       if (HIGHS_TIME_LIMIT) solver.setOptionValue('time_limit', parseFloat(HIGHS_TIME_LIMIT));
+      // Invoke optional plugins to modify the solver
+      applyPlugins(solver);
       solver.passModel(model);
       console.log('Model transferred to HiGHS – solving...');
 

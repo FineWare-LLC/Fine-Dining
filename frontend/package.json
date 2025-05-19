@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:plugins": "node scripts/build-plugins.mjs",
     "start": "next start",
     "lint": "next lint",
     "test:playwright": "node scripts/run-playwright.mjs",

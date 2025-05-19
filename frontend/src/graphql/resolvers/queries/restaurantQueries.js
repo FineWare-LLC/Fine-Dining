@@ -25,7 +25,7 @@ export const getRestaurant = withErrorHandling(async (_parent, { id }, context) 
  * @returns {Promise<Object[]>} An array of restaurant documents.
  */
 export const getRestaurants = withErrorHandling(async (_parent, { page, limit }, context) => {
-  return paginateQuery(RestaurantModel, page, limit);
+  return paginateQuery(RestaurantModel.find(), page, limit);
 });
 
 /**

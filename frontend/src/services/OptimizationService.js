@@ -67,6 +67,27 @@ export async function prepareSolverData(userId, selectedMealIds = [], customNutr
 
   const totalMealsCount = await MealModel.countDocuments(baseQuery);
 
+  // Create meal query based on selected meal IDs
+  const mealQuery = { ...baseQuery };
+
+  const filteredMealsRaw = await MealModel.find(mealQuery);
+  console.log(`Query returned ${filteredMealsRaw.length} meals out of ${totalMealsCount} total`);
+
+  // Track filtering statistics
+  let allergenCount = 0;
+  let ingredientBlockCount = 0;
+
+  // Final filtering - check nutrition values, allergens, and disallowed ingredients
+  const filteredMeals = filteredMealsRaw.filter(meal => {
+    // Basic nutrition data check
+    if (!(meal.price !== undefined && meal.price !== null && meal.nutrition &&
+        meal.nutrition.carbohydrates !== undefined &&
+        meal.nutrition.protein !== undefined &&
+        meal.nutrition.fat !== undefined &&
+        meal.nutrition.sodium !== undefined)) {
+      return false;
+    }
+
     // Skip meals containing user allergens
     if (meal.allergens && meal.allergens.length > 0) {
       const mealAllergens = new Set(
@@ -92,17 +113,8 @@ export async function prepareSolverData(userId, selectedMealIds = [], customNutr
       }
     }
 
-  const filteredMealsRaw = await MealModel.find(mealQuery);
-  console.log(`Query returned ${filteredMealsRaw.length} meals out of ${totalMealsCount} total`);
-
-  // Final sanity check filtering – should normally pass all meals
-  const filteredMeals = filteredMealsRaw.filter(meal =>
-    meal.price !== undefined && meal.price !== null && meal.nutrition &&
-    meal.nutrition.carbohydrates !== undefined &&
-    meal.nutrition.protein !== undefined &&
-    meal.nutrition.fat !== undefined &&
-    meal.nutrition.sodium !== undefined
-  );
+    return true;
+  });
 
   // Format the filtered meals for the HiGHS solver
   const mealIds = [];

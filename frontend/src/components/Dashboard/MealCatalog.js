@@ -86,10 +86,10 @@ const GET_RESTAURANTS = gql`
  * @param {Array} props.selectedMeals - Array of selected meal IDs
  * @param {Function} props.onSelectMeal - Callback when a meal is selected/deselected
  * @param {Function} [props.onAddMeals] - Handler for the "Add Selected" button
+ * @param {string} [props.restaurantId] - Optional ID of restaurant to filter meals by
  * @returns {JSX.Element} The rendered component
  */
-const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals }) => {
-const MealCatalog = ({ selectedMeals = [], onSelectMeal, restaurantId }) => {
+const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals, restaurantId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [restaurantFilter, setRestaurantFilter] = useState(null);
@@ -105,11 +105,9 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal, restaurantId }) => {
     }
   );
 
-  // Filter meals based on search term
+  // Get initial items based on query type
   const allItems = restaurantId ? data?.getMenuItemsByRestaurant : data?.getAllMeals;
-  const filteredMeals = allItems?.filter(meal =>
-    meal.mealName.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+
   // Fetch local restaurants for filters
   const { data: restaurantData } = useQuery(GET_RESTAURANTS, {
     variables: { page: 1, limit: 50 },
@@ -117,28 +115,36 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal, restaurantId }) => {
   });
   const restaurants = restaurantData?.getRestaurants || [];
 
-  // Combine API meals with scraped menu items
-  const apiMeals = data?.getAllMeals || [];
-  const scrapedMeals = menuItems.map((item, idx) => ({
-    id: `scraped-${idx}`,
-    mealName: item.meal_name,
-    price: item.price || 0,
-    restaurant: { restaurantName: item.chain },
-    nutrition: {
-      carbohydrates: item.carbohydrates,
-      protein: item.protein,
-      fat: item.fat,
-      sodium: item.sodium
-    },
-    isScraped: true
-  }));
+  // Prepare meals data based on source
+  let mealsToDisplay = [];
 
-  const allMeals = [...apiMeals, ...scrapedMeals];
+  if (restaurantId) {
+    // If we're showing a specific restaurant's menu
+    mealsToDisplay = allItems || [];
+  } else {
+    // Combine API meals with scraped menu items when showing all meals
+    const apiMeals = data?.getAllMeals || [];
+    const scrapedMeals = menuItems.map((item, idx) => ({
+      id: `scraped-${idx}`,
+      mealName: item.meal_name,
+      price: item.price || 0,
+      restaurant: { restaurantName: item.chain },
+      nutrition: {
+        carbohydrates: item.carbohydrates,
+        protein: item.protein,
+        fat: item.fat,
+        sodium: item.sodium
+      },
+      isScraped: true
+    }));
+
+    mealsToDisplay = [...apiMeals, ...scrapedMeals];
+  }
 
   // Filter meals based on search term and restaurant filter
-  const filteredMeals = allMeals.filter(meal => {
+  const filteredMeals = mealsToDisplay.filter(meal => {
     const matchesSearch = meal.mealName
-      .toLowerCase()
+      ?.toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchesRestaurant = !restaurantFilter ||
       (meal.restaurant && meal.restaurant.restaurantName === restaurantFilter);
@@ -280,11 +286,11 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal, restaurantId }) => {
                       <TableCell component="th" scope="row">
                         {meal.mealName}
                       </TableCell>
-                      <TableCell align="right">${meal.price.toFixed(2)}</TableCell>
-                      <TableCell align="right">{meal.nutrition.carbohydrates}g</TableCell>
-                      <TableCell align="right">{meal.nutrition.protein}g</TableCell>
-                      <TableCell align="right">{meal.nutrition.fat}g</TableCell>
-                      <TableCell align="right">{meal.nutrition.sodium}mg</TableCell>
+                      <TableCell align="right">${(meal.price || 0).toFixed(2)}</TableCell>
+                      <TableCell align="right">{meal.nutrition?.carbohydrates || 'N/A'}g</TableCell>
+                      <TableCell align="right">{meal.nutrition?.protein || 'N/A'}g</TableCell>
+                      <TableCell align="right">{meal.nutrition?.fat || 'N/A'}g</TableCell>
+                      <TableCell align="right">{meal.nutrition?.sodium || 'N/A'}mg</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -305,7 +311,7 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal, restaurantId }) => {
             Page {page}
           </Typography>
           <Button
-            disabled={!data || data.getAllMeals.length < limit || loading}
+            disabled={!data || (allItems && allItems.length < limit) || loading}
             onClick={() => setPage(page + 1)}
           >
             Next

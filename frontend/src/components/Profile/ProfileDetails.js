@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, CardContent, Avatar, Typography, Grid } from '@mui/material';
+import CalorieProgressRing from './CalorieProgressRing';
 
 export default function ProfileDetails({ user }) {
   if (!user) return null;
@@ -12,6 +13,9 @@ export default function ProfileDetails({ user }) {
         <Grid container spacing={2} alignItems="center">
           <Grid item>
             <Avatar src={user.avatarUrl} alt={user.name} sx={{ width: 64, height: 64 }} />
+          </Grid>
+          <Grid item>
+            <CalorieProgressRing userId={user.id} dailyCalories={user.dailyCalories} />
           </Grid>
           <Grid item xs>
             <Typography variant="h6" fontWeight={600}>{user.name}</Typography>

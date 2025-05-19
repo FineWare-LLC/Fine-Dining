@@ -12,12 +12,8 @@ import { useAuth } from '../../context/AuthContext';
 export default function NewHeader({ user }) {
   const toggleDrawer = useDashStore(s => s.toggleDrawer);
   const router = useRouter();
-  let authUser = null;
-  try {
-    authUser = useAuth().user;
-  } catch (e) {
-    // Ignore if AuthProvider is not present
-  }
+  const auth = useAuth();
+  const authUser = auth?.user || null;
   const currentUser = user || authUser;
   return (
     <AppBar elevation={0} sx={{ bgcolor:'primary.main', px:2 }}>

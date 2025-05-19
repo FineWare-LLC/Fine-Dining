@@ -216,6 +216,14 @@ PlaceholderCard.defaultProps = {
 export default function DailySummary({ meals, loading, onAddMeal }) {
     // 1‑second heartbeat loader
     const [pulse, setPulse] = useState(loading);
+    const [pos, setPos] = useState(0);
+
+    const list  = Array.isArray(meals) ? meals : [];
+    const total = list.length;
+    const colour = useMemo(() => interpolateColour(pos), [pos]);
+    const idx    = total ? Math.round(pos * (total - 1)) : 0;
+    const meal   = total ? list[idx] : null;
+
     useEffect(() => {
         if (!loading) return setPulse(false);
         const id = setTimeout(() => setPulse(false), 1000);
@@ -223,13 +231,6 @@ export default function DailySummary({ meals, loading, onAddMeal }) {
     }, [loading]);
 
     if (pulse) return <LoaderSkeleton />;
-
-    const list  = Array.isArray(meals) ? meals : [];
-    const total = list.length;
-    const [pos, setPos] = useState(0);
-    const colour = useMemo(() => interpolateColour(pos), [pos]);
-    const idx    = total ? Math.round(pos * (total - 1)) : 0;
-    const meal   = total ? list[idx] : null;
 
     return (
         <Box sx={{ mt: 2 }}>

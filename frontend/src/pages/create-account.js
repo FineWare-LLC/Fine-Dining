@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { useMutation } from '@apollo/client';
 // Import the generated mutation document from your codegen output.
-import { CreateUserDocument} from "@/gql/graphql.js";
+import { CreateUserDocument} from "@/gql/graphql";
 
 // Regular expression for basic email validation.
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

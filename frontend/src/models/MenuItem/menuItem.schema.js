@@ -9,7 +9,7 @@ const menuItemSchema = new Schema(
     price: { type: Number, default: 0 },
     description: { type: String, default: '' },
     allergens: { type: [String], default: [] },
-    nutritionFacts: { type: String, default: '' }
+    nutritionFacts: { type: String, default: '' },
     // Nutrition details
     calories: { type: Number, default: 0 },
     protein: { type: Number, default: 0 },

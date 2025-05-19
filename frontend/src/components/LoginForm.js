@@ -229,7 +229,7 @@ export default function LoginForm() {
                 variant="body2"
                 sx={{ textAlign: 'center', marginTop: '0.5rem' }}
             >
-                Don't have an account? Create one!
+                Don&apos;t have an account? Create one!
             </Link>
         </Box>
     );

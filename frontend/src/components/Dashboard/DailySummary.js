@@ -1,7 +1,7 @@
 /**
  * DailySummary — all components now share the dynamic tint colour.
  */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
     Box,
@@ -225,9 +225,7 @@ export default function DailySummary({ meals, loading, onAddMeal }) {
 
     const list  = Array.isArray(meals) ? meals : [];
     const total = list.length;
-    const colour = useMemo(() => interpolateColour(pos), [pos]);
-    const idx    = total ? Math.round(pos * (total - 1)) : 0;
-    const meal   = total ? list[idx] : null;
+    const baseColour = interpolateColour(0);
 
     useEffect(() => {
         if (!loading) return setPulse(false);
@@ -247,15 +245,20 @@ export default function DailySummary({ meals, loading, onAddMeal }) {
 
     return (
         <Box sx={{ mt: 2 }}>
-            <PillHeader title="YOUR DAY" colour={colour} onMenu={() => {}} />
-            <DaySlider position={pos} onChange={setPos} colour={colour} />
+            <PillHeader title="YOUR DAY" colour={baseColour} onMenu={() => {}} />
 
             {total ? (
-                <MealCard meal={meal} colour={colour} />
+                list.map((m, i) => (
+                    <MealCard
+                        key={i}
+                        meal={m}
+                        colour={interpolateColour(total === 1 ? 0 : i / (total - 1))}
+                    />
+                ))
             ) : (
                 <PlaceholderCard
                     message="No meals planned for today"
-                    colour={colour}
+                    colour={baseColour}
                     onAdd={onAddMeal}
                 />
             )}

@@ -11,13 +11,15 @@ export default function MealCard({ meal }) {
       <CardMedia component="img" height="160" image={meal.imageUrl} alt={meal.title} />
       <CardContent>
         <Typography variant="h6">{meal.title}</Typography>
-        <Box display="flex" gap={1}>
-          {meal.tags.map(t => (
-            <Typography key={t} variant="caption" sx={{ bgcolor:'brand.surface', px:1, borderRadius:1 }}>
-              {t}
-            </Typography>
-          ))}
-        </Box>
+        {meal.tags && meal.tags.length > 0 && (
+          <Box display="flex" gap={1}>
+            {meal.tags.map(t => (
+              <Typography key={t} variant="caption" sx={{ bgcolor:'brand.surface', px:1, borderRadius:1 }}>
+                {t}
+              </Typography>
+            ))}
+          </Box>
+        )}
       </CardContent>
     </Card>
   );

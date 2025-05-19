@@ -48,14 +48,17 @@ const GENERATE_OPTIMIZED_MEAL_PLAN = gql`
 const FIND_NEARBY_RESTAURANTS = gql`
   query FindNearbyRestaurants($latitude: Float!, $longitude: Float!, $radius: Int!) {
     findNearbyRestaurants(latitude: $latitude, longitude: $longitude, radius: $radius) {
-      placeId
-      name
-      vicinity
-      rating
-      userRatingsTotal
-      location {
-        latitude
-        longitude
+      source
+      restaurants {
+        placeId
+        name
+        vicinity
+        rating
+        userRatingsTotal
+        location {
+          latitude
+          longitude
+        }
       }
     }
   }

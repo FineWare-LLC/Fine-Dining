@@ -1,4 +1,10 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, {
+  useState,
+  useEffect,
+  createContext,
+  useContext,
+  useRef
+} from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
@@ -6,6 +12,7 @@ import {
   Stepper,
   Step,
   StepLabel,
+  StepButton,
   RadioGroup,
   FormControlLabel,
   Radio,
@@ -244,6 +251,10 @@ export default function QuestionnaireWizard() {
   const [activeStep, setActiveStep] = useSessionState('wizardStep', 0);
   const [formData, setFormData] = useSessionState('wizardData', {});
 
+  const [focusIdx, setFocusIdx] = useState(activeStep);
+  const stepRefs = useRef([]);
+  const [liveMsg, setLiveMsg] = useState('');
+
   const steps = ['Basic Info', 'Weight Goal', 'Summary'];
 
   const handleBasicNext = (data) => {
@@ -268,16 +279,72 @@ export default function QuestionnaireWizard() {
     }
   };
 
+  useEffect(() => {
+    setFocusIdx(activeStep);
+  }, [activeStep]);
+
+  useEffect(() => {
+    const label = steps[focusIdx];
+    const completed = focusIdx < activeStep ? ' — completed' : '';
+    setLiveMsg(`Step ${focusIdx + 1} of ${steps.length}: ${label}${completed}`);
+  }, [focusIdx, activeStep, steps]);
+
+  const handleKeyDown = (e) => {
+    const max = steps.length - 1;
+    if (['ArrowRight', 'ArrowDown'].includes(e.key)) {
+      e.preventDefault();
+      const next = focusIdx === max ? 0 : focusIdx + 1;
+      setFocusIdx(next);
+      stepRefs.current[next]?.focus();
+    } else if (['ArrowLeft', 'ArrowUp'].includes(e.key)) {
+      e.preventDefault();
+      const prev = focusIdx === 0 ? max : focusIdx - 1;
+      setFocusIdx(prev);
+      stepRefs.current[prev]?.focus();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setFocusIdx(0);
+      stepRefs.current[0]?.focus();
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setFocusIdx(max);
+      stepRefs.current[max]?.focus();
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setActiveStep(focusIdx);
+    }
+  };
+
   return (
     <MeasurementProvider>
       <Box>
-        <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
+        <Stepper role="list" nonLinear activeStep={activeStep} sx={{ mb: 3 }}>
           {steps.map((label, i) => (
-            <Step key={label} aria-current={activeStep === i ? 'step' : undefined}>
-              <StepLabel>{label}</StepLabel>
+            <Step
+              key={label}
+              completed={i < activeStep}
+              role="listitem"
+              aria-current={activeStep === i ? 'step' : undefined}
+            >
+              <StepButton
+                onClick={() => setActiveStep(i)}
+                ref={(el) => (stepRefs.current[i] = el)}
+                tabIndex={focusIdx === i ? 0 : -1}
+                onFocus={() => setFocusIdx(i)}
+                onKeyDown={handleKeyDown}
+              >
+                <StepLabel>{label}</StepLabel>
+              </StepButton>
             </Step>
           ))}
         </Stepper>
+        <Box
+          role="status"
+          aria-live="polite"
+          sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}
+        >
+          {liveMsg}
+        </Box>
         {renderStep()}
       </Box>
     </MeasurementProvider>

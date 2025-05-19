@@ -155,6 +155,31 @@ OVERPASS_URL=https://overpass-api.de/api/interpreter
 
 If `GOOGLE_PLACES_API_KEY` is missing or a request fails, the service falls back to OpenStreetMap Overpass. Results may be less complete and lack ratings. If no `.env.local` file is present, the default Overpass endpoint is used automatically.
 
+### Fetch Local Restaurants
+
+Use the helper script to retrieve nearby restaurants from the command line:
+
+```bash
+node scripts/fetch-local-restaurants.mjs <lat> <lon> [radius] [keyword]
+```
+
+`GOOGLE_PLACES_API_KEY` and the optional `OVERPASS_URL` are read from your
+`.env.local`. Results are printed as JSON.
+
+### Menu Scraping Pipeline
+
+The scraping pipeline under `src/lib/HiGHS` collects menu data and outputs a
+CSV file:
+
+```bash
+cd src/lib/HiGHS
+npm install
+node src/main_pipeline.mjs
+```
+
+On completion you will find `data/processed/restaurant_meals_processed.csv` in
+the same directory.
+
 ## Testing
 
 The project uses Playwright for both end-to-end and component testing.

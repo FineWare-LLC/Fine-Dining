@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, CardContent, Avatar, Typography, Grid } from '@mui/material';
+import EditableField from './EditableField';
 
 export default function ProfileDetails({ user }) {
   if (!user) return null;
@@ -28,12 +29,24 @@ export default function ProfileDetails({ user }) {
             <Typography variant="body2">{user.accountStatus}</Typography>
           </Grid>
           <Grid item xs={6}>
-            <Typography variant="subtitle2">Weight</Typography>
-            <Typography variant="body2">{user.weight ?? 'N/A'} {weightUnit}</Typography>
+            <EditableField
+              label="Weight"
+              field="weight"
+              value={user.weight}
+              unit={weightUnit}
+              userId={user.id}
+              measurementSystem={user.measurementSystem}
+            />
           </Grid>
           <Grid item xs={6}>
-            <Typography variant="subtitle2">Height</Typography>
-            <Typography variant="body2">{user.height ?? 'N/A'} {heightUnit}</Typography>
+            <EditableField
+              label="Height"
+              field="height"
+              value={user.height}
+              unit={heightUnit}
+              userId={user.id}
+              measurementSystem={user.measurementSystem}
+            />
           </Grid>
           <Grid item xs={6}>
             <Typography variant="subtitle2">Gender</Typography>

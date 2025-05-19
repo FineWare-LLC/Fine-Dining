@@ -1,6 +1,6 @@
 # Troubleshooting Solver Errors
 
-This document lists common issues encountered when running the HiGHS solver and how to resolve them.
+This document lists common issues encountered when running the HiGHS solver and how to resolve them. If you are new to the project start with the [Getting Started](./getting_started.md) guide.
 
 ## Error Codes
 
@@ -15,3 +15,5 @@ This document lists common issues encountered when running the HiGHS solver and 
 - **Infeasible models**: Try widening the calorie or macro ranges in your request. Ensure there are enough meals with valid nutrition data.
 - **Numerical issues**: Inspect the meal dataset for very large or very small numbers. Removing outliers often resolves this problem.
 - **Unknown status**: Ensure you are using a compatible version of the HiGHS addon and that all inputs are valid.
+
+For more examples of how to structure LP/MIP problems see the [User Guide](./user_guide.md).

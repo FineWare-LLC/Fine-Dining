@@ -1,7 +1,7 @@
 /**
  * DailySummary — all components now share the dynamic tint colour.
  */
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, useMemo} from 'react';
 import PropTypes from 'prop-types';
 import {
     Box,

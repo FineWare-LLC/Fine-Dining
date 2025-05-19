@@ -142,6 +142,11 @@ export default function Dashboard() {
   // auth redirect stub
   /* const { isAuthenticated, loading } = useAuth();
   useEffect(()=>{ if (!loading && !isAuthenticated) router.push('/login'); },[loading]); */
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const { user } = useAuth();
 
@@ -151,11 +156,7 @@ export default function Dashboard() {
     fetchPolicy: 'cache-first',
   });
 
-  const activeMealPlanId = useMemo(() => {
-    const plans = mealPlanData?.getMealPlans || [];
-    const activePlan = plans.find(p => p.status === 'ACTIVE') || plans[0];
-    return activePlan?.id;
-  }, [mealPlanData]);
+
 
   const meal        = useMeal();
   const [dailyMeals, setDailyMeals] = useState([]);
@@ -342,7 +343,7 @@ export default function Dashboard() {
     <>
       <Head><title>Fine Dining Dashboard</title></Head>
       <CssBaseline />
-      <NewHeader user={user} />
+      <NewHeader user={isClient ? user : null} />
       <Box
         component="main"
         sx={{
@@ -444,9 +445,9 @@ export default function Dashboard() {
             <Typography color="error" gutterBottom>
               Failed to load nearby restaurants.
             </Typography>
-            <Button 
-              variant="outlined" 
-              size="small" 
+            <Button
+              variant="outlined"
+              size="small"
               onClick={() => {
                 // Retry with current location or fallback
                 if (navigator.geolocation) {

@@ -10,6 +10,7 @@
     "build:gpu": "cross-env USE_GPU=1 next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "node --test src/tests/unit/*test.js src/tests/solver/*test.js src/tests/gpu/*test.mjs",
     "test:playwright": "node scripts/run-playwright.mjs",
     "test:components": "cross-env NODE_ENV=test-ct playwright test --config=playwright-ct.config.js",
     "test:solver": "node --test src/tests/solver/concurrency.test.js",

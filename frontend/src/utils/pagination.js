@@ -19,7 +19,4 @@ export async function paginateQuery(query, page = 1, limit = 10) {
 
     // Apply skip and limit to the query and execute it
     return query.skip(skip).limit(limitNum).exec();
-}/**
- * @file pagination.js
- * @description Utility function for paginating Mongoose queries.
- */
+}

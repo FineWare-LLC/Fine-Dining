@@ -1,5 +1,6 @@
 import { benchmark } from '../../gpu/matrixOperations.mjs';
-import assert from 'node:assert';
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 
 describe('GPU performance benchmark', () => {
   it('multiplies a large matrix within a reasonable time', async () => {

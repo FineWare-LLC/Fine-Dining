@@ -39,6 +39,8 @@
     "framer-motion": "^12.7.3",
     "graphql": "^16.11.0",
     "graphql-tag": "^2.12.6",
+    "react-dropzone": "^14.2.3",
+    "browser-image-compression": "^2.0.0",
     "highs-addon": "^0.9.4",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.14.2",

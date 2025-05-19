@@ -18,6 +18,8 @@ import Head from 'next/head';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { ApolloProvider, ApolloClient, InMemoryCache, HttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ToastProvider } from '../context/ToastContext';
 
 import createEmotionCache from '../utils/createEmotionCache'; // [cite: frontend/src/utils/createEmotionCache.js]
 import { CacheProvider } from '@emotion/react';
@@ -65,6 +67,7 @@ const client = new ApolloClient({
 
 // Create an Emotion cache instance for client-side rendering.
 const clientSideEmotionCache = createEmotionCache(); // [cite: frontend/src/utils/createEmotionCache.js]
+const queryClient = new QueryClient();
 
 /**
  * MyApp - The root component of the Next.js application.
@@ -100,11 +103,15 @@ export default function MyApp(props) {
                 <CssBaseline />
                 {/* Provide the configured Apollo Client to the entire application */}
                 <ApolloProvider client={client}>
-                    {/* Provide the Authentication Context to manage user auth state */}
-                    <AuthProvider>
-                        {/* Render the active page component with its specific props */}
-                        <Component {...pageProps} />
-                    </AuthProvider>
+                    <QueryClientProvider client={queryClient}>
+                        <ToastProvider>
+                            {/* Provide the Authentication Context to manage user auth state */}
+                            <AuthProvider>
+                                {/* Render the active page component with its specific props */}
+                                <Component {...pageProps} />
+                            </AuthProvider>
+                        </ToastProvider>
+                    </QueryClientProvider>
                 </ApolloProvider>
             </ThemeProvider>
         </CacheProvider>

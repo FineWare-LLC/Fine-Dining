@@ -147,6 +147,19 @@ file is present, printing the resulting restaurant list as JSON.
 * `npm run codegen`: Generates GraphQL types from your schema (`codegen.yml`).
 * `npm run benchmark:gpu`: Runs a matrix multiplication benchmark using the GPU module.
 
+## Continuous Integration
+The repository uses a GitHub Actions workflow defined in
+`.github/workflows/ci.yml`. The workflow runs on Node.js 18 and performs the
+following steps:
+
+1. Checks out the code.
+2. Installs dependencies inside the `frontend` directory.
+3. Lints the project with `npm run lint`.
+4. Runs unit tests via `npm test`.
+5. Executes Playwright tests with `npm run test:playwright`.
+6. Builds the Next.js application and uploads the `.next` directory as a build
+   artifact.
+
 ## License
 This project is currently not licensed under an open-source license.
 © 2025 FineWare LLC. All rights reserved.

@@ -6,10 +6,18 @@ import { AppBar, Toolbar, IconButton, Avatar, Typography } from '@mui/material';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import { useDashStore } from './store';
 import { useRouter } from 'next/router';
+import { useAuth } from '../../context/AuthContext';
 
 export default function NewHeader({ user }) {
   const toggleDrawer = useDashStore(s => s.toggleDrawer);
   const router = useRouter();
+  let authUser = null;
+  try {
+    authUser = useAuth().user;
+  } catch (e) {
+    // Ignore if AuthProvider is not present
+  }
+  const currentUser = user || authUser;
   return (
     <AppBar elevation={0} sx={{ bgcolor:'primary.main', px:2 }}>
       <Toolbar disableGutters sx={{ justifyContent:'space-between' }}>
@@ -23,8 +31,8 @@ export default function NewHeader({ user }) {
           title="Profile"
         >
           <Avatar
-            alt={user?.name}
-            src={user?.avatarUrl}
+            alt={currentUser?.name}
+            src={currentUser?.avatarUrl}
             sx={{ width:36, height:36 }}
           />
         </IconButton>

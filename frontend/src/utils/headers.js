@@ -1,7 +1,5 @@
 // src/utils/headers.js
 
-import { randomUUID } from 'crypto';
-
 const isProduction = process.env.NODE_ENV === 'production';
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
@@ -62,11 +60,13 @@ export function setCORSHeaders(res, origin) {
 
 /**
  * Attaches a unique Request ID to the response.
+ * Uses Web Crypto API which is supported in Edge Runtime.
  * @param {import('http').ServerResponse | import('next/server').NextResponse} res
  * @returns {string}
  */
 export function assignRequestId(res) {
-    const requestId = randomUUID();
+    // Using Web Crypto API which is supported in Edge Runtime
+    const requestId = crypto.randomUUID();
     if (res.headers && res.headers.set) {
         res.headers.set('X-Request-ID', requestId);
     } else if (res.setHeader) {

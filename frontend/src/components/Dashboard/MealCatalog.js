@@ -66,6 +66,19 @@ const GET_RESTAURANTS = gql`
   }
 `;
 
+// GraphQL query to fetch menu items for a restaurant
+const GET_MENU_ITEMS = gql`
+  query GetMenuItems($restaurantId: ID!, $page: Int, $limit: Int) {
+    getMenuItemsByRestaurant(restaurantId: $restaurantId, page: $page, limit: $limit) {
+      id
+      mealName
+      price
+      allergens
+      nutritionFacts
+    }
+  }
+`;
+
 /**
  * Displays the meal catalog with search, filtering, and selection capabilities.
  * 
@@ -73,20 +86,24 @@ const GET_RESTAURANTS = gql`
  * @param {Array} props.selectedMeals - Array of selected meal IDs
  * @param {Function} props.onSelectMeal - Callback when a meal is selected/deselected
  * @param {Function} [props.onAddMeals] - Handler for the "Add Selected" button
+ * @param {String} [props.restaurantId] - Optional restaurant ID to filter by
  * @returns {JSX.Element} The rendered component
  */
-const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals }) => {
+const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals, restaurantId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [restaurantFilter, setRestaurantFilter] = useState(null);
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
 
-  // Fetch meals from the server
-  const { loading, error, data } = useQuery(GET_ALL_MEALS, {
-    variables: { page, limit },
-    fetchPolicy: 'network-only' // Don't use cache for this query
-  });
+  // Fetch meals or menu items from the server
+  const { loading, error, data } = useQuery(
+    restaurantId ? GET_MENU_ITEMS : GET_ALL_MEALS,
+    {
+      variables: restaurantId ? { restaurantId, page, limit } : { page, limit },
+      fetchPolicy: 'network-only'
+    }
+  );
 
   // Fetch local restaurants for filters
   const { data: restaurantData } = useQuery(GET_RESTAURANTS, {
@@ -95,23 +112,29 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals }) => {
   });
   const restaurants = restaurantData?.getRestaurants || [];
 
-  // Combine API meals with scraped menu items
-  const apiMeals = data?.getAllMeals || [];
-  const scrapedMeals = menuItems.map((item, idx) => ({
-    id: `scraped-${idx}`,
-    mealName: item.meal_name,
-    price: item.price || 0,
-    restaurant: { restaurantName: item.chain },
-    nutrition: {
-      carbohydrates: item.carbohydrates,
-      protein: item.protein,
-      fat: item.fat,
-      sodium: item.sodium
-    },
-    isScraped: true
-  }));
-
-  const allMeals = [...apiMeals, ...scrapedMeals];
+  // Combine API meals with scraped menu items if not filtering by restaurant ID
+  let allMeals = [];
+  if (restaurantId) {
+    // When filtering by restaurant ID, use the menu items from that restaurant
+    allMeals = data?.getMenuItemsByRestaurant || [];
+  } else {
+    // Otherwise combine API meals with scraped data
+    const apiMeals = data?.getAllMeals || [];
+    const scrapedMeals = menuItems.map((item, idx) => ({
+      id: `scraped-${idx}`,
+      mealName: item.meal_name,
+      price: item.price || 0,
+      restaurant: { restaurantName: item.chain },
+      nutrition: {
+        carbohydrates: item.carbohydrates,
+        protein: item.protein,
+        fat: item.fat,
+        sodium: item.sodium
+      },
+      isScraped: true
+    }));
+    allMeals = [...apiMeals, ...scrapedMeals];
+  }
 
   // Filter meals based on search term and restaurant filter
   const filteredMeals = allMeals.filter(meal => {
@@ -259,10 +282,10 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals }) => {
                         {meal.mealName}
                       </TableCell>
                       <TableCell align="right">${meal.price.toFixed(2)}</TableCell>
-                      <TableCell align="right">{meal.nutrition.carbohydrates}g</TableCell>
-                      <TableCell align="right">{meal.nutrition.protein}g</TableCell>
-                      <TableCell align="right">{meal.nutrition.fat}g</TableCell>
-                      <TableCell align="right">{meal.nutrition.sodium}mg</TableCell>
+                      <TableCell align="right">{meal.nutrition?.carbohydrates || 0}g</TableCell>
+                      <TableCell align="right">{meal.nutrition?.protein || 0}g</TableCell>
+                      <TableCell align="right">{meal.nutrition?.fat || 0}g</TableCell>
+                      <TableCell align="right">{meal.nutrition?.sodium || 0}mg</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -283,7 +306,7 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals }) => {
             Page {page}
           </Typography>
           <Button
-            disabled={!data || data.getAllMeals.length < limit || loading}
+            disabled={!data || (restaurantId ? data.getMenuItemsByRestaurant.length < limit : data.getAllMeals.length < limit) || loading}
             onClick={() => setPage(page + 1)}
           >
             Next
@@ -291,16 +314,18 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals }) => {
         </Box>
 
         {/* Add Selected button */}
-        <Box sx={{ mt: 2, textAlign: 'right' }}>
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={selectedMeals.length === 0}
-            onClick={handleAddSelected}
-          >
-            Add Selected
-          </Button>
-        </Box>
+        {onAddMeals && (
+          <Box sx={{ mt: 2, textAlign: 'right' }}>
+            <Button
+              variant="contained"
+              color="primary"
+              disabled={selectedMeals.length === 0}
+              onClick={handleAddSelected}
+            >
+              Add Selected
+            </Button>
+          </Box>
+        )}
       </CardContent>
     </Card>
   );

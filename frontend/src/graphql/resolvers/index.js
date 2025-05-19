@@ -6,7 +6,7 @@
 
 import { Query } from './queries';
 import { Mutation } from './mutations';
-import { MealPlan, Meal, Stats, Review, DateScalar } from './resolversFields';
+import { MealPlan, Meal, Stats, Review, MenuItem, DateScalar } from './resolversFields';
 
 /**
  * @file index.js
@@ -22,5 +22,6 @@ export const resolvers = {
     MealPlan,
     Meal,
     Stats,
-    Review
+    Review,
+    MenuItem
 };

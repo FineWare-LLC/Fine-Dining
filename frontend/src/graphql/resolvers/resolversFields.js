@@ -73,3 +73,9 @@ export const Review = {
         return User.findById(parent.user);
     },
 };
+
+export const MenuItem = {
+    async restaurant(parent) {
+        return RestaurantModel.findById(parent.restaurant);
+    },
+};

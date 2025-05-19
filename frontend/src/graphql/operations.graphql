@@ -386,6 +386,7 @@ query GetUser($id: ID!) {
         gender
         measurementSystem
         dailyCalories
+        avatarUrl
         createdAt
     }
 }

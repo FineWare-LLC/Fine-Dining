@@ -126,6 +126,7 @@ export const typeDefs = gql`
         questionnaire: Questionnaire
         dailyCalories: Int
         nutritionTargets: NutritionTargets
+        avatarUrl: String
         lastLogin: Date
         createdAt: Date!
         updatedAt: Date!

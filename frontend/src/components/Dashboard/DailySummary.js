@@ -213,7 +213,7 @@ PlaceholderCard.defaultProps = {
 };
 
 /* ─── DailySummary Organism ───────────────────────────────────────── */
-export default function DailySummary({ meals, loading, onAddMeal }) {
+export default function DailySummary({ meals, loading, onAddMeal, nutritionTargets }) {
     // 1‑second heartbeat loader
     const [pulse, setPulse] = useState(loading);
     const [pos, setPos] = useState(0);
@@ -229,6 +229,23 @@ export default function DailySummary({ meals, loading, onAddMeal }) {
         const id = setTimeout(() => setPulse(false), 1000);
         return () => clearTimeout(id);
     }, [loading]);
+
+    const totals = useMemo(
+        () => list.reduce((acc, m) => ({
+            calories: acc.calories + (m.calories || 0),
+            protein:  acc.protein  + (m.protein  || 0),
+            carbohydrates: acc.carbohydrates + (m.carbohydrates || 0),
+            fat: acc.fat + (m.fat || 0),
+        }), { calories: 0, protein: 0, carbohydrates: 0, fat: 0 }),
+        [list]
+    );
+
+    const remaining = useMemo(() => ({
+        calories: Math.max((nutritionTargets?.calories || 0) - totals.calories, 0),
+        protein: Math.max((nutritionTargets?.protein || 0) - totals.protein, 0),
+        carbohydrates: Math.max((nutritionTargets?.carbohydrates || 0) - totals.carbohydrates, 0),
+        fat: Math.max((nutritionTargets?.fat || 0) - totals.fat, 0),
+    }), [nutritionTargets, totals]);
 
     if (pulse) return <LoaderSkeleton />;
 
@@ -246,6 +263,12 @@ export default function DailySummary({ meals, loading, onAddMeal }) {
                     onAdd={onAddMeal}
                 />
             )}
+
+            <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                    Remaining: {remaining.calories} cal · {remaining.protein} g protein · {remaining.carbohydrates} g carbs · {remaining.fat} g fat
+                </Typography>
+            </Box>
         </Box>
     );
 }
@@ -254,17 +277,26 @@ DailySummary.propTypes = {
     loading:   PropTypes.bool,
     meals:     PropTypes.arrayOf(
         PropTypes.shape({
-            timeLabel: PropTypes.string.isRequired,
-            title:     PropTypes.string.isRequired,
-            calories:  PropTypes.number.isRequired,
-            protein:   PropTypes.number.isRequired,
-            imageUrl:  PropTypes.string.isRequired,
+            timeLabel:    PropTypes.string.isRequired,
+            title:        PropTypes.string.isRequired,
+            calories:     PropTypes.number.isRequired,
+            protein:      PropTypes.number.isRequired,
+            carbohydrates:PropTypes.number,
+            fat:          PropTypes.number,
+            imageUrl:     PropTypes.string.isRequired,
         })
     ),
+    nutritionTargets: PropTypes.shape({
+        calories:     PropTypes.number,
+        protein:      PropTypes.number,
+        carbohydrates:PropTypes.number,
+        fat:          PropTypes.number,
+    }),
     onAddMeal: PropTypes.func,
 };
 DailySummary.defaultProps = {
     loading:   false,
     meals:     [],
+    nutritionTargets: null,
     onAddMeal: () => {},
 };

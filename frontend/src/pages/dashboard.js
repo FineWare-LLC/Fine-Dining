@@ -113,6 +113,8 @@ const useDailyMeals = (count = 3) => {
         (m.nutrition.fat || 0) * 9
       ),
       protein: m.nutrition.protein || 0,
+      carbohydrates: m.nutrition.carbohydrates || 0,
+      fat: m.nutrition.fat || 0,
       imageUrl: m.recipe?.images?.[0] || `https://source.unsplash.com/800x600/?food&sig=${m.id}`,
     })),
   [data]);
@@ -261,6 +263,33 @@ export default function Dashboard() {
     [restaurants, searchTerm],
   );
 
+  const dailyTargets = useMemo(() => {
+    if (optimizedMealPlan?.totalNutrition) {
+      const n = optimizedMealPlan.totalNutrition;
+      return {
+        calories: Math.round((n.carbohydrates || 0) * 4 + (n.protein || 0) * 4 + (n.fat || 0) * 9),
+        carbohydrates: n.carbohydrates || 0,
+        protein: n.protein || 0,
+        fat: n.fat || 0,
+      };
+    }
+    if (user?.nutritionTargets) {
+      const n = user.nutritionTargets;
+      return {
+        calories: Math.round((n.carbohydratesMax || 0) * 4 + (n.proteinMax || 0) * 4 + (n.fatMax || 0) * 9),
+        carbohydrates: n.carbohydratesMax || 0,
+        protein: n.proteinMax || 0,
+        fat: n.fatMax || 0,
+      };
+    }
+    return {
+      calories: user?.dailyCalories || 2000,
+      carbohydrates: 250,
+      protein: 75,
+      fat: 70,
+    };
+  }, [optimizedMealPlan, user]);
+
   return (
     <>
       <Head><title>Fine Dining Dashboard</title></Head>
@@ -277,7 +306,7 @@ export default function Dashboard() {
         }}
       >
         <GreetingSegment userName={user?.name || 'Guest'} />
-        <DailySummary meals={meal ? [meal] : []} />
+        <DailySummary meals={meal ? [meal] : []} nutritionTargets={dailyTargets} />
 
         {/* Tabs for Meal Plan Optimization */}
         <Box sx={{ width: '100%', mt: 3 }}>

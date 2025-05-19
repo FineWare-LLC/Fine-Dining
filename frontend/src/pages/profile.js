@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { gql, useQuery } from '@apollo/client';
 import QuestionnaireWizard from '../components/Questionnaire/QuestionnaireWizard';
 import ProfileDetails from '../components/Profile/ProfileDetails';
+import ThemeToggle from '../components/ThemeToggle';
 import { useAuth } from '../context/AuthContext';
 import styles from '@/styles/ProfilePage.module.css';
 
@@ -55,6 +56,9 @@ export default function ProfilePage() {
       <Typography variant="body1" className={styles.description} sx={{ mt: 3 }}>
         Update your preferences below.
       </Typography>
+      <Box sx={{ my: 2 }}>
+        <ThemeToggle />
+      </Box>
       <Box>
         <QuestionnaireWizard />
       </Box>

@@ -4,7 +4,7 @@
  * Component to display the meal catalog and allow users to select meals.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, gql } from '@apollo/client';
 import {
   Box,
@@ -30,8 +30,9 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+
+// Local JSON data of scraped menu items
+import menuItems from '@/lib/HiGHS/data/raw/scraped_data_test.json';
 
 // GraphQL query to fetch all available meals
 const GET_ALL_MEALS = gql`
@@ -40,6 +41,10 @@ const GET_ALL_MEALS = gql`
       id
       mealName
       price
+      restaurant {
+        id
+        restaurantName
+      }
       nutrition {
         carbohydrates
         protein
@@ -47,6 +52,16 @@ const GET_ALL_MEALS = gql`
         sodium
       }
       allergens
+    }
+  }
+`;
+
+// Query to fetch restaurants for filter chips
+const GET_RESTAURANTS = gql`
+  query GetRestaurants($page: Int, $limit: Int) {
+    getRestaurants(page: $page, limit: $limit) {
+      id
+      restaurantName
     }
   }
 `;
@@ -62,6 +77,7 @@ const GET_ALL_MEALS = gql`
 const MealCatalog = ({ selectedMeals = [], onSelectMeal }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [restaurantFilter, setRestaurantFilter] = useState(null);
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
 
@@ -71,10 +87,40 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal }) => {
     fetchPolicy: 'network-only' // Don't use cache for this query
   });
 
-  // Filter meals based on search term
-  const filteredMeals = data?.getAllMeals?.filter(meal => 
-    meal.mealName.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  // Fetch local restaurants for filters
+  const { data: restaurantData } = useQuery(GET_RESTAURANTS, {
+    variables: { page: 1, limit: 50 },
+    fetchPolicy: 'cache-first'
+  });
+  const restaurants = restaurantData?.getRestaurants || [];
+
+  // Combine API meals with scraped menu items
+  const apiMeals = data?.getAllMeals || [];
+  const scrapedMeals = menuItems.map((item, idx) => ({
+    id: `scraped-${idx}`,
+    mealName: item.meal_name,
+    price: item.price || 0,
+    restaurant: { restaurantName: item.chain },
+    nutrition: {
+      carbohydrates: item.carbohydrates,
+      protein: item.protein,
+      fat: item.fat,
+      sodium: item.sodium
+    },
+    isScraped: true
+  }));
+
+  const allMeals = [...apiMeals, ...scrapedMeals];
+
+  // Filter meals based on search term and restaurant filter
+  const filteredMeals = allMeals.filter(meal => {
+    const matchesSearch = meal.mealName
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesRestaurant = !restaurantFilter ||
+      (meal.restaurant && meal.restaurant.restaurantName === restaurantFilter);
+    return matchesSearch && matchesRestaurant;
+  });
 
   // Handle meal selection
   const handleMealSelection = (mealId) => {
@@ -132,11 +178,19 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal }) => {
               Filters
             </Typography>
             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
-              <Chip label="McDonald's" onClick={() => {}} />
-              <Chip label="Walmart" onClick={() => {}} />
-              <Chip label="Taco Bell" onClick={() => {}} />
-              <Chip label="Subway" onClick={() => {}} />
-              <Chip label="Burger King" onClick={() => {}} />
+              <Chip
+                label="All"
+                onClick={() => setRestaurantFilter(null)}
+                color={restaurantFilter === null ? 'primary' : 'default'}
+              />
+              {restaurants.map((r) => (
+                <Chip
+                  key={r.id}
+                  label={r.restaurantName}
+                  onClick={() => setRestaurantFilter(r.restaurantName)}
+                  color={restaurantFilter === r.restaurantName ? 'primary' : 'default'}
+                />
+              ))}
             </Stack>
           </Box>
         </Collapse>
@@ -179,16 +233,17 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal }) => {
                   </TableRow>
                 ) : (
                   filteredMeals.map((meal) => (
-                    <TableRow 
+                    <TableRow
                       key={meal.id}
                       hover
-                      onClick={() => handleMealSelection(meal.id)}
-                      selected={isMealSelected(meal.id)}
+                      onClick={() => !meal.isScraped && handleMealSelection(meal.id)}
+                      selected={!meal.isScraped && isMealSelected(meal.id)}
                     >
                       <TableCell padding="checkbox">
-                        <Checkbox 
-                          checked={isMealSelected(meal.id)}
-                          onChange={() => handleMealSelection(meal.id)}
+                        <Checkbox
+                          checked={!meal.isScraped && isMealSelected(meal.id)}
+                          onChange={() => !meal.isScraped && handleMealSelection(meal.id)}
+                          disabled={meal.isScraped}
                         />
                       </TableCell>
                       <TableCell component="th" scope="row">

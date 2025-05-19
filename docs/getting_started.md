@@ -23,6 +23,7 @@ This tutorial walks you through setting up **Fine Dining** for local development
    MONGODB_URI=your_mongodb_connection
    JWT_SECRET=your_secret
    GOOGLE_PLACES_API_KEY=
+   # Optional custom Overpass endpoint (defaults to the public API if omitted)
    OVERPASS_URL=https://overpass-api.de/api/interpreter
    ```
 4. Seed the database and generate GraphQL types:

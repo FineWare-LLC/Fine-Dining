@@ -19,7 +19,9 @@ const lat = parseFloat(latArg);
 const lon = parseFloat(lonArg);
 const radius = parseInt(radiusArg, 10);
 
-const provider = new OverpassProvider(process.env.OVERPASS_URL);
+const provider = new OverpassProvider(
+  process.env.OVERPASS_URL || 'https://overpass-api.de/api/interpreter'
+);
 
 provider.findNearby(lat, lon, radius, keyword)
   .then((restaurants) => {

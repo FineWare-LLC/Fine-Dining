@@ -84,7 +84,7 @@ The application includes various code implementations, such as:
 
 ### Environment Variables
 
-Create a `.env.local` file in the `frontend` directory with your database connection string and secrets:
+Create a `.env.local` file in the `frontend` directory with your database connection string and secrets. `OVERPASS_URL` is optional and defaults to the public Overpass endpoint if omitted:
 
 ```dotenv
 MONGODB_URI=your_mongodb_connection_string
@@ -109,9 +109,9 @@ Example (search for pizza within 1.5 km of New York City):
 node scripts/overpass-demo.mjs 40.7128 -74.0060 1500 pizza
 ```
 
-The script relies on `OVERPASS_URL` from your `.env.local` file (defaults to
-`https://overpass-api.de/api/interpreter`) and prints the resulting restaurant
-list as JSON.
+The script uses `OVERPASS_URL` if provided in `.env.local` but falls back to the
+standard endpoint `https://overpass-api.de/api/interpreter` when no `.env`
+file is present, printing the resulting restaurant list as JSON.
 
 **Development (Frontend):**
 * Run the Next.js development server: `npm run dev`

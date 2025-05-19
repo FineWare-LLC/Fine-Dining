@@ -1,5 +1,7 @@
 import React from 'react';
-import { Container, Typography, Box, CircularProgress, Alert } from '@mui/material';
+import { Container, Typography, Box, CircularProgress, Alert, Button } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useRouter } from 'next/router';
 import { gql, useQuery } from '@apollo/client';
 import QuestionnaireWizard from '../components/Questionnaire/QuestionnaireWizard';
 import ProfileDetails from '../components/Profile/ProfileDetails';
@@ -20,12 +22,12 @@ const GET_USER = gql`
       measurementSystem
       dailyCalories
       createdAt
-      avatarUrl
     }
   }
 `;
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { user } = useAuth();
   const { data, loading, error } = useQuery(GET_USER, {
     skip: !user,
@@ -35,6 +37,14 @@ export default function ProfilePage() {
 
   return (
     <Container maxWidth="sm" className={styles.container}>
+      <Button
+        startIcon={<ArrowBackIcon />}
+        onClick={() => router.back()}
+        size="small"
+        sx={{ mb: 2 }}
+      >
+        Back
+      </Button>
       <Typography variant="h5" gutterBottom className={styles.heading}>
         Profile
       </Typography>

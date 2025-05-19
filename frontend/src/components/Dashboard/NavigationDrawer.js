@@ -1,3 +1,6 @@
+/**
+ * @fileoverview NavigationDrawer component
+ */
 // src/components/Dashboard/NavigationDrawer.js
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -18,6 +21,11 @@ import FoodBankIcon from '@mui/icons-material/FoodBank';
 // Drawer width is typically handled via sx or MUI props
 const drawerWidth = 250;
 
+/**
+ * NavigationDrawer component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 const NavigationDrawer = React.memo(({ open, onClose }) => {
 
     const handleNavigate = (page) => {

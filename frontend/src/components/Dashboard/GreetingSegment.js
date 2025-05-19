@@ -1,10 +1,18 @@
 /**
+ * @fileoverview GreetingSegment component
+ */
+/**
  * Greeting banner with teal background and rounded corners.
  */
 import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { useRouter } from 'next/router';
 
+/**
+ * GreetingSegment component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function GreetingSegment({ userName='Guest' }) {
   const router = useRouter();
   return (

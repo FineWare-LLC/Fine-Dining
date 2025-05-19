@@ -1,4 +1,7 @@
 /**
+ * @fileoverview MealCatalog component
+ */
+/**
  * MealCatalog.js
  * 
  * Component to display the meal catalog and allow users to select meals.

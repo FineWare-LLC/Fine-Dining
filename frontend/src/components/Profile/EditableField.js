@@ -1,3 +1,6 @@
+/**
+ * @fileoverview EditableField component
+ */
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Typography, TextField, IconButton } from '@mui/material';
@@ -27,6 +30,11 @@ async function updateField({ userId, field, value }) {
   return json.data.updateUser;
 }
 
+/**
+ * EditableField component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function EditableField({ label, field, value: initialValue, unit, userId, measurementSystem }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(initialValue ?? '');

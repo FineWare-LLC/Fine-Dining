@@ -1,3 +1,6 @@
+/**
+ * @fileoverview HeroSection component
+ */
 // components/HeroSection.js
 /**
  * @fileoverview The hero section for FineDinning landing page
@@ -9,6 +12,11 @@ import { Box, Typography } from '@mui/material';
 /**
  * HeroSection - Displays the FineDinning logo & tagline
  * @returns {JSX.Element} The hero/branding portion of the page
+ */
+/**
+ * HeroSection component
+ * @param {object} props
+ * @returns {JSX.Element}
  */
 export default function HeroSection() {
     return (

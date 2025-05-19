@@ -1,9 +1,17 @@
+/**
+ * @fileoverview ThemeToggle component
+ */
 import React from 'react';
 import { ToggleButtonGroup, ToggleButton } from '@mui/material';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import { useThemePreference } from '../context/ThemePreferenceContext';
 
+/**
+ * ThemeToggle component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ThemeToggle(props) {
     const { mode, setMode } = useThemePreference();
 

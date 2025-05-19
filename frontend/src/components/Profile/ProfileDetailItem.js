@@ -1,7 +1,15 @@
+/**
+ * @fileoverview ProfileDetailItem component
+ */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Box, Tooltip, Typography } from '@mui/material';
 
+/**
+ * ProfileDetailItem component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ProfileDetailItem({ icon, term, definition, tooltip }) {
   const content = (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

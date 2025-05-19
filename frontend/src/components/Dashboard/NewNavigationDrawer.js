@@ -1,4 +1,7 @@
 /**
+ * @fileoverview NewNavigationDrawer component
+ */
+/**
  * Right‑aligned navigation drawer with brand links.
  */
 import React from 'react';
@@ -7,6 +10,11 @@ import { Drawer, List, ListItemButton, ListItemText } from '@mui/material';
 import { useDashStore } from './store';
 import { useAuth } from '../../context/AuthContext';
 
+/**
+ * NewNavigationDrawer component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function NewNavigationDrawer() {
   const { drawerOpen, toggleDrawer } = useDashStore();
   const router = useRouter();

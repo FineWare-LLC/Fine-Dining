@@ -1,4 +1,7 @@
 /**
+ * @fileoverview store component
+ */
+/**
  * Lightweight global store (Zustand) — eliminates prop‑drilling.
  * • Named import (`{ create }`) plays nicely with ESM bundlers.
  * • toggleDrawer uses previous state correctly.

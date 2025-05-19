@@ -1,9 +1,17 @@
 /**
+ * @fileoverview MealCard component
+ */
+/**
  * Full‑bleed hero image card for the day’s meal.
  */
 import React from 'react';
 import { Card, CardMedia, CardContent, Typography, Box } from '@mui/material';
 
+/**
+ * MealCard component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function MealCard({ meal }) {
   if (!meal) return null;
   return (

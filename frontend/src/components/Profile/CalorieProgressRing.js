@@ -1,3 +1,6 @@
+/**
+ * @fileoverview CalorieProgressRing component
+ */
 import React, { useMemo } from 'react';
 import { gql, useQuery } from '@apollo/client';
 import { Box } from '@mui/material';
@@ -12,6 +15,11 @@ const GET_STATS_BY_USER = gql`
   }
 `;
 
+/**
+ * CalorieProgressRing component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function CalorieProgressRing({ userId, dailyCalories = 0, consumed }) {
   const { data } = useQuery(GET_STATS_BY_USER, {
     variables: { userId },

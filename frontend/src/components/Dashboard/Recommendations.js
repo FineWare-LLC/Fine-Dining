@@ -1,3 +1,6 @@
+/**
+ * @fileoverview Recommendations component
+ */
 // src/components/Dashboard/Recommendations.js
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -5,6 +8,11 @@ import { Box, Grid, Typography } from '@mui/material';
 import RestaurantCard from './RestaurantCard'; // Import the Tailwind-styled card
 // Removed useTheme and style constants/functions
 
+/**
+ * Recommendations component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 const Recommendations = React.memo(({ restaurants }) => {
     // Removed theme = useTheme()
 

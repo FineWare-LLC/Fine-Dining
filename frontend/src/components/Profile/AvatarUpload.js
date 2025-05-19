@@ -1,3 +1,6 @@
+/**
+ * @fileoverview AvatarUpload component
+ */
 import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Avatar, Box } from '@mui/material';
@@ -5,6 +8,11 @@ import { useDropzone } from 'react-dropzone';
 import imageCompression from 'browser-image-compression';
 import { generateInitialsAvatar } from '@/utils/avatar';
 
+/**
+ * AvatarUpload component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function AvatarUpload({ user, onUpload }) {
   const onDrop = useCallback(async (files) => {
     const file = files[0];

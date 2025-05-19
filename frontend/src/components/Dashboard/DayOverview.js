@@ -1,9 +1,17 @@
+/**
+ * @fileoverview DayOverview component
+ */
 // src/components/Dashboard/DayOverview.js
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Box, Card, CardMedia, Typography } from '@mui/material';
 // Removed style constants/functions
 
+/**
+ * DayOverview component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 const DayOverview = React.memo(({ meal }) => {
     if (!meal) return null;
 

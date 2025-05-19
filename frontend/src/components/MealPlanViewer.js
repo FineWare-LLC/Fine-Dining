@@ -1,3 +1,6 @@
+/**
+ * @fileoverview MealPlanViewer component
+ */
 import React from 'react';
 import {
   Card,

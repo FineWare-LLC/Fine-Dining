@@ -1,9 +1,17 @@
+/**
+ * @fileoverview WelcomeBanner component
+ */
 // src/components/Dashboard/WelcomeBanner.js
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Box, Typography } from '@mui/material';
 // Removed useTheme and style constants/functions
 
+/**
+ * WelcomeBanner component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 const WelcomeBanner = React.memo(({ userName }) => {
     // Removed theme = useTheme()
     const [greeting, setGreeting] = useState('Hello');

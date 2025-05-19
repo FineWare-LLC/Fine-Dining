@@ -1,3 +1,6 @@
+/**
+ * @fileoverview ProfileEditor component
+ */
 import React, { useState } from 'react';
 import { gql, useMutation } from '@apollo/client';
 import { Box, TextField, Button } from '@mui/material';
@@ -13,6 +16,11 @@ const UPDATE_USER = gql`
   }
 `;
 
+/**
+ * ProfileEditor component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ProfileEditor({ user }) {
   const [name, setName] = useState(user.name);
   const [updateUser] = useMutation(UPDATE_USER);

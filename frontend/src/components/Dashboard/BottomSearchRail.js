@@ -1,4 +1,7 @@
 /**
+ * @fileoverview BottomSearchRail component
+ */
+/**
  * @file BottomSearchRail.js
  * @description Hardened, bottom‑right, expandable search bar that plays well
  *              with both client and server renders.
@@ -43,6 +46,11 @@ const sanitizeInput = (v) =>
     typeof v === 'string' ? v.replace(/[<>&"']/g, '') : '';
 
 /* ----------------------------------------------------------------------- */
+/**
+ * BottomSearchRail component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 const BottomSearchRail = ({ storeHook = defaultDashStore }) => {
   /* ---------- store interaction (fallback‑safe) ------------------------ */
   if (typeof storeHook !== 'function') {

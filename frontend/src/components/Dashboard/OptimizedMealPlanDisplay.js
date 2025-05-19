@@ -1,4 +1,7 @@
 /**
+ * @fileoverview OptimizedMealPlanDisplay component
+ */
+/**
  * OptimizedMealPlanDisplay.js
  * 
  * Component to display the results of an optimized meal plan.

@@ -1,4 +1,7 @@
 /**
+ * @fileoverview NutritionRequirementsForm component
+ */
+/**
  * NutritionRequirementsForm.js
  * 
  * Component for inputting custom nutritional requirements.

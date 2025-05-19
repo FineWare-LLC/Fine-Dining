@@ -1,4 +1,7 @@
 /**
+ * @fileoverview NewHeader component
+ */
+/**
  * Brand header — fixed top bar with avatar + burger.
  */
 import React from 'react';
@@ -9,6 +12,11 @@ import { useDashStore } from './store';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../context/AuthContext';
 
+/**
+ * NewHeader component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function NewHeader({ user }) {
   const toggleDrawer = useDashStore(s => s.toggleDrawer);
   const router = useRouter();

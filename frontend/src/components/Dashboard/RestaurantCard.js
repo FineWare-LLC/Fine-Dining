@@ -1,9 +1,17 @@
 /**
+ * @fileoverview RestaurantCard component
+ */
+/**
  * Compact restaurant card with border‑elevation substitute.
  */
 import React from 'react';
 import { Card, CardContent, Typography, CardMedia } from '@mui/material';
 
+/**
+ * RestaurantCard component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function RestaurantCard({ restaurant, source }) {
   return (
     <Card

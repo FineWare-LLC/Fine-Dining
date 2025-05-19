@@ -1,3 +1,6 @@
+/**
+ * @fileoverview index component
+ */
 // components/Footer/Simple Info/CopyWright/index.js
 import React from 'react';
 // Removed unused imports: useEffect, useState, gql, useQuery

@@ -1,3 +1,6 @@
+/**
+ * @fileoverview ProfileDetails component
+ */
 import React from 'react';
 import {Avatar, Box, Card, CardContent, Chip, Grid, Typography} from '@mui/material';
 import WorkIcon from '@mui/icons-material/Work';
@@ -11,6 +14,11 @@ import ProfileDetailItem from './ProfileDetailItem';
 import {generateInitialsAvatar} from '@/utils/avatar';
 import CalorieProgressRing from './CalorieProgressRing';
 
+/**
+ * ProfileDetails component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ProfileDetails({user}) {
     if (!user) return null;
     const joinDate = new Date(user.createdAt).toLocaleDateString();

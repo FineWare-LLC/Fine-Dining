@@ -1,3 +1,6 @@
+/**
+ * @fileoverview QuestionnaireWizard component
+ */
 import React, {
   useState,
   useEffect,
@@ -247,6 +250,11 @@ const SummaryStep = ({ data, onBack }) => {
 SummaryStep.propTypes = { data: PropTypes.object.isRequired, onBack: PropTypes.func.isRequired };
 
 // Wizard container ----------------------------------------------------------
+/**
+ * QuestionnaireWizard component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function QuestionnaireWizard() {
   const [activeStep, setActiveStep] = useSessionState('wizardStep', 0);
   const [formData, setFormData] = useSessionState('wizardData', {});

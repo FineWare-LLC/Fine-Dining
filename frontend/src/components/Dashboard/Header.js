@@ -1,3 +1,6 @@
+/**
+ * @fileoverview Header component
+ */
 // src/components/Dashboard/Header.js
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -6,6 +9,11 @@ import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import FoodBankIcon from '@mui/icons-material/FoodBank';
 // Removed useTheme and style constants/functions
 
+/**
+ * Header component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 const Header = React.memo(({ user, onMenuClick }) => {
     // Removed theme = useTheme()
 

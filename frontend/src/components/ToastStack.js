@@ -1,7 +1,15 @@
+/**
+ * @fileoverview ToastStack component
+ */
 import React, { useEffect } from 'react';
 import { Transition } from '@headlessui/react';
 import { useToastStore } from '../store/toastStore';
 
+/**
+ * ToastStack component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function ToastStack() {
   const toasts = useToastStore(s => s.toasts);
   const removeToast = useToastStore(s => s.removeToast);

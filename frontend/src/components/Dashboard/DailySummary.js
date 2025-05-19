@@ -1,4 +1,7 @@
 /**
+ * @fileoverview DailySummary component
+ */
+/**
  * DailySummary — all components now share the dynamic tint colour.
  */
 import React, { useState, useEffect, useMemo } from 'react';
@@ -213,6 +216,11 @@ PlaceholderCard.defaultProps = {
 };
 
 /* ─── DailySummary Organism ───────────────────────────────────────── */
+/**
+ * DailySummary component
+ * @param {object} props
+ * @returns {JSX.Element}
+ */
 export default function DailySummary({ meals, loading, onAddMeal }) {
     // 1‑second heartbeat loader
     const [pulse, setPulse] = useState(loading);

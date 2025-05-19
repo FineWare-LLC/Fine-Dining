@@ -49,7 +49,8 @@ export const searchRestaurants = withErrorHandling(async (_parent, { keyword }, 
  * @param {object} _parent
  * @param {object} args - { latitude, longitude, radius, keyword }
  * @param {object} context - GraphQL context
- * @returns {Promise<Object[]>} Array of ExternalRestaurant objects
+ * @returns {Promise<{restaurants: Object[], source: string | null}>}
+ *   Object containing restaurant list and the provider source
  */
 export const findNearbyRestaurants = withErrorHandling(async (
   _parent,

@@ -46,16 +46,29 @@ const GENERATE_OPTIMIZED_MEAL_PLAN = gql`
 `;
 
 const FIND_NEARBY_RESTAURANTS = gql`
-  query FindNearbyRestaurants($latitude: Float!, $longitude: Float!, $radius: Int!) {
-    findNearbyRestaurants(latitude: $latitude, longitude: $longitude, radius: $radius) {
-      placeId
-      name
-      vicinity
-      rating
-      userRatingsTotal
-      location {
-        latitude
-        longitude
+  query FindNearbyRestaurants(
+    $latitude: Float!
+    $longitude: Float!
+    $radius: Int!
+    $keyword: String
+  ) {
+    findNearbyRestaurants(
+      latitude: $latitude
+      longitude: $longitude
+      radius: $radius
+      keyword: $keyword
+    ) {
+      source
+      restaurants {
+        placeId
+        name
+        vicinity
+        rating
+        userRatingsTotal
+        location {
+          latitude
+          longitude
+        }
       }
     }
   }

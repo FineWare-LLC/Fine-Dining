@@ -25,7 +25,11 @@ This tutorial walks you through setting up **Fine Dining** for local development
    GOOGLE_PLACES_API_KEY=
    # Optional custom Overpass endpoint (defaults to the public API if omitted)
    OVERPASS_URL=https://overpass-api.de/api/interpreter
+   # Disable GPU acceleration even when USE_GPU is set
+   DISABLE_GPU=1
    ```
+   Set `USE_GPU=1` to enable OpenCL acceleration if supported. In production you
+   can set `DISABLE_GPU=1` to force CPU mode.
 4. Seed the database and generate GraphQL types:
    ```bash
    npm run seed

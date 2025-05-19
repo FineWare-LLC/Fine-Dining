@@ -4,7 +4,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import { Box, Button, CssBaseline, useTheme, CircularProgress, Typography, Tabs, Tab, Alert } from '@mui/material';
-import { useMutation, useLazyQuery, gql } from '@apollo/client';
+import { useMutation, useLazyQuery, useQuery, gql } from '@apollo/client';
 import NewHeader from '@/components/Dashboard/NewHeader';
 import GreetingSegment from '@/components/Dashboard/GreetingSegment';
 import DailySummary from '@/components/Dashboard/DailySummary';
@@ -62,14 +62,50 @@ const FIND_NEARBY_RESTAURANTS = gql`
 `;
 
 /* ------------------------------------------------------------------------ */
-/* Mock fetchers – replace with real data hooks or GraphQL queries.         */
-const useMeal = () => ({
-  title:'Grilled Salmon Bowl',
-  calories:540,
-  protein:38,
-  imageUrl:'https://source.unsplash.com/800x600/?salmon',
-  tags:['Omega‑3','Low Carb'],
-});
+/* Data hooks powered by GraphQL.                                         */
+
+const GET_MEALS = gql`
+  query GetAllMeals($page: Int, $limit: Int) {
+    getAllMeals(page: $page, limit: $limit) {
+      id
+      mealName
+      mealType
+      nutrition {
+        carbohydrates
+        protein
+        fat
+      }
+      recipe { images }
+    }
+  }
+`;
+
+const useDailyMeals = (count = 3) => {
+  const { data } = useQuery(GET_MEALS, {
+    variables: { page: 1, limit: count },
+    fetchPolicy: 'network-only',
+  });
+
+  const meals = useMemo(() =>
+    (data?.getAllMeals || []).map((m, i) => ({
+      timeLabel: m.mealType
+        ? m.mealType.toLowerCase().replace('_', ' ').replace(/^./, c => c.toUpperCase())
+        : `Meal ${i + 1}`,
+      title: m.mealName,
+      calories: Math.round(
+        (m.nutrition.carbohydrates || 0) * 4 +
+        (m.nutrition.protein || 0) * 4 +
+        (m.nutrition.fat || 0) * 9
+      ),
+      protein: m.nutrition.protein || 0,
+      imageUrl: m.recipe?.images?.[0] || `https://source.unsplash.com/800x600/?food&sig=${m.id}`,
+    })),
+  [data]);
+
+  return meals;
+};
+
+const useHeroMeal = () => useDailyMeals(1)[0];
 /* ------------------------------------------------------------------------ */
 
 export default function Dashboard() {
@@ -77,7 +113,8 @@ export default function Dashboard() {
   /* const { isAuthenticated, loading } = useAuth();
   useEffect(()=>{ if (!loading && !isAuthenticated) router.push('/login'); },[loading]); */
 
-  const meal        = useMeal();
+  const heroMeal    = useHeroMeal();
+  const meals       = useDailyMeals();
   const [fetchRestaurants, {
     loading: restaurantsLoading,
     error: restaurantsError,
@@ -197,7 +234,7 @@ export default function Dashboard() {
         }}
       >
         <GreetingSegment userName="Anthony" />
-        <DailySummary meal={meal} />
+        <DailySummary meals={meals} />
 
         {/* Tabs for Meal Plan Optimization */}
         <Box sx={{ width: '100%', mt: 3 }}>
@@ -265,7 +302,7 @@ export default function Dashboard() {
           )}
         </Box>
 
-        <MealCard meal={meal} />
+        <MealCard meal={heroMeal} />
 
         <DiscoveryHeader />
 

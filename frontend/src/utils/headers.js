@@ -62,14 +62,16 @@ export function setCORSHeaders(res, origin) {
  * Attaches a unique Request ID to the response.
  * Uses a combination of timestamp and random values to generate a unique ID.
  * This is compatible with Edge Runtime, unlike the Node.js crypto module.
+ * Uses Web Crypto API which is supported in Edge Runtime.
  * @param {import('http').ServerResponse | import('next/server').NextResponse} res
  * @returns {string}
  */
 export function assignRequestId(res) {
+    // Using Web Crypto API which is supported in Edge Runtime
+    const requestId = crypto.randomUUID();
     // Generate a unique ID using timestamp and random values
     const timestamp = Date.now().toString(36);
     const randomPart = Math.random().toString(36).substring(2, 10);
-    const requestId = `${timestamp}-${randomPart}`;
 
     if (res.headers && res.headers.set) {
         res.headers.set('X-Request-ID', requestId);

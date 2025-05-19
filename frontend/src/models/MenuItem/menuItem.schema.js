@@ -10,8 +10,14 @@ const menuItemSchema = new Schema(
     description: { type: String, default: '' },
     allergens: { type: [String], default: [] },
     nutritionFacts: { type: String, default: '' }
+    // Nutrition details
+    calories: { type: Number, default: 0 },
+    protein: { type: Number, default: 0 },
+    carbohydrates: { type: Number, default: 0 },
+    fat: { type: Number, default: 0 },
+    sodium: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true, collection: 'menuItems' }
 );
 
 export default menuItemSchema;

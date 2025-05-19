@@ -28,7 +28,7 @@ const GET_USER = gql`
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { data, loading, error } = useQuery(GET_USER, {
     skip: !user,
     variables: { id: user?.id },
@@ -57,6 +57,14 @@ export default function ProfilePage() {
       <Box>
         <QuestionnaireWizard />
       </Box>
+      <Button
+        variant="outlined"
+        color="secondary"
+        onClick={logout}
+        sx={{ mt: 3 }}
+      >
+        Log Out
+      </Button>
     </Container>
   );
 }

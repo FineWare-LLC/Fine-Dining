@@ -73,6 +73,7 @@ The application includes various code implementations, such as:
 **Prerequisites:**
 * Node.js (>=18.18.0 based on `frontend/package.json`) and npm (or Yarn/pnpm/bun).
 * MongoDB instance (local or cloud, e.g., MongoDB Atlas) with a valid connection URI.
+* Encryption at rest is required. Atlas clusters encrypt storage and backups automatically. For local MongoDB, start `mongod` with `--enableEncryption` or use an encrypted volume. See [docs/encryption.md](docs/encryption.md).
 * Environment variables in a `.env.local` file in the `frontend` directory (e.g., `MONGODB_URI`, `JWT_SECRET`, `GOOGLE_PLACES_API_KEY`, `OVERPASS_URL`). The app uses Google Places when a valid key is supplied and falls back to Overpass otherwise.
 
 **Setup & Installation (Frontend):**
@@ -130,6 +131,7 @@ file is present, printing the resulting restaurant list as JSON.
 * [Getting Started](docs/getting_started.md)
 * [User Guide](docs/user_guide.md)
 * [Troubleshooting](docs/troubleshooting.md)
+* [Encryption Guide](docs/encryption.md)
 
 ## Available Scripts (Frontend - from `package.json`)
 * `npm run dev`: Starts the Next.js development server.

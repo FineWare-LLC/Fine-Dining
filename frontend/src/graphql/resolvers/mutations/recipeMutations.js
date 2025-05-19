@@ -1,6 +1,7 @@
 import { withErrorHandling } from './baseImports.js';
 import User from '@/models/User/index.js';
 import { RecipeModel } from '@/models/Recipe/index.js';
+import { sanitizeString } from '@/lib/sanitize.js';
 import mongoose from 'mongoose';
 
 /**
@@ -45,16 +46,17 @@ export const createRecipe = withErrorHandling(async (_parent, { input }, context
   if (!recipeName || typeof recipeName !== 'string' || !recipeName.trim()) {
     throw new Error('A valid recipe name is required.');
   }
-  recipeName = recipeName.trim();
+  recipeName = sanitizeString(recipeName.trim());
 
   if (!Array.isArray(ingredients) || ingredients.length === 0) {
     throw new Error('At least one ingredient is required.');
   }
+  ingredients = ingredients.map(i => sanitizeString(i));
 
   if (!instructions || typeof instructions !== 'string' || !instructions.trim()) {
     throw new Error('Instructions are required.');
   }
-  instructions = instructions.trim();
+  instructions = sanitizeString(instructions.trim());
 
   if (typeof prepTime !== 'number' || prepTime <= 0) {
     throw new Error('Preparation time must be a positive number.');
@@ -63,7 +65,7 @@ export const createRecipe = withErrorHandling(async (_parent, { input }, context
   if (!difficulty || typeof difficulty !== 'string' || !difficulty.trim()) {
     throw new Error('Difficulty is required.');
   }
-  difficulty = difficulty.trim();
+  difficulty = sanitizeString(difficulty.trim());
 
   // Optional: Validate nutritionFacts, tags, images, estimatedCost if needed
   // For example, ensure estimatedCost is a non-negative number:
@@ -83,6 +85,13 @@ export const createRecipe = withErrorHandling(async (_parent, { input }, context
 
   if (!author) {
     throw new Error('Author not found');
+  }
+
+  if (Array.isArray(tags)) {
+    tags = tags.map(t => sanitizeString(t));
+  }
+  if (Array.isArray(images)) {
+    images = images.map(i => sanitizeString(i));
   }
 
   return RecipeModel.create({
@@ -148,19 +157,19 @@ export const updateRecipe = withErrorHandling(async (
     if (typeof recipeName !== 'string' || !recipeName.trim()) {
       throw new Error('Invalid recipe name');
     }
-    updateData.recipeName = recipeName.trim();
+    updateData.recipeName = sanitizeString(recipeName.trim());
   }
   if (ingredients !== undefined) {
     if (!Array.isArray(ingredients) || ingredients.length === 0) {
       throw new Error('Ingredients must be a non-empty array');
     }
-    updateData.ingredients = ingredients;
+    updateData.ingredients = ingredients.map(i => sanitizeString(i));
   }
   if (instructions !== undefined) {
     if (typeof instructions !== 'string' || !instructions.trim()) {
       throw new Error('Invalid instructions');
     }
-    updateData.instructions = instructions.trim();
+    updateData.instructions = sanitizeString(instructions.trim());
   }
   if (prepTime !== undefined) {
     if (typeof prepTime !== 'number' || prepTime <= 0) {
@@ -172,7 +181,7 @@ export const updateRecipe = withErrorHandling(async (
     if (typeof difficulty !== 'string' || !difficulty.trim()) {
       throw new Error('Invalid difficulty');
     }
-    updateData.difficulty = difficulty.trim();
+    updateData.difficulty = sanitizeString(difficulty.trim());
   }
   if (nutritionFacts !== undefined) {
     updateData.nutritionFacts = nutritionFacts;
@@ -181,13 +190,13 @@ export const updateRecipe = withErrorHandling(async (
     if (!Array.isArray(tags)) {
       throw new Error('Tags must be an array');
     }
-    updateData.tags = tags;
+    updateData.tags = tags.map(t => sanitizeString(t));
   }
   if (images !== undefined) {
     if (!Array.isArray(images)) {
       throw new Error('Images must be an array');
     }
-    updateData.images = images;
+    updateData.images = images.map(i => sanitizeString(i));
   }
   if (estimatedCost !== undefined) {
     if (typeof estimatedCost !== 'number' || estimatedCost < 0) {

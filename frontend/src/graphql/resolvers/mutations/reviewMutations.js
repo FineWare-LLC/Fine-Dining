@@ -3,6 +3,7 @@ import { Review as ReviewModel } from '@/models/Review/index.js';
 import { RecipeModel } from '@/models/Recipe/index.js';
 import { RestaurantModel } from '@/models/Restaurant/index.js';
 import mongoose from 'mongoose';
+import { sanitizeString } from '@/lib/sanitize.js';
 
 /**
  * Creates a new review.
@@ -43,7 +44,7 @@ export const createReview = withErrorHandling(async (_parent, { targetType, targ
   if (typeof comment !== 'string') {
     throw new Error('Comment must be a string');
   }
-  comment = comment.trim();
+  comment = sanitizeString(comment.trim());
 
   const userId = context.user.userId;
   const newReview = await ReviewModel.create({

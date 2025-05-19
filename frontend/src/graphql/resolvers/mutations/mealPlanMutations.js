@@ -1,6 +1,7 @@
 import { withErrorHandling } from './baseImports.js';
 import User from '@/models/User/index.js';
 import { MealPlanModel } from "@/models/MealPlan/index.js";
+import { sanitizeString } from '@/lib/sanitize.js';
 
 /**
  * Creates a new meal plan.
@@ -24,8 +25,8 @@ export const createMealPlan = withErrorHandling(async (_parent, { userId, startD
     user: user._id,
     startDate,
     endDate,
-    title,
-    status,
+    title: title ? sanitizeString(title.trim()) : title,
+    status: status ? sanitizeString(status.trim()) : status,
     totalCalories,
   });
   return newPlan.populate('user');
@@ -52,8 +53,8 @@ export const updateMealPlan = withErrorHandling(async (_parent, { id, startDate,
   const updateData = {};
   if (startDate !== undefined) updateData.startDate = startDate;
   if (endDate !== undefined) updateData.endDate = endDate;
-  if (title !== undefined) updateData.title = title;
-  if (status !== undefined) updateData.status = status;
+  if (title !== undefined) updateData.title = sanitizeString(title.trim());
+  if (status !== undefined) updateData.status = sanitizeString(status.trim());
   if (totalCalories !== undefined) updateData.totalCalories = totalCalories;
   return MealPlanModel.findByIdAndUpdate(id, updateData, { new: true }).populate('user');
 });

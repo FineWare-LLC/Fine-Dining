@@ -1,6 +1,7 @@
 import { withErrorHandling } from './baseImports.js';
 import { RestaurantModel } from '@/models/Restaurant/index.js';
 import mongoose from 'mongoose';
+import { sanitizeString } from '@/lib/sanitize.js';
 
 /**
  * Creates a new restaurant.
@@ -45,11 +46,11 @@ export const createRestaurant = withErrorHandling(async (_parent, args, context)
 
   // Sanitize inputs
   const sanitizedData = {
-    restaurantName: restaurantName.trim(),
-    address: address.trim(),
-    phone: phone.trim(),
-    website: website.trim(),
-    cuisineType: cuisineType.trim(),
+    restaurantName: sanitizeString(restaurantName.trim()),
+    address: sanitizeString(address.trim()),
+    phone: sanitizeString(phone.trim()),
+    website: sanitizeString(website.trim()),
+    cuisineType: sanitizeString(cuisineType.trim()),
     priceRange,
   };
 
@@ -89,31 +90,31 @@ export const updateRestaurant = withErrorHandling(async (_parent, { id, restaura
     if (typeof restaurantName !== 'string' || !restaurantName.trim()) {
       throw new Error('Invalid restaurant name');
     }
-    updateData.restaurantName = restaurantName.trim();
+    updateData.restaurantName = sanitizeString(restaurantName.trim());
   }
   if (address !== undefined) {
     if (typeof address !== 'string' || !address.trim()) {
       throw new Error('Invalid address');
     }
-    updateData.address = address.trim();
+    updateData.address = sanitizeString(address.trim());
   }
   if (phone !== undefined) {
     if (typeof phone !== 'string' || !phone.trim()) {
       throw new Error('Invalid phone number');
     }
-    updateData.phone = phone.trim();
+    updateData.phone = sanitizeString(phone.trim());
   }
   if (website !== undefined) {
     if (typeof website !== 'string' || !website.trim()) {
       throw new Error('Invalid website URL');
     }
-    updateData.website = website.trim();
+    updateData.website = sanitizeString(website.trim());
   }
   if (cuisineType !== undefined) {
     if (typeof cuisineType !== 'string' || !cuisineType.trim()) {
       throw new Error('Invalid cuisine type');
     }
-    updateData.cuisineType = cuisineType.trim();
+    updateData.cuisineType = sanitizeString(cuisineType.trim());
   }
   if (priceRange !== undefined) {
     updateData.priceRange = priceRange;

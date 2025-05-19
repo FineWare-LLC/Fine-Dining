@@ -1,5 +1,6 @@
 import {withErrorHandling} from './baseImports.js';
 import User from '@/models/User/index.js';
+import { sanitizeString } from '@/lib/sanitize.js';
 
 /**
  * Creates a new user with the provided input.
@@ -36,13 +37,24 @@ export const createUser = withErrorHandling(async (_parent, { input }, context) 
   if (input.role) delete input.role;
   if (input.accountStatus) delete input.accountStatus;
 
-  const existingUser = await User.findOne({ email: input.email });
+  const sanitizedInput = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (typeof value === 'string') {
+      sanitizedInput[key] = sanitizeString(value.trim());
+    } else if (Array.isArray(value)) {
+      sanitizedInput[key] = value.map(v => typeof v === 'string' ? sanitizeString(v) : v);
+    } else {
+      sanitizedInput[key] = value;
+    }
+  }
+
+  const existingUser = await User.findOne({ email: sanitizedInput.email });
   if (existingUser) {
     throw new Error('Email already in use');
   }
 
   // Create user; note that password hashing is expected to be done via middleware on the User model.
-  return User.create(input);
+  return User.create(sanitizedInput);
 });
 
 /**
@@ -77,7 +89,17 @@ export const updateUser = withErrorHandling(async (_parent, { id, input }, conte
   if (!user) {
     throw new Error(`User with ID ${id} not found`);
   }
-  return User.findByIdAndUpdate(id, {...input}, {new: true});
+  const sanitizedInput = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (typeof value === 'string') {
+      sanitizedInput[key] = sanitizeString(value.trim());
+    } else if (Array.isArray(value)) {
+      sanitizedInput[key] = value.map(v => typeof v === 'string' ? sanitizeString(v) : v);
+    } else {
+      sanitizedInput[key] = value;
+    }
+  }
+  return User.findByIdAndUpdate(id, { ...sanitizedInput }, { new: true });
 });
 
 /**
@@ -116,7 +138,17 @@ export const upsertQuestionnaire = withErrorHandling(async (_parent, { id, input
   if (!user) {
     throw new Error(`User with ID ${id} not found`);
   }
-  user.questionnaire = { ...(user.questionnaire || {}), ...input };
+  const sanitizedInput = {};
+  for (const [key, value] of Object.entries(input)) {
+    if (typeof value === 'string') {
+      sanitizedInput[key] = sanitizeString(value.trim());
+    } else if (Array.isArray(value)) {
+      sanitizedInput[key] = value.map(v => typeof v === 'string' ? sanitizeString(v) : v);
+    } else {
+      sanitizedInput[key] = value;
+    }
+  }
+  user.questionnaire = { ...(user.questionnaire || {}), ...sanitizedInput };
   await user.save();
   return user.questionnaire;
 });

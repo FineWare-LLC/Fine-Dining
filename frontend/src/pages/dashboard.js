@@ -17,6 +17,7 @@ import OptimizedMealPlanDisplay from '@/components/Dashboard/OptimizedMealPlanDi
 import MealCatalog from '@/components/Dashboard/MealCatalog';
 import NutritionRequirementsForm from '@/components/Dashboard/NutritionRequirementsForm';
 import { useDashStore } from '@/components/Dashboard/store';
+import { useAuth } from '@/context/AuthContext';
 
 const GENERATE_OPTIMIZED_MEAL_PLAN = gql`
   mutation GenerateOptimizedMealPlan($selectedMealIds: [ID], $customNutritionTargets: CustomNutritionTargetsInput) {
@@ -127,6 +128,8 @@ export default function Dashboard() {
   /* const { isAuthenticated, loading } = useAuth();
   useEffect(()=>{ if (!loading && !isAuthenticated) router.push('/login'); },[loading]); */
 
+  const { user } = useAuth();
+
   const meal        = useMeal();
   const [fetchRestaurants, {
     loading: restaurantsLoading,
@@ -235,7 +238,7 @@ export default function Dashboard() {
     <>
       <Head><title>Fine Dining Dashboard</title></Head>
       <CssBaseline />
-      <NewHeader user={{ name:'Anthony Fine'}} />
+      <NewHeader user={user} />
       <Box
         component="main"
         sx={{
@@ -246,7 +249,7 @@ export default function Dashboard() {
           flexDirection:'column',
         }}
       >
-        <GreetingSegment userName="Anthony" />
+        <GreetingSegment userName={user?.name || 'Guest'} />
         <DailySummary meal={meal} />
 
         {/* Tabs for Meal Plan Optimization */}

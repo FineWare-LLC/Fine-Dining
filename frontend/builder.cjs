@@ -114,9 +114,16 @@ import React from 'react';
 import { AppBar, Toolbar, IconButton, Avatar, Typography } from '@mui/material';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import { useDashStore } from './store';
+import { useAuth } from '../../context/AuthContext';
 
 export default function NewHeader({ user }) {
   const toggleDrawer = useDashStore(s => s.toggleDrawer);
+  let authUser = null;
+  try {
+    authUser = useAuth().user;
+  } catch (e) {
+  }
+  const currentUser = user || authUser;
   return (
     <AppBar elevation={0} sx={{ bgcolor:'primary.main', px:2 }}>
       <Toolbar disableGutters sx={{ justifyContent:'space-between' }}>
@@ -124,7 +131,7 @@ export default function NewHeader({ user }) {
           <MenuRoundedIcon />
         </IconButton>
         <Typography variant="h6" fontWeight={600}>Fine Dining</Typography>
-        <Avatar alt={user?.name} src={user?.avatarUrl} sx={{ width:36, height:36 }} />
+        <Avatar alt={currentUser?.name} src={currentUser?.avatarUrl} sx={{ width:36, height:36 }} />
       </Toolbar>
     </AppBar>
   );
@@ -307,6 +314,7 @@ import RestaurantCard from '../components/dashboard/RestaurantCard';
 import BottomSearchRail from '../components/dashboard/BottomSearchRail';
 import NewNavigationDrawer from '../components/dashboard/NewNavigationDrawer';
 import { useDashStore } from '../components/dashboard/store';
+import { useAuth } from '../context/AuthContext';
 
 /* ------------------------------------------------------------------------ */
 /* Mock fetchers – replace with real data hooks or GraphQL queries.         */
@@ -327,6 +335,7 @@ export default function Dashboard() {
   // auth redirect stub
   /* const { isAuthenticated, loading } = useAuth();
   useEffect(()=>{ if (!loading && !isAuthenticated) router.push('/login'); },[loading]); */
+  const { user: currentUser } = useAuth();
 
   const meal        = useMeal();
   const restaurants = useRestaurants();
@@ -342,7 +351,7 @@ export default function Dashboard() {
     <>
       <Head><title>Fine Dining Dashboard</title></Head>
       <CssBaseline />
-      <NewHeader user={{ name:'Anthony Fine'}} />
+      <NewHeader user={currentUser} />
       <Box
         component="main"
         sx={{
@@ -353,7 +362,7 @@ export default function Dashboard() {
           flexDirection:'column',
         }}
       >
-        <GreetingSegment userName="Anthony" />
+        <GreetingSegment userName={currentUser?.name || 'Guest'} />
         <DailySummary meal={meal} />
         <MealCard meal={meal} />
         <DiscoveryHeader />

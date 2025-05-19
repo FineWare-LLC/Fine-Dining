@@ -126,6 +126,11 @@ list as JSON.
 * Component tests only: `npm run test:components`
 * For detailed component testing guidance, refer to `frontend/docs/testing/component-testing.md`.
 
+## Documentation
+* [Getting Started](docs/getting_started.md)
+* [User Guide](docs/user_guide.md)
+* [Troubleshooting](docs/troubleshooting.md)
+
 ## Available Scripts (Frontend - from `package.json`)
 * `npm run dev`: Starts the Next.js development server.
 * `npm run build`: Builds the Next.js application for production.

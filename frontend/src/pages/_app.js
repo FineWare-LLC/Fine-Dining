@@ -24,6 +24,7 @@ import { ToastProvider } from '../context/ToastContext';
 import createEmotionCache from '../utils/createEmotionCache'; // [cite: frontend/src/utils/createEmotionCache.js]
 import { CacheProvider } from '@emotion/react';
 import useCustomTheme from '../theme/useCustomTheme'; // [cite: frontend/src/theme/useCustomTheme.js]
+import { ThemePreferenceProvider } from '../context/ThemePreferenceContext';
 import { AuthProvider } from '../context/AuthContext';
 import ToastStack from '../components/ToastStack';
 
@@ -86,8 +87,6 @@ const queryClient = new QueryClient();
 export default function MyApp(props) {
     // Destructure props with a default fallback for emotionCache.
     const { Component, pageProps, emotionCache = clientSideEmotionCache } = props;
-    // Retrieve the custom Material UI theme (e.g., light/dark modes) using the custom hook.
-    const { theme } = useCustomTheme(); // [cite: frontend/src/theme/useCustomTheme.js]
 
     return (
         // The CacheProvider makes the Emotion cache available throughout the component tree.
@@ -98,25 +97,24 @@ export default function MyApp(props) {
                 {/* Set a default page title */}
                 <title>Fine Dining</title> {/* Corrected typo from FineDinning */}
             </Head>
-            {/* Apply the custom Material UI theme */}
-            <ThemeProvider theme={theme}>
-                {/* Apply global CSS reset using MUI's baseline */}
-                <CssBaseline />
-                {/* Provide the configured Apollo Client to the entire application */}
-                <ApolloProvider client={client}>
-                    <QueryClientProvider client={queryClient}>
-                        <ToastProvider>
-                            {/* Provide the Authentication Context to manage user auth state */}
-                            <AuthProvider>
-                                {/* Render the active page component with its specific props */}
-                                <Component {...pageProps} />
-                            <ToastStack />
-                    </AuthProvider>
-                        </ToastProvider>
-                    </QueryClientProvider>
-                </ApolloProvider>
-            </ThemeProvider>
+            <ThemePreferenceProvider>
+                <ThemedApp Component={Component} pageProps={pageProps} />
+            </ThemePreferenceProvider>
         </CacheProvider>
+    );
+}
+
+function ThemedApp({ Component, pageProps }) {
+    const { theme } = useCustomTheme();
+    return (
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <ApolloProvider client={client}>
+                <AuthProvider>
+                    <Component {...pageProps} />
+                </AuthProvider>
+            </ApolloProvider>
+        </ThemeProvider>
     );
 }
 

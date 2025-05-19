@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import { Box, Button, CssBaseline, useTheme, CircularProgress, Typography, Tabs, Tab, Alert } from '@mui/material';
 import { useMutation, useLazyQuery, useQuery, gql } from '@apollo/client';
+import { CreateMealDocument } from '@/gql/graphql';
 import NewHeader from '@/components/Dashboard/NewHeader';
 import GreetingSegment from '@/components/Dashboard/GreetingSegment';
 import DailySummary from '@/components/Dashboard/DailySummary';
@@ -194,6 +195,9 @@ export default function Dashboard() {
       }
     });
 
+  // GraphQL mutation for adding meals to a meal plan
+  const [createMeal] = useMutation(CreateMealDocument);
+
   // Handle generate button click
   const handleGenerateOptimizedPlan = () => {
     setOptimizedMealPlan(null); // Clear any previous results
@@ -214,6 +218,29 @@ export default function Dashboard() {
         return [...prev, mealId];
       }
     });
+  };
+
+  // Handle adding selected meals to the active meal plan
+  const activeMealPlanId = 'YOUR_MEAL_PLAN_ID'; // TODO: replace with real ID
+  const handleAddMeals = async (meals) => {
+    try {
+      for (const meal of meals) {
+        await createMeal({
+          variables: {
+            mealPlanId: activeMealPlanId,
+            date: new Date().toISOString(),
+            mealType: 'DINNER',
+            mealName: meal.mealName,
+            price: meal.price,
+            nutrition: meal.nutrition,
+            allergens: meal.allergens,
+          }
+        });
+      }
+      setSelectedMeals([]);
+    } catch (err) {
+      console.error('Error adding meals:', err);
+    }
   };
 
   // Handle nutrition targets change
@@ -272,6 +299,7 @@ export default function Dashboard() {
             <MealCatalog
               selectedMeals={selectedMeals}
               onSelectMeal={handleMealSelection}
+              onAddMeals={handleAddMeals}
             />
           )}
 

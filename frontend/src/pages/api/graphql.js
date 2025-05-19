@@ -23,6 +23,8 @@ import { randomUUID } from 'crypto';
 import { typeDefs } from '@/graphql/typeDefs'; // [cite: frontend/src/graphql/typeDefs.js]
 import { resolvers } from '@/graphql/resolvers'; // [cite: frontend/src/graphql/resolvers/index.js]
 import { dbConnect } from '@/lib/dbConnect'; // [cite: frontend/src/lib/dbConnect.js]
+import logger from '@/lib/logger.js';
+import { requestCounter, errorCounter } from '@/lib/metrics.js';
 
 // --- Configuration ---
 const isProduction = process.env.NODE_ENV === 'production';
@@ -37,7 +39,8 @@ const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
 
 // --- Early Failure Check ---
 if (!JWT_SECRET && isProduction) {
-    console.error('FATAL ERROR: JWT_SECRET is not defined in production.');
+    logger.error('FATAL ERROR: JWT_SECRET is not defined in production.');
+    errorCounter.inc({ route: 'graphql' });
     process.exit(1);
 }
 
@@ -177,11 +180,12 @@ const apolloServer = new ApolloServer({
     plugins: isProduction ? [] : [ApolloServerPluginLandingPageLocalDefault({ embed: true })],
     formatError: (formattedError, error) => {
         const originalError = error?.originalError || error;
-        console.error('GraphQL Processing Error:', {
+        logger.error('GraphQL Processing Error:', {
             message: originalError?.message,
             code: formattedError.extensions?.code,
             path: formattedError.path,
         });
+        errorCounter.inc({ route: 'graphql' });
 
         if (isProduction) {
             const safeExtensions = { ...formattedError.extensions };
@@ -239,24 +243,27 @@ const serverHandler = startServerAndCreateNextHandler(apolloServer, {
                         if (typeof decoded === 'object' && decoded.userId) {
                             contextUser = { userId: decoded.userId, email: decoded.email, role: decoded.role };
                         } else {
-                            console.warn('Invalid JWT payload structure.');
+                            logger.warn('Invalid JWT payload structure.');
                         }
                     } catch (err) {
                         if (err instanceof jwt.TokenExpiredError) {
-                            console.warn(`JWT expired at ${err.expiredAt}: ${err.message}`);
+                            logger.warn(`JWT expired at ${err.expiredAt}: ${err.message}`);
                         } else if (err instanceof jwt.JsonWebTokenError) {
-                            console.warn(`Invalid JWT: ${err.message}`);
+                            logger.warn(`Invalid JWT: ${err.message}`);
                         } else {
-                            console.error('Unhandled JWT verification error:', err);
+                            logger.error('Unhandled JWT verification error:', err);
+                            errorCounter.inc({ route: 'graphql' });
                         }
                         contextUser = null;
                     }
                 }
             } catch (error) {
-                console.error('Error during context setup (e.g., DB connection):', error);
+                logger.error('Error during context setup (e.g., DB connection):', error);
+                errorCounter.inc({ route: 'graphql' });
             }
         } else {
-            console.error('JWT_SECRET missing during context creation.');
+            logger.error('JWT_SECRET missing during context creation.');
+            errorCounter.inc({ route: 'graphql' });
         }
         return { req, res, user: contextUser };
     },
@@ -274,6 +281,9 @@ export default async function handler(req, res) {
     assignRequestId(res);
     setSecurityHeaders(res);
     setCORSHeaders(res, req.headers.origin || '');
+    res.on('finish', () => {
+        requestCounter.inc({ route: 'graphql', method: req.method || '', status: res.statusCode });
+    });
 
     const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
     if (!(await checkRateLimit(ip))) {
@@ -331,7 +341,8 @@ export default async function handler(req, res) {
                 });
                 req.on('error', (err) => {
                     if (!requestAborted) {
-                        console.error('Request stream error:', err);
+                        logger.error('Request stream error:', err);
+                        errorCounter.inc({ route: 'graphql' });
                         reject(err);
                     }
                 });
@@ -340,7 +351,8 @@ export default async function handler(req, res) {
                 try {
                     req.body = JSON.parse(rawBody);
                 } catch (parseError) {
-                    console.error('Invalid JSON body:', parseError);
+                    logger.error('Invalid JSON body:', parseError);
+                    errorCounter.inc({ route: 'graphql' });
                     res.statusCode = 400;
                     res.setHeader('Content-Type', 'application/json');
                     return res.end(

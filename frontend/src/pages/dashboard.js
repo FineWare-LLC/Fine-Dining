@@ -95,6 +95,15 @@ const GET_MEALS = gql`
   }
 `;
 
+const GET_MEAL_PLANS = gql`
+  query GetMealPlans($userId: ID) {
+    getMealPlans(userId: $userId) {
+      id
+      status
+    }
+  }
+`;
+
 const useDailyMeals = (count = 3) => {
   const { data } = useQuery(GET_MEALS, {
     variables: { page: 1, limit: count },
@@ -133,6 +142,18 @@ export default function Dashboard() {
   useEffect(()=>{ if (!loading && !isAuthenticated) router.push('/login'); },[loading]); */
 
   const { user } = useAuth();
+
+  const { data: mealPlanData } = useQuery(GET_MEAL_PLANS, {
+    variables: { userId: user?.id },
+    skip: !user,
+    fetchPolicy: 'cache-first',
+  });
+
+  const activeMealPlanId = useMemo(() => {
+    const plans = mealPlanData?.getMealPlans || [];
+    const activePlan = plans.find(p => p.status === 'ACTIVE') || plans[0];
+    return activePlan?.id;
+  }, [mealPlanData]);
 
   const meal        = useMeal();
   const [dailyMeals, setDailyMeals] = useState([]);
@@ -237,8 +258,11 @@ export default function Dashboard() {
   };
 
   // Handle adding selected meals to the active meal plan
-  const activeMealPlanId = 'YOUR_MEAL_PLAN_ID'; // TODO: replace with real ID
   const handleAddMeals = async (meals) => {
+    if (!activeMealPlanId) {
+      console.error('No active meal plan available to add meals.');
+      return;
+    }
     try {
       for (const meal of meals) {
         await createMeal({

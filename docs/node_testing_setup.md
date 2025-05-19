@@ -45,3 +45,18 @@ try {
 ```
 
 These stubs are created inline within each test file. When optional dependencies are missing the tests are skipped using the `{ skip: true }` option. Playwright component tests follow a similar approach, interacting with real components and manually providing any required props.
+
+## Performance Benchmark
+
+The solver test `src/tests/solver/performance.test.js` measures how long
+`generateOptimizedMealPlan` takes on a fixed data set. The execution time
+must stay below the `MEAL_PLAN_BENCHMARK_MS` environment variable (defaults to
+500ms).
+
+Run only the benchmark with:
+
+```bash
+node --test src/tests/solver/performance.test.js
+```
+
+`npm test` will execute it automatically along with the other tests.

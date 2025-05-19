@@ -19,6 +19,7 @@ import preferencesSchema from './subSchemas/preferencesSchema.js';
 import questionnaireSchema from './subSchemas/questionnaireSchema.js';
 import securityQuestionSchema from './subSchemas/securityQuestionSchema.js';
 import socialAccountSchema from './subSchemas/socialAccountSchema.js';
+import encrypt from 'mongoose-encryption';
 
 // Methods
 import {
@@ -323,5 +324,18 @@ userSchema.methods.comparePassword = comparePassword;
  * ------------------------------- */
 userSchema.statics.findByEmailCaseInsensitive = findByEmailCaseInsensitive;
 userSchema.statics.softDeleteUser = softDeleteUser;
+
+// Encrypt PII fields if encryption keys are provided
+const encKey = process.env.MONGO_ENCRYPTION_KEY;
+const sigKey = process.env.MONGO_ENCRYPTION_SIGNING_KEY;
+if (encKey && sigKey) {
+    userSchema.plugin(encrypt, {
+        encryptionKey: Buffer.from(encKey, 'hex'),
+        signingKey: Buffer.from(sigKey, 'hex'),
+        encryptedFields: ['phoneNumber', 'addresses'],
+    });
+} else {
+    console.warn('Encryption keys missing; phone numbers and addresses will not be encrypted.');
+}
 
 export default userSchema;

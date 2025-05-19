@@ -17,13 +17,25 @@ export function setSecurityHeaders(res) {
     const csp = isProduction
         ? "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; frame-ancestors 'none';"
         : "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;";
-    res.headers.set ? res.headers.set('Content-Security-Policy', csp) : res.setHeader('Content-Security-Policy', csp);
-    res.headers.set ? res.headers.set('X-Frame-Options', 'DENY') : res.setHeader('X-Frame-Options', 'DENY');
-    res.headers.set ? res.headers.set('X-Content-Type-Options', 'nosniff') : res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.headers.set ? res.headers.set('X-XSS-Protection', '1; mode=block') : res.setHeader('X-XSS-Protection', '1; mode=block');
-    res.headers.set ? res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin') : res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    if (isProduction) {
-        res.headers.set ? res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload') : res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+
+    if (res.headers && res.headers.set) {
+        res.headers.set('Content-Security-Policy', csp);
+        res.headers.set('X-Frame-Options', 'DENY');
+        res.headers.set('X-Content-Type-Options', 'nosniff');
+        res.headers.set('X-XSS-Protection', '1; mode=block');
+        res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        if (isProduction) {
+            res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+        }
+    } else if (res.setHeader) {
+        res.setHeader('Content-Security-Policy', csp);
+        res.setHeader('X-Frame-Options', 'DENY');
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('X-XSS-Protection', '1; mode=block');
+        res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+        if (isProduction) {
+            res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+        }
     }
 }
 
@@ -34,10 +46,18 @@ export function setSecurityHeaders(res) {
  */
 export function setCORSHeaders(res, origin) {
     const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
-    res.headers.set ? res.headers.set('Access-Control-Allow-Origin', allowed) : res.setHeader('Access-Control-Allow-Origin', allowed);
-    res.headers.set ? res.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS') : res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.headers.set ? res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization') : res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.headers.set ? res.headers.set('Access-Control-Allow-Credentials', 'true') : res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+    if (res.headers && res.headers.set) {
+        res.headers.set('Access-Control-Allow-Origin', allowed);
+        res.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+        res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        res.headers.set('Access-Control-Allow-Credentials', 'true');
+    } else if (res.setHeader) {
+        res.setHeader('Access-Control-Allow-Origin', allowed);
+        res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
 }
 
 /**
@@ -47,6 +67,10 @@ export function setCORSHeaders(res, origin) {
  */
 export function assignRequestId(res) {
     const requestId = randomUUID();
-    res.headers.set ? res.headers.set('X-Request-ID', requestId) : res.setHeader('X-Request-ID', requestId);
+    if (res.headers && res.headers.set) {
+        res.headers.set('X-Request-ID', requestId);
+    } else if (res.setHeader) {
+        res.setHeader('X-Request-ID', requestId);
+    }
     return requestId;
 }

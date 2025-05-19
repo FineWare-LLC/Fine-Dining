@@ -21,6 +21,7 @@ const GET_USER = gql`
       gender
       measurementSystem
       dailyCalories
+      avatarUrl
       createdAt
     }
   }

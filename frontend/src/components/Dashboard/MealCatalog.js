@@ -56,6 +56,19 @@ const GET_ALL_MEALS = gql`
   }
 `;
 
+// GraphQL query to fetch menu items for a restaurant
+const GET_MENU_ITEMS = gql`
+  query GetMenuItems($restaurantId: ID!, $page: Int, $limit: Int) {
+    getMenuItemsByRestaurant(restaurantId: $restaurantId, page: $page, limit: $limit) {
+      id
+      mealName
+      price
+      allergens
+      nutritionFacts
+    }
+  }
+`;
+
 // Query to fetch restaurants for filter chips
 const GET_RESTAURANTS = gql`
   query GetRestaurants($page: Int, $limit: Int) {
@@ -76,18 +89,27 @@ const GET_RESTAURANTS = gql`
  * @returns {JSX.Element} The rendered component
  */
 const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals }) => {
+const MealCatalog = ({ selectedMeals = [], onSelectMeal, restaurantId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [restaurantFilter, setRestaurantFilter] = useState(null);
   const [page, setPage] = useState(1);
   const [limit] = useState(20);
 
-  // Fetch meals from the server
-  const { loading, error, data } = useQuery(GET_ALL_MEALS, {
-    variables: { page, limit },
-    fetchPolicy: 'network-only' // Don't use cache for this query
-  });
+  // Fetch meals or menu items from the server
+  const { loading, error, data } = useQuery(
+    restaurantId ? GET_MENU_ITEMS : GET_ALL_MEALS,
+    {
+      variables: restaurantId ? { restaurantId, page, limit } : { page, limit },
+      fetchPolicy: 'network-only'
+    }
+  );
 
+  // Filter meals based on search term
+  const allItems = restaurantId ? data?.getMenuItemsByRestaurant : data?.getAllMeals;
+  const filteredMeals = allItems?.filter(meal =>
+    meal.mealName.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
   // Fetch local restaurants for filters
   const { data: restaurantData } = useQuery(GET_RESTAURANTS, {
     variables: { page: 1, limit: 50 },

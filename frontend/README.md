@@ -13,6 +13,12 @@
 
 > **Note**: This repository contains the frontend portion and is in active development. Features and documentation will evolve over time.
 
+### Quick Access
+- [Canva Design 1](https://www.canva.com/design/DAGb9hD06yg/OBGfzJ5Tc3A1LDYlEH0Msw/view?mode=prototype)
+- [Canva Design 2](https://www.canva.com/design/DAGb9gj3T0A/gShpCjKK3pJla-BF_2VNvw/view?mode=prototype)
+
+> **Contributors:** Please align new or updated components with these designs to ensure a consistent user experience.
+
 ---
 
 ## Table of Contents

@@ -4,7 +4,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import { Box, Button, CssBaseline, useTheme, CircularProgress, Typography, Tabs, Tab, Alert } from '@mui/material';
-import { useMutation, useLazyQuery, gql } from '@apollo/client';
+import { useMutation, useLazyQuery, useQuery, gql } from '@apollo/client';
 import NewHeader from '@/components/Dashboard/NewHeader';
 import GreetingSegment from '@/components/Dashboard/GreetingSegment';
 import DailySummary from '@/components/Dashboard/DailySummary';
@@ -119,6 +119,7 @@ const useDailyMeals = (count = 3) => {
 };
 
 const useHeroMeal = () => useDailyMeals(1)[0];
+const useMeal = useHeroMeal;
 /* ------------------------------------------------------------------------ */
 
 export default function Dashboard() {

@@ -129,6 +129,7 @@ file is present, printing the resulting restaurant list as JSON.
 * For detailed component testing guidance, refer to `frontend/docs/testing/component-testing.md`.
 
 ## Documentation
+* [Branching Strategy](docs/branching_guidelines.md)
 * [Getting Started](docs/getting_started.md)
 * [User Guide](docs/user_guide.md)
 * [Troubleshooting](docs/troubleshooting.md)

@@ -8,6 +8,19 @@ export default createTheme({
     accent: { main: '#7F36F4' },
     background: { default:'#FFFFFF', paper:'#FFFFFF' },
     surface: { light:'#F2F4F7' },
+    role: {
+      admin: '#e57373',
+      user: '#64b5f6',
+      premium: '#ba68c8',
+      super_admin: '#ffb74d'
+    },
+    state: {
+      active: '#81c784',
+      pending: '#ffb74d',
+      suspended: '#9575cd',
+      deleted: '#e0e0e0',
+      archived: '#bdbdbd'
+    },
   },
   shape:{ borderRadius:12 },
   typography:{ fontFamily:'Inter,Roboto,Helvetica Neue,Helvetica,Arial,sans-serif' },

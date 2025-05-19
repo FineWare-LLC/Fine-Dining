@@ -19,7 +19,7 @@ import { ApolloServer, ApolloServerErrorCode } from '@apollo/server';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { startServerAndCreateNextHandler } from '@as-integrations/next';
 import jwt from 'jsonwebtoken';
-import { randomUUID } from 'crypto';
+import { setSecurityHeaders, setCORSHeaders, assignRequestId } from '@/utils/headers';
 import { typeDefs } from '@/graphql/typeDefs'; // [cite: frontend/src/graphql/typeDefs.js]
 import { resolvers } from '@/graphql/resolvers'; // [cite: frontend/src/graphql/resolvers/index.js]
 import { dbConnect } from '@/lib/dbConnect'; // [cite: frontend/src/lib/dbConnect.js]
@@ -31,10 +31,6 @@ const MAX_REQUEST_BODY_SIZE = 1 * 1024 * 1024; // 1 MB
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_ISSUER = process.env.JWT_ISSUER || undefined;
 const JWT_AUDIENCE = process.env.JWT_AUDIENCE || undefined;
-const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',')
-    : ['https://yourdomain.com'];
-
 // --- Early Failure Check ---
 if (!JWT_SECRET && isProduction) {
     console.error('FATAL ERROR: JWT_SECRET is not defined in production.');
@@ -108,55 +104,6 @@ async function checkRateLimit(ip) {
     }
 }
 
-/**
- * Sets security headers on the response.
- * In production, a strict CSP is applied.
- * In development, the CSP is relaxed to allow inline scripts and eval for Apollo Sandbox.
- *
- * @param {import('http').ServerResponse} res - HTTP response object.
- */
-function setSecurityHeaders(res) {
-    const csp = isProduction
-        ? "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; frame-ancestors 'none';"
-        : "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;"; // relaxed in dev
-    res.setHeader('Content-Security-Policy', csp);
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-XSS-Protection', '1; mode=block');
-    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    if (isProduction) {
-        res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
-    }
-}
-
-/**
- * Sets CORS headers on the response.
- *
- * @param {import('http').ServerResponse} res - HTTP response object.
- * @param {string} origin - Request origin.
- */
-function setCORSHeaders(res, origin) {
-    if (ALLOWED_ORIGINS.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-    } else {
-        res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGINS[0]);
-    }
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-}
-
-/**
- * Attaches a unique Request ID to the response for traceability.
- *
- * @param {import('http').ServerResponse} res - HTTP response object.
- * @returns {string} - The generated Request ID.
- */
-function assignRequestId(res) {
-    const requestId = randomUUID();
-    res.setHeader('X-Request-ID', requestId);
-    return requestId;
-}
 
 /**
  * Validates that the Content-Type header is 'application/json'.

@@ -25,6 +25,7 @@ import createEmotionCache from '../utils/createEmotionCache'; // [cite: frontend
 import { CacheProvider } from '@emotion/react';
 import useCustomTheme from '../theme/useCustomTheme'; // [cite: frontend/src/theme/useCustomTheme.js]
 import { AuthProvider } from '../context/AuthContext';
+import ToastStack from '../components/ToastStack';
 
 /**
  * Creates an authenticated Apollo Link that attaches the authorization token to every request.
@@ -109,7 +110,8 @@ export default function MyApp(props) {
                             <AuthProvider>
                                 {/* Render the active page component with its specific props */}
                                 <Component {...pageProps} />
-                            </AuthProvider>
+                            <ToastStack />
+                    </AuthProvider>
                         </ToastProvider>
                     </QueryClientProvider>
                 </ApolloProvider>

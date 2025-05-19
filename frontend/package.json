@@ -42,6 +42,7 @@
     "react-dropzone": "^14.2.3",
     "browser-image-compression": "^2.0.0",
     "highs-addon": "^0.9.4",
+    "@headlessui/react": "^1.7.18",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.14.2",
     "mongoose-encryption": "^2.1.2",

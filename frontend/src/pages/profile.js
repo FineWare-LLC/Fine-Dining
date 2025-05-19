@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import { gql, useQuery } from '@apollo/client';
 import QuestionnaireWizard from '../components/Questionnaire/QuestionnaireWizard';
 import ProfileDetails from '../components/Profile/ProfileDetails';
+import ProfileEditor from '../components/Profile/ProfileEditor';
 import AvatarUpload from '../components/Profile/AvatarUpload';
 import { useAuth } from '../context/AuthContext';
 import styles from '@/styles/ProfilePage.module.css';
@@ -76,6 +77,12 @@ export default function ProfilePage() {
       </Typography>
       {loading && <CircularProgress />}
       {error && <Alert severity="error">Failed to load profile.</Alert>}
+      {data?.getUser && (
+        <>
+          <ProfileDetails user={data.getUser} />
+          <ProfileEditor user={data.getUser} />
+        </>
+      )}
       {data?.getUser && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <AvatarUpload user={{ name: data.getUser.name, avatarUrl }} onUpload={handleUpload} />

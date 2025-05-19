@@ -149,3 +149,5 @@ This project is currently not licensed under an open-source license.
 
 ## Contact
 FineWare LLC
+
+For security issues or vulnerability reports, please see [SECURITY.md](SECURITY.md) or email [cybyl.fine@fineware.tech](mailto:cybyl.fine@fineware.tech).

@@ -35,6 +35,7 @@ out center;`;
         placeId: `${el.type}-${el.id}`,
         name: el.tags?.name || 'Unnamed restaurant',
         vicinity: el.tags?.['addr:full'] || el.tags?.['addr:street'] || el.tags?.city || 'Unknown',
+        website: el.tags?.website || null,
         rating: null,
         userRatingsTotal: null,
         location: {

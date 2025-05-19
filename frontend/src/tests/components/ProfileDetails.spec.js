@@ -18,4 +18,10 @@ test('renders basic user info', async ({ mount }) => {
   const component = await mount(<ProfileDetails user={user} />);
   await expect(component.getByText('Jane Doe')).toBeVisible();
   await expect(component.getByText('jane@example.com')).toBeVisible();
+
+  const dts = component.locator('dl dt');
+  const dds = component.locator('dl dd');
+  await expect(dts).toHaveCount(7);
+  await expect(dds).toHaveCount(7);
+  await expect(component.locator('dl dt + dd')).toHaveCount(7);
 });

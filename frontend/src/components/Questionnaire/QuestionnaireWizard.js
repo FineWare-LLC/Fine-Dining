@@ -191,16 +191,52 @@ const WeightGoalStep = ({ data, onChange, onBack }) => {
 };
 WeightGoalStep.propTypes = { data: PropTypes.object.isRequired, onChange: PropTypes.func.isRequired, onBack: PropTypes.func.isRequired };
 
-const SummaryStep = ({ data, onBack }) => (
-  <Box>
-    <Typography variant="h6" gutterBottom>Summary</Typography>
-    <pre>{JSON.stringify(data, null, 2)}</pre>
-    <Box sx={{ mt: 2 }}>
-      <Button variant="outlined" onClick={onBack} sx={{ mr: 1 }}>Back</Button>
-      <Button variant="contained" onClick={() => console.log('submit', data)}>Submit</Button>
+const SummaryStep = ({ data, onBack }) => {
+  const items = [
+    { term: 'Measurement System', value: data.system },
+    {
+      term: 'Gender',
+      value: data.gender === 'other' ? data.otherGender : data.gender,
+    },
+    {
+      term: 'Height',
+      value: `${data.height} ${data.system === 'imperial' ? 'in' : 'cm'}`,
+    },
+    {
+      term: 'Weight',
+      value: `${data.weight} ${data.system === 'imperial' ? 'lbs' : 'kg'}`,
+    },
+    { term: 'Goal', value: data.goal },
+  ];
+  if (data.desired) {
+    items.push({
+      term: 'Desired Weight',
+      value: `${data.desired} ${data.system === 'imperial' ? 'lbs' : 'kg'}`,
+    });
+  }
+
+  return (
+    <Box>
+      <Typography variant="h6" gutterBottom>Summary</Typography>
+      <Box component="dl" sx={{ mt: 1 }}>
+        {items.map((item) => (
+          <Box key={item.term} sx={{ display: 'flex', gap: 1 }}>
+            <Typography component="dt" variant="subtitle2" sx={{ minWidth: 160 }}>
+              {item.term}
+            </Typography>
+            <Typography component="dd" variant="body2" sx={{ m: 0 }}>
+              {item.value}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+      <Box sx={{ mt: 2 }}>
+        <Button variant="outlined" onClick={onBack} sx={{ mr: 1 }}>Back</Button>
+        <Button variant="contained" onClick={() => console.log('submit', data)}>Submit</Button>
+      </Box>
     </Box>
-  </Box>
-);
+  );
+};
 SummaryStep.propTypes = { data: PropTypes.object.isRequired, onBack: PropTypes.func.isRequired };
 
 // Wizard container ----------------------------------------------------------
@@ -247,3 +283,5 @@ export default function QuestionnaireWizard() {
     </MeasurementProvider>
   );
 }
+
+export { SummaryStep };

@@ -9,8 +9,8 @@
  */
 
 import highsDefault from 'highs-addon';
-import { MealModel } from '@/models/Meal/index.js';
-import User from '@/models/User/index.js';
+import { countMeals, findMeals } from '../data/MealRepository.js';
+import { findUserById } from '../data/UserRepository.js';
 import { applyPlugins } from '../../../plugins/registry.mjs';
 import { createSolverError } from '../io/solverOutput.js';
 
@@ -43,7 +43,7 @@ export async function prepareSolverData(userId, selectedMealIds = [], customNutr
   console.log(`Custom nutrition targets: ${customNutritionTargets ? 'Provided' : 'None'}`);
 
   // Fetch user data including nutrition targets and allergies
-  const user = await User.findById(userId);
+  const user = await findUserById(userId);
   if (!user) {
     throw new Error('User not found');
   }
@@ -65,12 +65,12 @@ export async function prepareSolverData(userId, selectedMealIds = [], customNutr
     ? { _id: { $in: selectedMealIds } }
     : {};
 
-  const totalMealsCount = await MealModel.countDocuments(baseQuery);
+  const totalMealsCount = await countMeals(baseQuery);
 
   // Create meal query based on selected meal IDs
   const mealQuery = { ...baseQuery };
 
-  const filteredMealsRaw = await MealModel.find(mealQuery);
+  const filteredMealsRaw = await findMeals(mealQuery);
   console.log(`Query returned ${filteredMealsRaw.length} meals out of ${totalMealsCount} total`);
 
   // Track filtering statistics

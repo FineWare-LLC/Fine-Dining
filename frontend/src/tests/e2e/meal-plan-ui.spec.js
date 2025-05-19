@@ -52,6 +52,10 @@ test.describe('Meal Plan UI Flow', () => {
     await page.click('button[type="submit"]');
 
     await page.waitForURL('**/dashboard');
+    // Reload dashboard with active meal plan ID to exercise query logic
+    const testPlanId = 'test-plan';
+    await page.goto(`/dashboard?mealPlanId=${testPlanId}`);
+    await expect(page).toHaveURL(new RegExp(`mealPlanId=${testPlanId}`));
     await page.waitForSelector('text=Meal Catalog');
 
     const rows = page.locator('table tbody tr');

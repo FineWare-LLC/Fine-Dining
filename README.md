@@ -61,6 +61,7 @@ The application includes various code implementations, such as:
 * **Database**: MongoDB Atlas
 * **ODM**: Mongoose
 * **Optimization Solver**: HiGHS solver addon (`highs-addon`)
+* **GPU Acceleration**: Optional OpenCL backend for matrix operations (build with `npm run build:gpu`)
 * **Testing**: Playwright (End-to-end & Component Testing)
 * **Linting**: ESLint
 * **Type Generation**: GraphQL Code Generator
@@ -128,12 +129,14 @@ list as JSON.
 ## Available Scripts (Frontend - from `package.json`)
 * `npm run dev`: Starts the Next.js development server.
 * `npm run build`: Builds the Next.js application for production.
+* `npm run build:gpu`: Builds the application with GPU support.
 * `npm start`: Starts the Next.js production server.
 * `npm run lint`: Lints the codebase using Next.js's ESLint configuration.
 * `npm run test:playwright`: Runs Playwright end-to-end tests.
 * `npm run test:components`: Runs Playwright component tests.
 * `npm run seed`: Populates the database with sample data (uses `frontend/src/lib/HiGHS/seed_database.mjs`).
 * `npm run codegen`: Generates GraphQL types from your schema (`codegen.yml`).
+* `npm run benchmark:gpu`: Runs a matrix multiplication benchmark using the GPU module.
 
 ## License
 This project is currently not licensed under an open-source license.

@@ -2,6 +2,7 @@ import { withErrorHandling } from './baseImports.js';
 import User from '@/models/User/index.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { sanitizeString } from '@/lib/sanitize.js';
 
 /**
  * Logs in a user by verifying credentials.
@@ -22,7 +23,8 @@ export const loginUser = withErrorHandling(async (_parent, { email, password }, 
     if (!email || !password) {
         throw new Error('Email and password are required.');
     }
-    email = email.trim().toLowerCase();
+    email = sanitizeString(email.trim().toLowerCase());
+    const sanitizedPassword = sanitizeString(password);
 
     // Validate email format (basic regex)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -43,7 +45,7 @@ export const loginUser = withErrorHandling(async (_parent, { email, password }, 
     }
 
     // Compare the provided password with the stored hashed password.
-    const valid = await bcrypt.compare(password, user.password);
+    const valid = await bcrypt.compare(sanitizedPassword, user.password);
     if (!valid) {
         await new Promise(resolve => setTimeout(resolve, 100)); // 500ms delay
         throw new Error('Invalid credentials');
@@ -98,7 +100,7 @@ export const requestPasswordReset = withErrorHandling(async (_parent, { email },
     }
 
     // Normalize email input.
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = sanitizeString(email.trim().toLowerCase());
 
     // Validate the email format.
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -164,7 +166,7 @@ export const resetPassword = withErrorHandling(async (_parent, { resetToken, new
     }
 
     // Optionally sanitize newPassword (e.g., trim spaces) if needed.
-    newPassword = newPassword.trim();
+    newPassword = sanitizeString(newPassword.trim());
 
     const user = await User.findOne({ passwordResetToken: resetToken });
     if (!user) {

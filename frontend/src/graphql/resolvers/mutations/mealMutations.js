@@ -3,6 +3,7 @@ import { MealModel } from '@/models/Meal/index.js';
 import { MealPlanModel } from "@/models/MealPlan/index.js";
 import { RecipeModel } from '@/models/Recipe/index.js';
 import { RestaurantModel } from '@/models/Restaurant/index.js';
+import { sanitizeString } from '@/lib/sanitize.js';
 
 /**
  * Creates a meal within a meal plan.
@@ -56,6 +57,11 @@ export const createMeal = withErrorHandling(async (
 
   const recipe = recipeId ? await RecipeModel.findById(recipeId) : null;
   const restaurant = restaurantId ? await RestaurantModel.findById(restaurantId) : null;
+  if (mealName) mealName = sanitizeString(mealName.trim());
+  if (Array.isArray(ingredients)) {
+    ingredients = ingredients.map(i => sanitizeString(i));
+  }
+  if (notes) notes = sanitizeString(notes.trim());
   const newMeal = await MealModel.create({
     mealPlan: mealPlan._id,
     date,
@@ -131,14 +137,14 @@ export const updateMeal = withErrorHandling(async (
   if (mealType !== undefined) meal.mealType = mealType;
   if (recipeId !== undefined) meal.recipe = recipeId;
   if (restaurantId !== undefined) meal.restaurant = restaurantId;
-  if (mealName !== undefined) meal.mealName = mealName;
+  if (mealName !== undefined) meal.mealName = sanitizeString(mealName.trim());
   if (price !== undefined) meal.price = price;
-  if (ingredients !== undefined) meal.ingredients = ingredients;
+  if (ingredients !== undefined) meal.ingredients = ingredients.map(i => sanitizeString(i));
   if (nutrition !== undefined) meal.nutrition = nutrition;
   if (allergens !== undefined) meal.allergens = allergens;
   if (nutritionFacts !== undefined) meal.nutritionFacts = nutritionFacts;
   if (portionSize !== undefined) meal.portionSize = portionSize;
-  if (notes !== undefined) meal.notes = notes;
+  if (notes !== undefined) meal.notes = sanitizeString(notes.trim());
   return meal.save();
 });
 

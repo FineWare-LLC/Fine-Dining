@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Avatar, Typography, Grid } from '@mui/material';
+import { Card, CardContent, Avatar, Typography, Grid, Chip } from '@mui/material';
 
 export default function ProfileDetails({ user }) {
   if (!user) return null;
@@ -16,6 +16,40 @@ export default function ProfileDetails({ user }) {
           <Grid item xs>
             <Typography variant="h6" fontWeight={600}>{user.name}</Typography>
             <Typography variant="body2" color="text.secondary">{user.email}</Typography>
+            <Grid container spacing={1} sx={{ mt: 1 }}>
+              <Grid item>
+                <Chip
+                  label={user.role}
+                  aria-label={`User role: ${user.role}`}
+                  sx={{
+                    bgcolor: `role.${user.role.toLowerCase()}`,
+                    color: 'common.white',
+                    boxShadow: 1,
+                    '@keyframes fadeIn': {
+                      from: { opacity: 0 },
+                      to: { opacity: 1 }
+                    },
+                    animation: 'fadeIn 0.3s ease-in'
+                  }}
+                />
+              </Grid>
+              <Grid item>
+                <Chip
+                  label={user.accountStatus}
+                  aria-label={`User status: ${user.accountStatus}`}
+                  sx={{
+                    bgcolor: `state.${user.accountStatus.toLowerCase()}`,
+                    color: 'common.white',
+                    boxShadow: 1,
+                    '@keyframes fadeIn': {
+                      from: { opacity: 0 },
+                      to: { opacity: 1 }
+                    },
+                    animation: 'fadeIn 0.3s ease-in'
+                  }}
+                />
+              </Grid>
+            </Grid>
           </Grid>
         </Grid>
         <Grid container spacing={1} sx={{ mt: 2 }}>

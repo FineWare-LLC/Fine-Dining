@@ -4,7 +4,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import { Box, Button, CssBaseline, useTheme, CircularProgress, Typography, Tabs, Tab, Alert } from '@mui/material';
-import { useMutation, useLazyQuery, useQuery, gql } from '@apollo/client';
+import { useMutation, useLazyQuery, gql } from '@apollo/client';
 import NewHeader from '@/components/Dashboard/NewHeader';
 import GreetingSegment from '@/components/Dashboard/GreetingSegment';
 import DailySummary from '@/components/Dashboard/DailySummary';
@@ -46,8 +46,18 @@ const GENERATE_OPTIMIZED_MEAL_PLAN = gql`
 `;
 
 const FIND_NEARBY_RESTAURANTS = gql`
-  query FindNearbyRestaurants($latitude: Float!, $longitude: Float!, $radius: Int!) {
-    findNearbyRestaurants(latitude: $latitude, longitude: $longitude, radius: $radius) {
+  query FindNearbyRestaurants(
+    $latitude: Float!
+    $longitude: Float!
+    $radius: Int!
+    $keyword: String
+  ) {
+    findNearbyRestaurants(
+      latitude: $latitude
+      longitude: $longitude
+      radius: $radius
+      keyword: $keyword
+    ) {
       source
       restaurants {
         placeId
@@ -116,8 +126,7 @@ export default function Dashboard() {
   /* const { isAuthenticated, loading } = useAuth();
   useEffect(()=>{ if (!loading && !isAuthenticated) router.push('/login'); },[loading]); */
 
-  const heroMeal    = useHeroMeal();
-  const meals       = useDailyMeals();
+  const meal        = useMeal();
   const [fetchRestaurants, {
     loading: restaurantsLoading,
     error: restaurantsError,
@@ -237,7 +246,7 @@ export default function Dashboard() {
         }}
       >
         <GreetingSegment userName="Anthony" />
-        <DailySummary meals={meals} />
+        <DailySummary meal={meal} />
 
         {/* Tabs for Meal Plan Optimization */}
         <Box sx={{ width: '100%', mt: 3 }}>
@@ -305,7 +314,7 @@ export default function Dashboard() {
           )}
         </Box>
 
-        <MealCard meal={heroMeal} />
+        <MealCard meal={meal} />
 
         <DiscoveryHeader />
 

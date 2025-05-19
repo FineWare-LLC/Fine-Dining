@@ -54,3 +54,32 @@ node scripts/test-optimization.mjs
 ```
 
 See the [User Guide](./user_guide.md) for more details on command-line usage and examples.
+
+## Fetch Local Restaurants
+
+You can quickly query nearby restaurants from the command line using
+`fetch-local-restaurants.mjs`:
+
+```bash
+node scripts/fetch-local-restaurants.mjs <lat> <lon> [radius] [keyword]
+```
+
+The script reads `GOOGLE_PLACES_API_KEY` and the optional `OVERPASS_URL`
+from `.env.local`. If the Google key is missing or invalid it falls back to
+the Overpass API. Results are printed as JSON.
+
+## Menu Scraping Pipeline
+
+To collect menu data from major chains and produce a processed CSV, run the
+pipeline located under `frontend/src/lib/HiGHS`:
+
+```bash
+cd frontend/src/lib/HiGHS
+npm install
+node src/main_pipeline.mjs
+```
+
+The pipeline fetches menu items, normalizes them, and writes
+`data/processed/restaurant_meals_processed.csv`. Progress messages are printed
+to the console. No additional environment variables are required beyond those
+defined earlier.

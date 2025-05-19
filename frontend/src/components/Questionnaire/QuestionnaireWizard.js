@@ -10,8 +10,13 @@ import {
   FormControlLabel,
   Radio,
   TextField,
-  Typography
+  Typography,
+  IconButton,
+  InputAdornment,
+  Tooltip
 } from '@mui/material';
+import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import HelpModal from '../Profile/HelpModal';
 
 // Measurement system context -------------------------------------------------
 const MeasurementContext = createContext();
@@ -157,6 +162,7 @@ const WeightGoalStep = ({ data, onChange, onBack }) => {
   const [goal, setGoal] = useState(data.goal || 'maintain');
   const [desired, setDesired] = useState(data.desired || '');
   const { system } = useMeasurement();
+  const [helpOpen, setHelpOpen] = useState(false);
 
   useEffect(() => {
     onChange({ goal, desired });
@@ -181,7 +187,23 @@ const WeightGoalStep = ({ data, onChange, onBack }) => {
         fullWidth
         size="small"
         sx={{ mt: 2 }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <Tooltip title="What is desired weight?">
+                <IconButton
+                  size="small"
+                  onClick={() => setHelpOpen(true)}
+                  aria-label="Desired weight help"
+                >
+                  <InfoOutlined fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </InputAdornment>
+          )
+        }}
       />
+      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
       <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
         <Button variant="outlined" onClick={onBack}>Back</Button>
         <Button variant="contained" onClick={() => onChange({ goal, desired, complete: true })}>Next</Button>
@@ -247,3 +269,4 @@ export default function QuestionnaireWizard() {
     </MeasurementProvider>
   );
 }
+export { WeightGoalStep };

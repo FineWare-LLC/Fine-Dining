@@ -1,0 +1,9 @@
+{
+  "help": {
+    "desiredWeight": {
+      "title": "Desired Weight",
+      "description": "This is the target weight you aim to reach.",
+      "image": "/plate-logo.png"
+    }
+  }
+}

@@ -13,7 +13,7 @@ import { MealModel } from '../../models/Meal/index.js';
 async function testMealCatalog() {
   try {
     // Connect to MongoDB
-    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fine-dining';
+    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fineDiningApp';
     console.log(`Connecting to MongoDB at ${mongoURI}...`);
     await mongoose.connect(mongoURI);
     console.log("Connected to MongoDB");

@@ -329,9 +329,14 @@ userSchema.statics.softDeleteUser = softDeleteUser;
 const encKey = process.env.MONGO_ENCRYPTION_KEY;
 const sigKey = process.env.MONGO_ENCRYPTION_SIGNING_KEY;
 if (encKey && sigKey) {
+    // Convert hex keys to base64 format
+    const hexToBase64 = (hexStr) => {
+        return Buffer.from(hexStr, 'hex').toString('base64');
+    };
+
     userSchema.plugin(encrypt, {
-        encryptionKey: Buffer.from(encKey, 'hex'),
-        signingKey: Buffer.from(sigKey, 'hex'),
+        encryptionKey: Buffer.from(hexToBase64(encKey), 'base64'),
+        signingKey: Buffer.from(hexToBase64(sigKey), 'base64'),
         encryptedFields: ['phoneNumber', 'addresses'],
     });
 } else {

@@ -19,8 +19,6 @@ import MealCatalog from '@/components/Dashboard/MealCatalog';
 import NutritionRequirementsForm from '@/components/Dashboard/NutritionRequirementsForm';
 import { useDashStore } from '@/components/Dashboard/store';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/router';
-import { getPlanIdFromQuery } from '@/utils/activeMealPlan';
 
 const GENERATE_OPTIMIZED_MEAL_PLAN = gql`
   mutation GenerateOptimizedMealPlan($selectedMealIds: [ID], $customNutritionTargets: CustomNutritionTargetsInput) {
@@ -97,15 +95,6 @@ const GET_MEALS = gql`
   }
 `;
 
-const GET_MEAL_PLANS = gql`
-  query GetMealPlans($userId: ID) {
-    getMealPlans(userId: $userId) {
-      id
-      status
-    }
-  }
-`;
-
 const useDailyMeals = (count = 3) => {
   const { data } = useQuery(GET_MEALS, {
     variables: { page: 1, limit: count },
@@ -124,8 +113,6 @@ const useDailyMeals = (count = 3) => {
         (m.nutrition.fat || 0) * 9
       ),
       protein: m.nutrition.protein || 0,
-      carbohydrates: m.nutrition.carbohydrates || 0,
-      fat: m.nutrition.fat || 0,
       imageUrl: m.recipe?.images?.[0] || `https://source.unsplash.com/800x600/?food&sig=${m.id}`,
     })),
   [data]);
@@ -135,31 +122,28 @@ const useDailyMeals = (count = 3) => {
 
 const useHeroMeal = () => useDailyMeals(1)[0];
 const useMeal = useHeroMeal;
-const DEFAULT_TIME_LABELS = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
 /* ------------------------------------------------------------------------ */
 
 export default function Dashboard() {
   // auth redirect stub
   /* const { isAuthenticated, loading } = useAuth();
   useEffect(()=>{ if (!loading && !isAuthenticated) router.push('/login'); },[loading]); */
+  const [currentUser, setCurrentUser] = useState(null);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
+    try {
+      const { user } = useAuth();
+      setCurrentUser(user);
+    } catch (e) {
+      // Auth context not available
+    }
   }, []);
 
   const { user } = useAuth();
 
-  const { data: mealPlanData } = useQuery(GET_MEAL_PLANS, {
-    variables: { userId: user?.id },
-    skip: !user,
-    fetchPolicy: 'cache-first',
-  });
-
-
-
   const meal        = useMeal();
-  const [dailyMeals, setDailyMeals] = useState([]);
   const [fetchRestaurants, {
     loading: restaurantsLoading,
     error: restaurantsError,
@@ -214,18 +198,6 @@ export default function Dashboard() {
     useMutation(GENERATE_OPTIMIZED_MEAL_PLAN, {
       onCompleted: (data) => {
         setOptimizedMealPlan(data.generateOptimizedMealPlan);
-        const plannedMeals = (data.generateOptimizedMealPlan?.meals || []).map((m, i) => ({
-          timeLabel: DEFAULT_TIME_LABELS[i] || `Meal ${i + 1}`,
-          title: m.mealName,
-          calories: Math.round(
-            (m.nutrition?.carbohydrates || 0) * 4 +
-            (m.nutrition?.protein || 0) * 4 +
-            (m.nutrition?.fat || 0) * 9
-          ),
-          protein: m.nutrition?.protein || 0,
-          imageUrl: `https://source.unsplash.com/800x600/?food&sig=${m.mealId}`,
-        }));
-        setDailyMeals(plannedMeals);
         // Switch to the results tab
         setTabValue(2);
       },
@@ -260,20 +232,9 @@ export default function Dashboard() {
     });
   };
 
-  // Determine the active meal plan from query params
-  const router = useRouter();
-  const activeMealPlanId = getPlanIdFromQuery(router.query);
-
   // Handle adding selected meals to the active meal plan
+  const activeMealPlanId = 'YOUR_MEAL_PLAN_ID'; // TODO: replace with real ID
   const handleAddMeals = async (meals) => {
-    if (!activeMealPlanId) {
-      console.error('No active meal plan available to add meals.');
-      return;
-    }
-    if (!activeMealPlanId) {
-      console.warn('No active meal plan ID provided');
-      return;
-    }
     try {
       for (const meal of meals) {
         await createMeal({
@@ -312,38 +273,11 @@ export default function Dashboard() {
     [restaurants, searchTerm],
   );
 
-  const dailyTargets = useMemo(() => {
-    if (optimizedMealPlan?.totalNutrition) {
-      const n = optimizedMealPlan.totalNutrition;
-      return {
-        calories: Math.round((n.carbohydrates || 0) * 4 + (n.protein || 0) * 4 + (n.fat || 0) * 9),
-        carbohydrates: n.carbohydrates || 0,
-        protein: n.protein || 0,
-        fat: n.fat || 0,
-      };
-    }
-    if (user?.nutritionTargets) {
-      const n = user.nutritionTargets;
-      return {
-        calories: Math.round((n.carbohydratesMax || 0) * 4 + (n.proteinMax || 0) * 4 + (n.fatMax || 0) * 9),
-        carbohydrates: n.carbohydratesMax || 0,
-        protein: n.proteinMax || 0,
-        fat: n.fatMax || 0,
-      };
-    }
-    return {
-      calories: user?.dailyCalories || 2000,
-      carbohydrates: 250,
-      protein: 75,
-      fat: 70,
-    };
-  }, [optimizedMealPlan, user]);
-
   return (
     <>
       <Head><title>Fine Dining Dashboard</title></Head>
       <CssBaseline />
-      <NewHeader user={isClient ? user : null} />
+      <NewHeader user={isClient ? currentUser : null} />
       <Box
         component="main"
         sx={{
@@ -354,8 +288,10 @@ export default function Dashboard() {
           flexDirection:'column',
         }}
       >
+        <GreetingSegment userName={(isClient && currentUser?.name) || 'Guest'} />
+        <DailySummary meal={meal} />
         <GreetingSegment userName={user?.name || 'Guest'} />
-        <DailySummary meals={dailyMeals} nutritionTargets={dailyTargets} />
+        <DailySummary meals={meal ? [meal] : []} />
 
         {/* Tabs for Meal Plan Optimization */}
         <Box sx={{ width: '100%', mt: 3 }}>

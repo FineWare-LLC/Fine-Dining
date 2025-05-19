@@ -216,7 +216,12 @@ PlaceholderCard.defaultProps = {
 export default function DailySummary({ meals, loading, onAddMeal }) {
     // 1‑second heartbeat loader
     const [pulse, setPulse] = useState(loading);
-    const [pos, setPos] = useState(0);
+    const computePos = () => {
+        const now = new Date();
+        const raw = (now.getHours() + now.getMinutes() / 60 - 6) / 18;
+        return Math.min(1, Math.max(0, raw));
+    };
+    const [pos, setPos] = useState(computePos);
 
     const list  = Array.isArray(meals) ? meals : [];
     const total = list.length;
@@ -229,6 +234,14 @@ export default function DailySummary({ meals, loading, onAddMeal }) {
         const id = setTimeout(() => setPulse(false), 1000);
         return () => clearTimeout(id);
     }, [loading]);
+
+    // auto-update slider position every minute based on current time
+    useEffect(() => {
+        const update = () => setPos(computePos());
+        update();
+        const id = setInterval(update, 60_000);
+        return () => clearInterval(id);
+    }, []);
 
     if (pulse) return <LoaderSkeleton />;
 

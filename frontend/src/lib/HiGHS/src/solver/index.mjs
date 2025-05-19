@@ -15,6 +15,7 @@ import fs              from 'fs';
 import { parse }       from 'csv-parse';
 import path            from 'path';
 import { fileURLToPath } from 'url';
+import { interpretStatus } from '../../../../io/solverOutput.js';
 import { autoTune, loadConfig } from '../tuner/index.mjs';
 
 const { Solver, solverVersion } = highsDefault;
@@ -162,7 +163,8 @@ async function main() {
         const status = solver.getModelStatus();
         console.log(`📊 Solver status code: ${status}`);
         if (status !== STATUS_OPTIMAL) {
-            console.warn(`⚠️ Solver did not reach Optimal (code ${status}).`);
+            const { message } = interpretStatus(status);
+            console.warn(`⚠ ${message}`);
         }
 
         const info = solver.getInfo();

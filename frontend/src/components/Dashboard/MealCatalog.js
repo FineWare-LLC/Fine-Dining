@@ -56,10 +56,11 @@ const GET_ALL_MEALS = gql`
  * 
  * @param {Object} props - Component props
  * @param {Array} props.selectedMeals - Array of selected meal IDs
- * @param {Function} props.onSelectMeal - Callback function when a meal is selected/deselected
+ * @param {Function} props.onSelectMeal - Callback when a meal is selected/deselected
+ * @param {Function} [props.onAddMeals] - Handler for the "Add Selected" button
  * @returns {JSX.Element} The rendered component
  */
-const MealCatalog = ({ selectedMeals = [], onSelectMeal }) => {
+const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
@@ -86,6 +87,14 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal }) => {
   // Check if a meal is selected
   const isMealSelected = (mealId) => {
     return selectedMeals.includes(mealId);
+  };
+
+  // Handle Add Selected button click
+  const handleAddSelected = () => {
+    if (onAddMeals) {
+      const mealsToAdd = filteredMeals.filter(m => selectedMeals.includes(m.id));
+      onAddMeals(mealsToAdd);
+    }
   };
 
   return (
@@ -209,8 +218,8 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal }) => {
 
         {/* Pagination controls */}
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
-          <Button 
-            disabled={page === 1 || loading} 
+          <Button
+            disabled={page === 1 || loading}
             onClick={() => setPage(page - 1)}
           >
             Previous
@@ -218,11 +227,23 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal }) => {
           <Typography variant="body2" sx={{ alignSelf: 'center' }}>
             Page {page}
           </Typography>
-          <Button 
-            disabled={!data || data.getAllMeals.length < limit || loading} 
+          <Button
+            disabled={!data || data.getAllMeals.length < limit || loading}
             onClick={() => setPage(page + 1)}
           >
             Next
+          </Button>
+        </Box>
+
+        {/* Add Selected button */}
+        <Box sx={{ mt: 2, textAlign: 'right' }}>
+          <Button
+            variant="contained"
+            color="primary"
+            disabled={selectedMeals.length === 0}
+            onClick={handleAddSelected}
+          >
+            Add Selected
           </Button>
         </Box>
       </CardContent>

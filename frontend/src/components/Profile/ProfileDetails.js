@@ -9,6 +9,7 @@ import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ProfileDetailItem from './ProfileDetailItem';
 import {generateInitialsAvatar} from '@/utils/avatar';
+import CalorieProgressRing from './CalorieProgressRing';
 
 export default function ProfileDetails({user}) {
     if (!user) return null;
@@ -26,7 +27,10 @@ export default function ProfileDetails({user}) {
                             sx={{width: 64, height: 64}}
                         />
                     </Grid>
-                    <Grid item xs>
+                    <Grid item>
+            <CalorieProgressRing userId={user.id} dailyCalories={user.dailyCalories} />
+          </Grid>
+          <Grid item xs>
                         <Typography variant="h6" fontWeight={600}>{user.name}</Typography>
                         <Typography variant="body2" color="text.secondary">{user.email}</Typography>
                         <Grid container spacing={1} sx={{mt: 1}}>

@@ -20,12 +20,16 @@ This tutorial walks you through setting up **Fine Dining** for local development
    ```
 3. Configure environment variables by creating a `.env.local` file in `frontend/`:
    ```dotenv
-   MONGODB_URI=your_mongodb_connection
-   JWT_SECRET=your_secret
-   GOOGLE_PLACES_API_KEY=
-   # Optional custom Overpass endpoint (defaults to the public API if omitted)
-   OVERPASS_URL=https://overpass-api.de/api/interpreter
-   ```
+    MONGODB_URI=your_mongodb_connection
+    JWT_SECRET=your_secret
+    MONGO_ENCRYPTION_KEY=32_byte_hex_key
+    MONGO_ENCRYPTION_SIGNING_KEY=64_byte_hex_key
+    GOOGLE_PLACES_API_KEY=
+    # Optional custom Overpass endpoint (defaults to the public API if omitted)
+    OVERPASS_URL=https://overpass-api.de/api/interpreter
+    ```
+
+`MONGO_ENCRYPTION_KEY` must be 32 bytes and `MONGO_ENCRYPTION_SIGNING_KEY` must be 64 bytes. Generate them with `openssl rand -hex 32` and `openssl rand -hex 64`.
 4. Seed the database and generate GraphQL types:
    ```bash
    npm run seed

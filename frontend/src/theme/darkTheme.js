@@ -3,10 +3,18 @@ import { createTheme } from '@mui/material/styles';
 export default createTheme({
   palette: {
     mode: 'dark',
-    primary: { main: '#78E5F3' },
-    secondary: { main: '#0093B2' },
+    primary: {
+      light: '#8ad9f6',
+      main: '#66c0f4',
+      dark: '#3194c5',
+    },
+    secondary: {
+      light: '#4abbd0',
+      main: '#009fb7',
+      dark: '#007a8c',
+    },
     accent: { main: '#7F36F4' },
-    background: { default:'#0B0D11', paper:'#12151B' },
+    background: { default:'#0A0C10', paper:'#12151B' },
     surface: { light:'#1E222B' },
     role: {
       admin: '#ef9a9a',

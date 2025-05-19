@@ -92,7 +92,10 @@ export function logSummary() {
     return stats;
 }
 
-// Run function to maintain consistency with other modules
+/**
+ * Executes the logging step and returns collected statistics
+ * @returns {Object} Pipeline statistics
+ */
 export function run() {
     logSummary();
     return stats;

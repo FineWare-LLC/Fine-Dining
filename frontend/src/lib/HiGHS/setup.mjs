@@ -34,13 +34,13 @@ const pipelineSteps = [
 ];
 
 const filesToCreate = {
-    // Placeholder scripts for each pipeline step
+    // Basic implementations for each pipeline step
     ...Object.fromEntries(pipelineSteps.map(step => [
         `src/${step}/index.mjs`,
-        `// src/${step}/index.mjs\n// Placeholder for the ${step} step.\n\nconsole.log("Running ${step} step...");\n\n// TODO: Implement ${step} logic\n`
+        `// src/${step}/index.mjs\n/**\n * Runs the ${step} step of the pipeline\n * @param {Array} data Input from the previous step\n * @returns {Promise<${step === 'writer' ? 'string' : 'Array'}>} ${step === 'writer' ? 'Path to written file' : 'Processed data'}\n */\nexport async function run(${step === 'fetcher' ? '' : 'data'}) {\n    console.log('Running ${step} step...');\n    return ${step === 'fetcher' ? '[]' : 'data || []'};\n}\n`
     ])),
-    // Placeholder for the main pipeline orchestration script
-    'src/main_pipeline.mjs': `// src/main_pipeline.mjs\n// Orchestrates the data processing pipeline steps.\n\nimport * as fetcher from './fetcher/index.mjs';\nimport * as normalizer from './normalizer/index.mjs';\nimport * as enricher from './enricher/index.mjs';\nimport * as sampler from './sampler/index.mjs';\nimport * as writer from './writer/index.mjs';\nimport * as logger from './logger/index.mjs';\n\nasync function runPipeline() {\n    console.log("Starting data pipeline...");\n    // const rawData = await fetcher.run();\n    // const normalizedData = await normalizer.run(rawData);\n    // const enrichedData = await enricher.run(normalizedData); // Optional\n    // const sampledData = await sampler.run(enrichedData);\n    // await writer.run(sampledData);\n    // logger.logSummary();\n    console.log("Pipeline finished (placeholders executed).");\n}\n\nrunPipeline().catch(console.error);\n`,
+    // Orchestration script for the pipeline
+    'src/main_pipeline.mjs': `// src/main_pipeline.mjs\nimport * as fetcher from './fetcher/index.mjs';\nimport * as normalizer from './normalizer/index.mjs';\nimport * as enricher from './enricher/index.mjs';\nimport * as sampler from './sampler/index.mjs';\nimport * as writer from './writer/index.mjs';\nimport * as logger from './logger/index.mjs';\nimport { fileURLToPath } from 'url';\n\nexport async function runPipeline() {\n  logger.startStep('pipeline', 0);\n  logger.startStep('fetcher', 0);\n  const raw = await fetcher.run();\n  logger.endStep('fetcher', raw.length);\n  logger.startStep('normalizer', raw.length);\n  const norm = await normalizer.run(raw);\n  logger.endStep('normalizer', norm.length);\n  logger.startStep('enricher', norm.length);\n  const enr = await enricher.run(norm);\n  logger.endStep('enricher', enr.length);\n  logger.startStep('sampler', enr.length);\n  const samp = await sampler.run(enr);\n  logger.endStep('sampler', samp.length);\n  logger.startStep('writer', samp.length);\n  const out = await writer.run(samp);\n  logger.endStep('writer', samp.length);\n  logger.endStep('pipeline', samp.length);\n  logger.logSummary();\n  console.log(\`Pipeline completed: ${out}\`);\n}\n\nif (process.argv[1] === fileURLToPath(import.meta.url)) {\n  runPipeline().catch(err => {\n    console.error('Uncaught pipeline error:', err);\n    process.exit(1);\n  });\n}\n`,
     // Basic package.json
     'package.json': JSON.stringify({
         name: "highs-meal-pipeline",

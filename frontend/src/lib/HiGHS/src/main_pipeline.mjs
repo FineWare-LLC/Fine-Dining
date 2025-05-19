@@ -7,8 +7,9 @@ import * as enricher from './enricher/index.mjs';
 import * as sampler from './sampler/index.mjs';
 import * as writer from './writer/index.mjs';
 import * as logger from './logger/index.mjs';
+import { fileURLToPath } from 'url';
 
-async function runPipeline() {
+export async function runPipeline() {
     console.log("Starting data pipeline...");
 
     try {
@@ -52,7 +53,9 @@ async function runPipeline() {
     }
 }
 
-runPipeline().catch(error => {
-    console.error("Uncaught pipeline error:", error);
-    process.exit(1);
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    runPipeline().catch(error => {
+        console.error("Uncaught pipeline error:", error);
+        process.exit(1);
+    });
+}

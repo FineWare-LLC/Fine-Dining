@@ -2,9 +2,11 @@
  * Greeting banner with teal background and rounded corners.
  */
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
+import { useRouter } from 'next/router';
 
 export default function GreetingSegment({ userName='Guest' }) {
+  const router = useRouter();
   return (
     <Box
       className="rounded-section"
@@ -12,6 +14,14 @@ export default function GreetingSegment({ userName='Guest' }) {
     >
       <Typography variant="h5" fontWeight={600}>Hi {userName}!</Typography>
       <Typography variant="body2">Ready for today’s culinary adventure?</Typography>
+      <Button
+        variant="outlined"
+        size="small"
+        sx={{ mt: 1, color:'#fff', borderColor:'currentColor' }}
+        onClick={() => router.push('/profile')}
+      >
+        View Profile
+      </Button>
     </Box>
   );
 }

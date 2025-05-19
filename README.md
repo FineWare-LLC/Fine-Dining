@@ -124,6 +124,7 @@ file is present, printing the resulting restaurant list as JSON.
 **Testing (Frontend):**
 * End-to-end & component tests: `npm run test:playwright`
 * Component tests only: `npm run test:components`
+* Unit tests via Node's test runner: `npm test` (see [docs/node_testing_setup.md](docs/node_testing_setup.md))
 * For detailed component testing guidance, refer to `frontend/docs/testing/component-testing.md`.
 
 ## Documentation

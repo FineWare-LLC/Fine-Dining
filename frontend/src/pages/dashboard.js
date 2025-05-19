@@ -250,7 +250,7 @@ export default function Dashboard() {
         }}
       >
         <GreetingSegment userName={user?.name || 'Guest'} />
-        <DailySummary meal={meal} />
+        <DailySummary meals={meal ? [meal] : []} />
 
         {/* Tabs for Meal Plan Optimization */}
         <Box sx={{ width: '100%', mt: 3 }}>

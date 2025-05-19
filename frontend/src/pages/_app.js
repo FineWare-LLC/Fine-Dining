@@ -110,9 +110,14 @@ function ThemedApp({ Component, pageProps }) {
         <ThemeProvider theme={theme}>
             <CssBaseline />
             <ApolloProvider client={client}>
-                <AuthProvider>
-                    <Component {...pageProps} />
-                </AuthProvider>
+                <QueryClientProvider client={queryClient}>
+                    <ToastProvider>
+                        <AuthProvider>
+                            <ToastStack />
+                            <Component {...pageProps} />
+                        </AuthProvider>
+                    </ToastProvider>
+                </QueryClientProvider>
             </ApolloProvider>
         </ThemeProvider>
     );

@@ -240,9 +240,7 @@ export default function DailySummary({ meals, loading, onAddMeal }) {
                 <MealCard meal={meal} colour={colour} />
             ) : (
                 <PlaceholderCard
-                    message={Array.isArray(meals)
-                        ? 'No meals planned for today'
-                        : 'Could not fetch your plan'}
+                    message="No meals planned for today"
                     colour={colour}
                     onAdd={onAddMeal}
                 />

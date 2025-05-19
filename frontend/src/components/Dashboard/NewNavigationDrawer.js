@@ -5,14 +5,16 @@ import React from 'react';
 import { useRouter } from 'next/router';
 import { Drawer, List, ListItemButton, ListItemText } from '@mui/material';
 import { useDashStore } from './store';
+import { useAuth } from '../../context/AuthContext';
 
 export default function NewNavigationDrawer() {
   const { drawerOpen, toggleDrawer } = useDashStore();
   const router = useRouter();
+  const { logout } = useAuth();
   const links = [
     { label: 'Profile', path: '/profile' },
     { label: 'Settings', path: '/settings' },
-    { label: 'Sign\u00a0Out', path: '/signin' },
+    { label: 'Sign\u00a0Out', action: logout },
   ];
   return (
     <Drawer anchor="right" open={drawerOpen} onClose={toggleDrawer}>
@@ -21,7 +23,11 @@ export default function NewNavigationDrawer() {
           <ListItemButton
             key={link.label}
             onClick={() => {
-              router.push(link.path);
+              if (link.action) {
+                link.action();
+              } else if (link.path) {
+                router.push(link.path);
+              }
               toggleDrawer();
             }}
           >

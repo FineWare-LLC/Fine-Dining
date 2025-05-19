@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 let prepareSolverData, runOptimization, generateOptimizedMealPlan;
-let MealModel, User, registry, Solver;
+let MealRepository, UserRepository, registry, Solver;
 try {
   ({ prepareSolverData, runOptimization, generateOptimizedMealPlan } = await import('../../services/OptimizationService.js'));
-  ({ MealModel } = await import('../../models/Meal/index.js'));
-  ({ default: User } = await import('../../models/User/index.js'));
+  MealRepository = await import('../../data/MealRepository.js');
+  UserRepository = await import('../../data/UserRepository.js');
   registry = await import('../../../../plugins/registry.mjs');
   ({ Solver } = await import('highs-addon'));
 } catch (err) {
@@ -16,15 +16,15 @@ try {
 
 if (prepareSolverData) {
   test('prepareSolverData returns formatted data for valid input', async t => {
-    t.mock.method(User, 'findById', async () => ({
+    t.mock.method(UserRepository, 'findUserById', async () => ({
       _id: 'u1',
       allergies: [],
       dislikedIngredients: [],
       nutritionTargets: {}
     }));
 
-    t.mock.method(MealModel, 'countDocuments', async () => 2);
-    t.mock.method(MealModel, 'find', async () => [
+    t.mock.method(MealRepository, 'countMeals', async () => 2);
+    t.mock.method(MealRepository, 'findMeals', async () => [
       {
         _id: 'm1',
         name: 'A',
@@ -51,15 +51,15 @@ if (prepareSolverData) {
   });
 
   test('generateOptimizedMealPlan throws when no meals exist', async t => {
-    t.mock.method(User, 'findById', async () => ({
+    t.mock.method(UserRepository, 'findUserById', async () => ({
       _id: 'u1',
       allergies: [],
       dislikedIngredients: [],
       nutritionTargets: {}
     }));
 
-    t.mock.method(MealModel, 'countDocuments', async () => 0);
-    t.mock.method(MealModel, 'find', async () => []);
+    t.mock.method(MealRepository, 'countMeals', async () => 0);
+    t.mock.method(MealRepository, 'findMeals', async () => []);
 
     await assert.rejects(
       generateOptimizedMealPlan('u1'),

@@ -122,6 +122,7 @@ const useDailyMeals = (count = 3) => {
 
 const useHeroMeal = () => useDailyMeals(1)[0];
 const useMeal = useHeroMeal;
+const DEFAULT_TIME_LABELS = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
 /* ------------------------------------------------------------------------ */
 
 export default function Dashboard() {
@@ -132,6 +133,7 @@ export default function Dashboard() {
   const { user } = useAuth();
 
   const meal        = useMeal();
+  const [dailyMeals, setDailyMeals] = useState([]);
   const [fetchRestaurants, {
     loading: restaurantsLoading,
     error: restaurantsError,
@@ -186,6 +188,18 @@ export default function Dashboard() {
     useMutation(GENERATE_OPTIMIZED_MEAL_PLAN, {
       onCompleted: (data) => {
         setOptimizedMealPlan(data.generateOptimizedMealPlan);
+        const plannedMeals = (data.generateOptimizedMealPlan?.meals || []).map((m, i) => ({
+          timeLabel: DEFAULT_TIME_LABELS[i] || `Meal ${i + 1}`,
+          title: m.mealName,
+          calories: Math.round(
+            (m.nutrition?.carbohydrates || 0) * 4 +
+            (m.nutrition?.protein || 0) * 4 +
+            (m.nutrition?.fat || 0) * 9
+          ),
+          protein: m.nutrition?.protein || 0,
+          imageUrl: `https://source.unsplash.com/800x600/?food&sig=${m.mealId}`,
+        }));
+        setDailyMeals(plannedMeals);
         // Switch to the results tab
         setTabValue(2);
       },
@@ -277,7 +291,7 @@ export default function Dashboard() {
         }}
       >
         <GreetingSegment userName={user?.name || 'Guest'} />
-        <DailySummary meals={meal ? [meal] : []} />
+        <DailySummary meals={dailyMeals} />
 
         {/* Tabs for Meal Plan Optimization */}
         <Box sx={{ width: '100%', mt: 3 }}>

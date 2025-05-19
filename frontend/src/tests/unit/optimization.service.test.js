@@ -1,0 +1,104 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+let prepareSolverData, runOptimization, generateOptimizedMealPlan;
+let MealModel, User, registry, Solver;
+try {
+  ({ prepareSolverData, runOptimization, generateOptimizedMealPlan } = await import('../../services/OptimizationService.js'));
+  ({ MealModel } = await import('../../models/Meal/index.js'));
+  ({ default: User } = await import('../../models/User/index.js'));
+  registry = await import('../../../../plugins/registry.mjs');
+  ({ Solver } = await import('highs-addon'));
+} catch (err) {
+  // Skip the entire suite if solver dependencies are missing
+  test('OptimizationService module unavailable', { skip: true }, () => {});
+}
+
+if (prepareSolverData) {
+  test('prepareSolverData returns formatted data for valid input', async t => {
+    t.mock.method(User, 'findById', async () => ({
+      _id: 'u1',
+      allergies: [],
+      dislikedIngredients: [],
+      nutritionTargets: {}
+    }));
+
+    t.mock.method(MealModel, 'countDocuments', async () => 2);
+    t.mock.method(MealModel, 'find', async () => [
+      {
+        _id: 'm1',
+        name: 'A',
+        price: 5,
+        allergens: [],
+        ingredients: [],
+        nutrition: { carbohydrates: 30, protein: 20, fat: 10, sodium: 300 }
+      },
+      {
+        _id: 'm2',
+        name: 'B',
+        price: 6,
+        allergens: [],
+        ingredients: [],
+        nutrition: { carbohydrates: 50, protein: 10, fat: 5, sodium: 200 }
+      }
+    ]);
+
+    const data = await prepareSolverData('u1');
+
+    assert.equal(data.mealCount, 2);
+    assert.deepEqual(Array.from(data.prices), [5, 6]);
+    assert.deepEqual(data.mealIds, ['m1', 'm2']);
+  });
+
+  test('generateOptimizedMealPlan throws when no meals exist', async t => {
+    t.mock.method(User, 'findById', async () => ({
+      _id: 'u1',
+      allergies: [],
+      dislikedIngredients: [],
+      nutritionTargets: {}
+    }));
+
+    t.mock.method(MealModel, 'countDocuments', async () => 0);
+    t.mock.method(MealModel, 'find', async () => []);
+
+    await assert.rejects(
+      generateOptimizedMealPlan('u1'),
+      /No meals found/
+    );
+  });
+
+  test('runOptimization rejects on infeasible status', async t => {
+    const solverRun = t.mock.method(Solver.prototype, 'run', function (cb) { cb(null); });
+    t.mock.method(Solver.prototype, 'setOptionValue', () => {});
+    t.mock.method(Solver.prototype, 'passModel', () => {});
+    t.mock.method(Solver.prototype, 'getModelStatus', () => 8); // infeasible
+    t.mock.method(Solver.prototype, 'getInfo', () => ({ objective_function_value: 0 }));
+    t.mock.method(Solver.prototype, 'getSolution', () => ({ columnValues: [] }));
+    const pluginSpy = t.mock.method(registry, 'applyPlugins', () => {});
+
+    const sampleData = {
+      mealCount: 1,
+      mealIds: ['1'],
+      mealNames: ['A'],
+      prices: Float64Array.from([5]),
+      carbohydrates: Float64Array.from([30]),
+      proteins: Float64Array.from([20]),
+      fats: Float64Array.from([10]),
+      sodiums: Float64Array.from([300]),
+      nutritionTargets: {
+        carbohydratesMin: 20,
+        carbohydratesMax: 100,
+        proteinMin: 10,
+        proteinMax: 40,
+        fatMin: 5,
+        fatMax: 20,
+        sodiumMin: 100,
+        sodiumMax: 500
+      }
+    };
+
+    await assert.rejects(runOptimization(sampleData), /No feasible meal plan/);
+    assert.equal(pluginSpy.mock.calls.length, 1);
+    assert.equal(solverRun.mock.calls.length, 1);
+  });
+}

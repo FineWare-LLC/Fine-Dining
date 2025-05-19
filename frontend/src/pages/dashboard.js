@@ -19,6 +19,8 @@ import MealCatalog from '@/components/Dashboard/MealCatalog';
 import NutritionRequirementsForm from '@/components/Dashboard/NutritionRequirementsForm';
 import { useDashStore } from '@/components/Dashboard/store';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/router';
+import { getPlanIdFromQuery } from '@/utils/activeMealPlan';
 
 const GENERATE_OPTIMIZED_MEAL_PLAN = gql`
   mutation GenerateOptimizedMealPlan($selectedMealIds: [ID], $customNutritionTargets: CustomNutritionTargetsInput) {
@@ -220,9 +222,16 @@ export default function Dashboard() {
     });
   };
 
+  // Determine the active meal plan from query params
+  const router = useRouter();
+  const activeMealPlanId = getPlanIdFromQuery(router.query);
+
   // Handle adding selected meals to the active meal plan
-  const activeMealPlanId = 'YOUR_MEAL_PLAN_ID'; // TODO: replace with real ID
   const handleAddMeals = async (meals) => {
+    if (!activeMealPlanId) {
+      console.warn('No active meal plan ID provided');
+      return;
+    }
     try {
       for (const meal of meals) {
         await createMeal({

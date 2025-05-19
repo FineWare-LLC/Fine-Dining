@@ -2,7 +2,9 @@ import { GooglePlacesProvider } from './providers/GooglePlacesProvider.js';
 import { OverpassProvider } from './providers/OverpassProvider.js';
 
 const google = new GooglePlacesProvider(process.env.GOOGLE_PLACES_API_KEY);
-const overpass = new OverpassProvider(process.env.OVERPASS_URL);
+const overpass = new OverpassProvider(
+  process.env.OVERPASS_URL || 'https://overpass-api.de/api/interpreter'
+);
 
 export async function findNearbyRestaurants(lat, lon, radius = 1000, keyword = '') {
   if (google.isValidKey()) {

@@ -15,6 +15,7 @@
     "test:components": "cross-env NODE_ENV=test-ct playwright test --config=playwright-ct.config.js",
     "test:solver": "node --test src/tests/solver/concurrency.test.js",
     "seed": "node src/lib/HiGHS/seed_database.mjs",
+    "dev:memory": "node scripts/dev-memory.mjs",
     "codegen": "graphql-codegen --config codegen.yml",
     "benchmark:gpu": "node src/gpu/benchmark.mjs 1024"
   },
@@ -65,6 +66,7 @@
     "@graphql-codegen/cli": "^5.0.5",
     "@graphql-codegen/client-preset": "^4.8.0",
     "@playwright/test": "^1.52.0",
+    "mongodb-memory-server": "^8.14.0",
     "@tailwindcss/postcss": "^4.1.6",
     "cross-env": "^7.0.3",
     "eslint": "^9.26.0",

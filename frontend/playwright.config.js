@@ -1,5 +1,5 @@
 // playwright.config.js
-import { defineConfig } from '@playwright/experimental-ct-react';
+import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
     testDir: 'src/tests',
@@ -9,7 +9,7 @@ export default defineConfig({
     },
     ct: {
       devServer: {
-        command: 'npm run dev',
+        command: 'npm run dev:memory',
         port: 3000,
         reuseExistingServer: true,
         env: { NODE_ENV: 'test-ct' },

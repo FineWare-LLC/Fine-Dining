@@ -83,3 +83,15 @@ The pipeline fetches menu items, normalizes them, and writes
 `data/processed/restaurant_meals_processed.csv`. Progress messages are printed
 to the console. No additional environment variables are required beyond those
 defined earlier.
+
+## Running Tests with a Temporary Database
+
+The Playwright tests expect a MongoDB connection. If you do not have MongoDB
+installed locally you can start a disposable in-memory instance together with
+the Next.js dev server:
+
+```bash
+npm run dev:memory
+```
+
+Run your Playwright tests in another terminal once the server is ready.

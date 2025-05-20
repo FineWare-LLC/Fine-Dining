@@ -33,7 +33,7 @@ export default defineConfig({
 
   // Add this block for the component development server
   ctDevServer: {
-    command: 'npm run dev', // Uses 'next dev' from your package.json
+    command: 'npm run dev:memory', // Start dev server with in-memory MongoDB
     port: 3000,             // The port your Next.js app runs on
     reuseExistingServer: !process.env.CI, // Reuse dev server locally, but not on CI
     env: { NODE_ENV: 'test-ct' },

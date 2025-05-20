@@ -126,6 +126,7 @@ file is present, printing the resulting restaurant list as JSON.
 * End-to-end & component tests: `npm run test:playwright`
 * Component tests only: `npm run test:components`
 * Unit tests via Node's test runner: `npm test` (see [docs/node_testing_setup.md](docs/node_testing_setup.md))
+* If MongoDB is not installed locally start `npm run dev:memory` in another terminal before running Playwright tests.
 * For detailed component testing guidance, refer to `frontend/docs/testing/component-testing.md`.
 
 ## Documentation
@@ -137,6 +138,7 @@ file is present, printing the resulting restaurant list as JSON.
 
 ## Available Scripts (Frontend - from `package.json`)
 * `npm run dev`: Starts the Next.js development server.
+* `npm run dev:memory`: Starts the dev server with an in-memory MongoDB for testing.
 * `npm run build`: Builds the Next.js application for production.
 * `npm run build:gpu`: Builds the application with GPU support.
 * `npm start`: Starts the Next.js production server.

@@ -3,7 +3,8 @@ import React, {
   useEffect,
   createContext,
   useContext,
-  useRef
+  useRef,
+  useMemo
 } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -255,7 +256,10 @@ export default function QuestionnaireWizard() {
   const stepRefs = useRef([]);
   const [liveMsg, setLiveMsg] = useState('');
 
-  const steps = ['Basic Info', 'Weight Goal', 'Summary'];
+  const steps = useMemo(
+    () => ['Basic Info', 'Weight Goal', 'Summary'],
+    []
+  );
 
   const handleBasicNext = (data) => {
     if (data.valid) {

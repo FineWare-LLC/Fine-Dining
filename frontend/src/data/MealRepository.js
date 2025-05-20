@@ -27,8 +27,10 @@ export function findMealById(id) {
   return MealModel.findById(id);
 }
 
-export default {
+const MealRepository = {
   countMeals,
   findMeals,
   findMealById,
 };
+
+export default MealRepository;

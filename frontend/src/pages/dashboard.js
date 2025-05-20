@@ -128,20 +128,15 @@ export default function Dashboard() {
   // auth redirect stub
   /* const { isAuthenticated, loading } = useAuth();
   useEffect(()=>{ if (!loading && !isAuthenticated) router.push('/login'); },[loading]); */
+  const { user } = useAuth();
   const [currentUser, setCurrentUser] = useState(null);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    try {
-      const { user } = useAuth();
-      setCurrentUser(user);
-    } catch (e) {
-      // Auth context not available
-    }
-  }, []);
+    setCurrentUser(user);
+  }, [user]);
 
-  const { user } = useAuth();
 
   const meal        = useMeal();
   const [fetchRestaurants, {

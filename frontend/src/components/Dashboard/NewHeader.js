@@ -10,23 +10,18 @@ import {useRouter} from 'next/router';
 import {useAuth} from '@/context/AuthContext.js';
 
 export default function NewHeader({user}) {
+    const { user: contextUser } = useAuth();
     const toggleDrawer = useDashStore(s => s.toggleDrawer);
     const [authUser, setAuthUser] = useState(null);
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
         setIsClient(true);
-        try {
-            const {user: contextUser} = useAuth();
-            setAuthUser(contextUser);
-        } catch (e) {
-            // Auth context not available
-        }
-    }, []);
+        setAuthUser(contextUser);
+    }, [contextUser]);
 
     const currentUser = user || (isClient ? authUser : null);
     const router = useRouter();
-    const auth = useAuth();
     return (<AppBar elevation={0} sx={{bgcolor: 'primary.main', px: 2}}>
             <Toolbar disableGutters sx={{justifyContent: 'space-between'}}>
                 <IconButton color="inherit" onClick={toggleDrawer}>

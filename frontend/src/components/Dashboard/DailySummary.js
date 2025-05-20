@@ -223,7 +223,10 @@ export default function DailySummary({ meals, loading, onAddMeal, nutritionTarge
     };
     const [pos, setPos] = useState(computePos);
 
-    const list  = Array.isArray(meals) ? meals : [];
+    const list = useMemo(
+        () => (Array.isArray(meals) ? meals : []),
+        [meals]
+    );
     const total = list.length;
     const baseColour = interpolateColour(0);
 

@@ -391,8 +391,10 @@ export async function generateOptimizedMealPlan(userId, selectedMealIds = [], cu
   }
 }
 
-export default {
+const OptimizationService = {
   prepareSolverData,
   runOptimization,
   generateOptimizedMealPlan
 };
+
+export default OptimizationService;

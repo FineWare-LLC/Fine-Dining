@@ -9,6 +9,8 @@ export function findUserById(id) {
   return User.findById(id);
 }
 
-export default {
+const UserRepository = {
   findUserById,
 };
+
+export default UserRepository;

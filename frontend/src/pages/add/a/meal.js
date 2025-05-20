@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import styles from '../../../styles/MealEntryForm.module.css';
 import { useMutation } from '@apollo/client';
 import { CreateMealDocument } from '@/gql/graphql';
@@ -93,10 +93,17 @@ function MealEntryForm() {
     });
 
     // Debounced validation (remains the same)
-    const debouncedValidate = useCallback(debounce((data) => { /* ... */ if (!isSubmitting) { setErrors(prevErrors => ({...prevErrors, ...validate(data)})); } }, 500), [isSubmitting]);
+    const debouncedValidate = useMemo(
+        () => debounce((data) => {
+            /* ... */ if (!isSubmitting) {
+                setErrors(prevErrors => ({...prevErrors, ...validate(data)}));
+            }
+        }, 500),
+        [isSubmitting]
+    );
 
     // Effect for debounced validation (remains the same)
-    useEffect(() => { /* ... */ const dataToCheck = { ...formData }; delete dataToCheck.allergens; if (Object.values(dataToCheck).some(val => typeof val === 'string' && val !== '') && !isSubmitting) { debouncedValidate(formData); } }, [ formData.restaurantName, formData.mealName, formData.estPrice, formData.calories, formData.protein, formData.carbohydrates, formData.fat, formData.sodium, debouncedValidate, isSubmitting ]);
+    useEffect(() => { /* ... */ const dataToCheck = { ...formData }; delete dataToCheck.allergens; if (Object.values(dataToCheck).some(val => typeof val === 'string' && val !== '') && !isSubmitting) { debouncedValidate(formData); } }, [ formData, debouncedValidate, isSubmitting ]);
 
     // Standard input handler (remains the same)
     const handleChange = (event) => { /* ... */ const {name, value} = event.target; setFormData(prevState => ({...prevState, [name]: value})); if (errors[name]) { setErrors(prevErrors => ({...prevErrors, [name]: undefined})); } if (name !== 'allergens') { debouncedValidate({...formData, [name]: value}); } };

@@ -47,11 +47,9 @@ const BottomSearchRail = ({ storeHook = defaultDashStore }) => {
   /* ---------- store interaction (fallback‑safe) ------------------------ */
   if (typeof storeHook !== 'function') {
     // Graceful degradation if someone passes junk
-    // eslint-disable-next-line no-console
     console.error(
         'BottomSearchRail: storeHook prop must be a function; falling back to internal store.'
     );
-    // eslint‑disable-next‑line
     storeHook = defaultDashStore;
   }
 
@@ -86,14 +84,12 @@ const BottomSearchRail = ({ storeHook = defaultDashStore }) => {
   /* ---------- sync debounced value to store --------------------------- */
   useEffect(() => {
     if (debouncedValue !== rawSearchTerm) setSearchTerm(debouncedValue);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedValue, setSearchTerm]);
+  }, [debouncedValue, rawSearchTerm, setSearchTerm]);
 
   /* ---------- external store → input sync ----------------------------- */
   useEffect(() => {
     if (rawSearchTerm !== inputValue) setInputValue(rawSearchTerm || '');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rawSearchTerm]);
+  }, [rawSearchTerm, inputValue]);
 
   /* ---------- refs / ids ---------------------------------------------- */
   const inputRef = useRef(null);

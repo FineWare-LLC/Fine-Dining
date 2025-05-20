@@ -29,4 +29,6 @@ attachMealIndexes(mealSchema);
  */
 export const MealModel = mongoose.models.Meal || mongoose.model('Meal', mealSchema);
 
-export default {MealModel};
+const MealModelExports = { MealModel };
+
+export default MealModelExports;

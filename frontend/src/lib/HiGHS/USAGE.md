@@ -28,6 +28,9 @@ This will:
 
 To run the full data processing pipeline:
 
+If the `data` or `src` folders are missing (for example after a clean clone),
+run `node setup.mjs` once to recreate the required directories.
+
 ```bash
 cd frontend/src/lib/HiGHS
 npm install  # Install dependencies

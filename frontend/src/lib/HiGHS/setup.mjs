@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// setup_pipeline.mjs
-// Run this script from the HiGHS directory to set up the project structure.
-// Example: node setup_pipeline.mjs
+// setup.mjs
+// Run this script from the HiGHS directory to ensure the project structure exists.
+// Example: node setup.mjs
 
 import fs from 'fs/promises';
 import path from 'path';
@@ -24,23 +24,7 @@ const directories = [
     'tools' // Ensure tools directory exists if build-meal-csv.mjs wasn't already in it
 ];
 
-const pipelineSteps = [
-    'fetcher',
-    'normalizer',
-    'enricher',
-    'sampler',
-    'writer',
-    'logger'
-];
-
 const filesToCreate = {
-    // Placeholder scripts for each pipeline step
-    ...Object.fromEntries(pipelineSteps.map(step => [
-        `src/${step}/index.mjs`,
-        `// src/${step}/index.mjs\n// Placeholder for the ${step} step.\n\nconsole.log("Running ${step} step...");\n\n// TODO: Implement ${step} logic\n`
-    ])),
-    // Placeholder for the main pipeline orchestration script
-    'src/main_pipeline.mjs': `// src/main_pipeline.mjs\n// Orchestrates the data processing pipeline steps.\n\nimport * as fetcher from './fetcher/index.mjs';\nimport * as normalizer from './normalizer/index.mjs';\nimport * as enricher from './enricher/index.mjs';\nimport * as sampler from './sampler/index.mjs';\nimport * as writer from './writer/index.mjs';\nimport * as logger from './logger/index.mjs';\n\nasync function runPipeline() {\n    console.log("Starting data pipeline...");\n    // const rawData = await fetcher.run();\n    // const normalizedData = await normalizer.run(rawData);\n    // const enrichedData = await enricher.run(normalizedData); // Optional\n    // const sampledData = await sampler.run(enrichedData);\n    // await writer.run(sampledData);\n    // logger.logSummary();\n    console.log("Pipeline finished (placeholders executed).");\n}\n\nrunPipeline().catch(console.error);\n`,
     // Basic package.json
     'package.json': JSON.stringify({
         name: "highs-meal-pipeline",
@@ -162,9 +146,8 @@ async function setup() {
     console.log("\n🎉 Project setup complete!");
     console.log("Next steps:");
     console.log("1. Run 'npm install' or 'yarn install' to install dependencies.");
-    console.log("2. Implement the logic in the placeholder scripts within the 'src' directory.");
-    console.log("3. Run the main pipeline using 'npm start' or 'node src/main_pipeline.mjs'.");
-    console.log("4. Run the solver using 'npm run solve' or 'node src/solver/index.mjs'.");
+    console.log("2. Run the main pipeline using 'npm start' or 'node src/main_pipeline.mjs'.");
+    console.log("3. Run the solver using 'npm run solve' or 'node src/solver/index.mjs'.");
 }
 
 setup().catch(err => {

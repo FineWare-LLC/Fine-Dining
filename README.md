@@ -75,7 +75,7 @@ The application includes various code implementations, such as:
 * Node.js (>=18.18.0 based on `frontend/package.json`) and npm (or Yarn/pnpm/bun).
 * MongoDB instance (local or cloud, e.g., MongoDB Atlas) with a valid connection URI.
 * Encryption at rest is required. Atlas clusters encrypt storage and backups automatically. For local MongoDB, start `mongod` with `--enableEncryption` or use an encrypted volume. See [docs/encryption.md](docs/encryption.md).
-* Environment variables in a `.env.local` file in the `frontend` directory (e.g., `MONGODB_URI`, `JWT_SECRET`, `GOOGLE_PLACES_API_KEY`, `OVERPASS_URL`). The app uses Google Places when a valid key is supplied and falls back to Overpass otherwise.
+* Environment variables provided via a `.env.local` file in the `frontend` directory (see `frontend/.env.example` for the list of variables such as `MONGODB_URI`, `JWT_SECRET`, `GOOGLE_PLACES_API_KEY`, `OVERPASS_URL`). The app uses Google Places when a valid key is supplied and falls back to Overpass otherwise.
 
 **Setup & Installation (Frontend):**
 1.  Clone the repository: `git clone https://github.com/FineWare-LLC/Fine-Dining.fineware.git`
@@ -86,7 +86,7 @@ The application includes various code implementations, such as:
 
 ### Environment Variables
 
-Create a `.env.local` file in the `frontend` directory with your database connection string and secrets. `OVERPASS_URL` is optional and defaults to the public Overpass endpoint if omitted:
+Start by copying `frontend/.env.example` to `frontend/.env.local` and fill in the values for your environment. `OVERPASS_URL` is optional and defaults to the public Overpass endpoint if omitted:
 
 ```dotenv
 MONGODB_URI=your_mongodb_connection_string

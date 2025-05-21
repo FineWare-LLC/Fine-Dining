@@ -1,6 +1,6 @@
 import { withErrorHandling } from './baseQueries.js';
-import { run as presolve } from '@/lib/HiGHS/src/presolve/index.mjs';
-import { readMeals, buildMealPlanModel } from '@/lib/HiGHS/src/solver/index.mjs';
+import { run as presolve } from '@highs/src/presolve/index.mjs';
+import { readMeals, buildMealPlanModel } from '@highs/src/solver/index.mjs';
 
 /**
  * Basic health check query.

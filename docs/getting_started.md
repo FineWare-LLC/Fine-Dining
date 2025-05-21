@@ -71,10 +71,10 @@ the Overpass API. Results are printed as JSON.
 ## Menu Scraping Pipeline
 
 To collect menu data from major chains and produce a processed CSV, run the
-pipeline located under `frontend/src/lib/HiGHS`:
+pipeline located under `highs-pipeline`:
 
 ```bash
-cd frontend/src/lib/HiGHS
+cd highs-pipeline
 npm install
 node src/main_pipeline.mjs
 ```

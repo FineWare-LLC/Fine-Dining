@@ -14,7 +14,7 @@
     "test:playwright": "node scripts/run-playwright.mjs",
     "test:components": "cross-env NODE_ENV=test-ct playwright test --config=playwright-ct.config.js",
     "test:solver": "node --test src/tests/solver/concurrency.test.js",
-    "seed": "node src/lib/HiGHS/seed_database.mjs",
+    "seed": "node ../highs-pipeline/seed_database.mjs",
     "dev:memory": "node scripts/dev-memory.mjs",
     "codegen": "graphql-codegen --config codegen.yml",
     "benchmark:gpu": "node src/gpu/benchmark.mjs 1024"

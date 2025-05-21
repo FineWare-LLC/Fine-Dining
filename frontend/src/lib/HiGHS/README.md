@@ -77,3 +77,14 @@ on subsequent runs.
 node src/solver/index.mjs --tune
 ```
 
+## Setup Script
+
+The `setup.mjs` script prepares the directory structure for the HiGHS pipeline.
+It no longer creates placeholder step files because those modules already exist
+under `src/`. Running the script is only necessary if the `data/` or `src/`
+folders are missing.
+
+```bash
+node setup.mjs
+```
+

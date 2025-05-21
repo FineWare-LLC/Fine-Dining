@@ -6,7 +6,7 @@ try {
   scraper = await import('../../lib/menuScraper.mjs');
 } catch {
   try {
-    scraper = await import('../../lib/HiGHS/src/fetcher/scraper.mjs');
+    scraper = await import('../../../highs-pipeline/src/fetcher/scraper.mjs');
   } catch {
     test('menuScraper.mjs not found', { skip: true }, () => {});
   }

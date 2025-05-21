@@ -168,11 +168,11 @@ node scripts/fetch-local-restaurants.mjs <lat> <lon> [radius] [keyword]
 
 ### Menu Scraping Pipeline
 
-The scraping pipeline under `src/lib/HiGHS` collects menu data and outputs a
+The scraping pipeline under `../highs-pipeline` collects menu data and outputs a
 CSV file:
 
 ```bash
-cd src/lib/HiGHS
+cd ../highs-pipeline
 npm install
 node src/main_pipeline.mjs
 ```

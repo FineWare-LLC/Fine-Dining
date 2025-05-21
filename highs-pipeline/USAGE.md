@@ -15,7 +15,7 @@ The implementation consists of several components:
 To run the web scraper and collect data from food chains and Walmart:
 
 ```bash
-cd frontend/src/lib/HiGHS
+cd highs-pipeline
 npm install  # Install dependencies
 node test_scraper.mjs
 ```
@@ -32,7 +32,7 @@ If the `data` or `src` folders are missing (for example after a clean clone),
 run `node setup.mjs` once to recreate the required directories.
 
 ```bash
-cd frontend/src/lib/HiGHS
+cd highs-pipeline
 npm install  # Install dependencies
 node src/main_pipeline.mjs
 ```
@@ -49,7 +49,7 @@ This will:
 To seed the database with the processed data:
 
 ```bash
-cd frontend/src/lib/HiGHS
+cd highs-pipeline
 npm install  # Install dependencies
 npm install dotenv  # Required for environment variables
 node seed_database.mjs

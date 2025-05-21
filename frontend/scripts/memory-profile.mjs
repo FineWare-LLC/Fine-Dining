@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const dataFile = path.join(__dirname, '../src/lib/HiGHS/data/processed/restaurant_meals_processed.csv');
+const dataFile = path.join(__dirname, '../highs-pipeline/data/processed/restaurant_meals_processed.csv');
 const csv = fs.readFileSync(dataFile, 'utf8');
 const lines = csv.trim().split(/\r?\n/);
 const headers = lines[0].split(',');

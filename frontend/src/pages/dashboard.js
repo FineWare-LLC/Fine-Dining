@@ -5,7 +5,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import { Box, Button, CssBaseline, useTheme, CircularProgress, Typography, Tabs, Tab, Alert } from '@mui/material';
 import { useMutation, useLazyQuery, useQuery, gql } from '@apollo/client';
+import { useRouter } from 'next/router';
 import { CreateMealDocument } from '@/gql/graphql';
+import { getPlanIdFromQuery } from '@/utils/activeMealPlan.js';
 import NewHeader from '@/components/Dashboard/NewHeader';
 import GreetingSegment from '@/components/Dashboard/GreetingSegment';
 import DailySummary from '@/components/Dashboard/DailySummary';
@@ -91,6 +93,15 @@ const GET_MEALS = gql`
         fat
       }
       recipe { images }
+    }
+  }
+`;
+
+const GET_MEAL_PLANS = gql`
+  query GetMealPlans($userId: ID, $page: Int, $limit: Int) {
+    getMealPlans(userId: $userId, page: $page, limit: $limit) {
+      id
+      status
     }
   }
 `;
@@ -185,6 +196,31 @@ export default function Dashboard() {
   // State for selected meals
   const [selectedMeals, setSelectedMeals] = useState([]);
 
+  // Router and active meal plan logic
+  const router = useRouter();
+  const planIdFromQuery = getPlanIdFromQuery(router.query);
+
+  const { data: mealPlansData } = useQuery(GET_MEAL_PLANS, {
+    skip: !!planIdFromQuery || !user,
+    variables: { userId: user?.id, page: 1, limit: 5 },
+    fetchPolicy: 'network-only',
+  });
+
+  const [activeMealPlanId, setActiveMealPlanId] = useState(null);
+
+  useEffect(() => {
+    if (planIdFromQuery) {
+      setActiveMealPlanId(planIdFromQuery);
+    }
+  }, [planIdFromQuery]);
+
+  useEffect(() => {
+    if (!planIdFromQuery && mealPlansData?.getMealPlans) {
+      const active = mealPlansData.getMealPlans.find(p => p.status === 'ACTIVE');
+      if (active) setActiveMealPlanId(active.id);
+    }
+  }, [mealPlansData, planIdFromQuery]);
+
   // State for custom nutrition targets
   const [customNutritionTargets, setCustomNutritionTargets] = useState(null);
 
@@ -228,8 +264,11 @@ export default function Dashboard() {
   };
 
   // Handle adding selected meals to the active meal plan
-  const activeMealPlanId = 'YOUR_MEAL_PLAN_ID'; // TODO: replace with real ID
   const handleAddMeals = async (meals) => {
+    if (!activeMealPlanId) {
+      console.error('No active meal plan selected');
+      return;
+    }
     try {
       for (const meal of meals) {
         await createMeal({

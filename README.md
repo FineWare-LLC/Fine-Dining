@@ -29,6 +29,7 @@ Human diet planning is complex and costly, and current applications often lack s
 * **Data Layer**: MongoDB Atlas stores food items, user credentials, preferences, and generated meal plans using Mongoose as the ODM. External integrations pull in nutrition metrics and grocery pricing for accurate solver inputs. Authentication is handled using JWT (jsonwebtoken) and bcrypt for password hashing.
 * **Deployment & Infrastructure**: All services hosted on AWS EC2 instances behind an Application Load Balancer for scalability. Data encrypted in transit (TLS/SSL), OAuth/JWT for secure user authentication, and MongoDB Atlas providing cloud-based, high-availability storage.
 * **Dev & CI/CD**: Key npm scripts (in `frontend/package.json`): `npm run dev` (Next.js dev server), `npm run build` & `npm start` (production), `npm run seed` (populate HiGHS test data), `npm run codegen` (GraphQL types), `npm run test:playwright` (end-to-end tests), and `npm run test:components` (component tests). ESLint is used for linting and GraphQL Code Generator for type generation.
+* **Security Headers**: A strict Content Security Policy is defined in `next.config.js`. `'unsafe-inline'` is only enabled during development, keeping production deployments locked down.
 
 ### Diagrams
 The project includes the following diagrams for better understanding:

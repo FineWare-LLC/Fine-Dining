@@ -146,7 +146,7 @@ file is present, printing the resulting restaurant list as JSON.
 * `npm run lint`: Lints the codebase using Next.js's ESLint configuration.
 * `npm run test:playwright`: Runs Playwright end-to-end tests.
 * `npm run test:components`: Runs Playwright component tests.
-* `npm run seed`: Populates the database with sample data (uses `frontend/src/lib/HiGHS/seed_database.mjs`).
+* `npm run seed`: Populates the database with sample data (uses `highs-pipeline/seed_database.mjs`).
 * `npm run codegen`: Generates GraphQL types from your schema (`codegen.yml`).
 * `npm run benchmark:gpu`: Runs a matrix multiplication benchmark using the GPU module.
 

@@ -4,28 +4,90 @@
   "registerSourceHash": "ea233d95b980072c81eb49458aee55f5d33fdb02",
   "components": [
     {
+      "id": "_Users_tt_IdeaProjects_Fine_Dining_frontend_src_components_Profile_AvatarUpload",
+      "filename": "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/tests/components/AvatarUpload.spec.js",
+      "importSource": "../../components/Profile/AvatarUpload"
+    },
+    {
+      "id": "_Users_tt_IdeaProjects_Fine_Dining_frontend_src_components_Profile_CalorieProgressRing",
+      "filename": "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/tests/components/CalorieProgressRing.spec.js",
+      "importSource": "../../components/Profile/CalorieProgressRing"
+    },
+    {
+      "id": "_Users_tt_IdeaProjects_Fine_Dining_frontend_src_components_Dashboard_DailySummary",
+      "filename": "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/tests/components/MyComponent.spec.js",
+      "importSource": "../../components/Dashboard/DailySummary"
+    },
+    {
+      "id": "_Users_tt_IdeaProjects_Fine_Dining_frontend_src_components_Dashboard_MealCatalog",
+      "filename": "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/tests/components/MyComponent.spec.js",
+      "importSource": "../../components/Dashboard/MealCatalog"
+    },
+    {
+      "id": "_Users_tt_IdeaProjects_Fine_Dining_frontend_src_components_Dashboard_WelcomeBanner",
+      "filename": "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/tests/components/MyComponent.spec.js",
+      "importSource": "../../components/Dashboard/WelcomeBanner"
+    },
+    {
+      "id": "_Users_tt_IdeaProjects_Fine_Dining_frontend_src_components_Dashboard_NewHeader",
+      "filename": "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/tests/components/NewHeader.spec.js",
+      "importSource": "../../components/Dashboard/NewHeader"
+    },
+    {
       "id": "_Users_tt_IdeaProjects_Fine_Dining_frontend_src_tests_components_Smoke_Smoke",
       "filename": "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/tests/components/overEngineeredCopyright.spec.js",
       "importSource": "./Smoke",
       "remoteName": "Smoke"
     },
     {
-      "id": "_Users_tt_IdeaProjects_Fine_Dining_frontend_src_components_Dashboard_NewHeader",
-      "filename": "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/tests/components/NewHeader.spec.js",
-      "importSource": "../../components/Dashboard/NewHeader"
+      "id": "_Users_tt_IdeaProjects_Fine_Dining_frontend_src_components_Profile_ProfileDetails",
+      "filename": "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/tests/components/ProfileDetails.spec.js",
+      "importSource": "../../components/Profile/ProfileDetails"
+    },
+    {
+      "id": "_Users_tt_IdeaProjects_Fine_Dining_frontend_src_components_Questionnaire_QuestionnaireWizard",
+      "filename": "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/tests/components/questionnaireWizard.spec.js",
+      "importSource": "../../components/Questionnaire/QuestionnaireWizard"
+    },
+    {
+      "id": "_Users_tt_IdeaProjects_Fine_Dining_frontend_src_components_Questionnaire_QuestionnaireWizard_SummaryStep",
+      "filename": "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/tests/components/SummaryStep.spec.js",
+      "importSource": "../../components/Questionnaire/QuestionnaireWizard",
+      "remoteName": "SummaryStep"
     }
   ],
   "sources": {
     "/Users/tt/IdeaProjects/Fine-Dining/frontend/playwright/index.html": {
-      "timestamp": 1747252004934.5823
+      "timestamp": 1747692760668.158
     }
   },
   "deps": {
-    "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/tests/components/Smoke.tsx": [
-      "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/tests/components/Smoke.tsx"
+    "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Profile/AvatarUpload.js": [
+      "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Profile/AvatarUpload.js"
+    ],
+    "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Profile/CalorieProgressRing.js": [
+      "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Profile/CalorieProgressRing.js"
+    ],
+    "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Dashboard/DailySummary.js": [
+      "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Dashboard/DailySummary.js"
+    ],
+    "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Dashboard/MealCatalog.js": [
+      "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Dashboard/MealCatalog.js"
+    ],
+    "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Dashboard/WelcomeBanner.js": [
+      "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Dashboard/WelcomeBanner.js"
     ],
     "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Dashboard/NewHeader.js": [
       "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Dashboard/NewHeader.js"
+    ],
+    "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/tests/components/Smoke.tsx": [
+      "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/tests/components/Smoke.tsx"
+    ],
+    "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Profile/ProfileDetails.js": [
+      "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Profile/ProfileDetails.js"
+    ],
+    "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Questionnaire/QuestionnaireWizard.js": [
+      "/Users/tt/IdeaProjects/Fine-Dining/frontend/src/components/Questionnaire/QuestionnaireWizard.js"
     ]
   }
 }

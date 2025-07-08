@@ -1,7 +1,9 @@
 // src/context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import { ApolloClient, InMemoryCache, ApolloProvider, gql, useApolloClient } from '@apollo/client'; // Import Apollo client related hooks/utils
+import { ApolloClient, InMemoryCache, ApolloProvider, useApolloClient } from '@apollo/client'; // Import Apollo client related hooks/utils
+import { gql } from 'graphql-tag';
+import jwt from 'jsonwebtoken';
 
 // Create the context
 const AuthContext = createContext(null);
@@ -16,6 +18,42 @@ export const AuthProvider = ({ children }) => {
 
     // Check localStorage for token on initial load
     useEffect(() => {
+        // Auto-login with fake user in development mode
+        if (process.env.NODE_ENV === 'development') {
+            const fakeUser = {
+                id: 'dev-user-123',
+                name: 'Dev User',
+                email: 'dev@finedining.com',
+                role: 'admin'
+            };
+
+            // Create a fake JWT token that won't expire for a long time
+            const fakeTokenPayload = {
+                userId: fakeUser.id,
+                email: fakeUser.email,
+                role: fakeUser.role,
+                exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60) // Expires in 1 year
+            };
+
+            // Create a properly signed JWT token for development using environment variable
+            const JWT_SECRET = process.env.JWT_SECRET;
+            if (!JWT_SECRET) {
+                console.error('FATAL ERROR: JWT_SECRET is not defined in environment variables for development auto-login.');
+                setLoading(false);
+                return;
+            }
+            const fakeToken = jwt.sign(fakeTokenPayload, JWT_SECRET, { algorithm: 'HS256' });
+
+            console.log('🚀 Development mode: Auto-logging in with fake user:', fakeUser);
+
+            setToken(fakeToken);
+            setUser(fakeUser);
+            localStorage.setItem('authToken', fakeToken);
+            localStorage.setItem('userInfo', JSON.stringify(fakeUser));
+            setLoading(false);
+            return;
+        }
+
         const storedToken = localStorage.getItem('authToken');
         const storedUser = localStorage.getItem('userInfo'); // Basic user info if stored
 

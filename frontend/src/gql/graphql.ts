@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -209,6 +210,20 @@ export enum MeasurementSystem {
   Metric = 'METRIC'
 }
 
+/** Represents a menu item belonging to a restaurant. */
+export type MenuItem = {
+  __typename?: 'MenuItem';
+  allergens?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  createdAt: Scalars['Date']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  mealName: Scalars['String']['output'];
+  nutritionFacts?: Maybe<Scalars['String']['output']>;
+  price?: Maybe<Scalars['Float']['output']>;
+  restaurant: Restaurant;
+  updatedAt: Scalars['Date']['output'];
+};
+
 /**
  * Mutation definitions for Fine Dining.
  * Each mutation should implement robust security, input validations, and logging.
@@ -217,6 +232,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   createMeal: Meal;
   createMealPlan: MealPlan;
+  createMenuItem: MenuItem;
   createRecipe: Recipe;
   createRestaurant: Restaurant;
   createReview: Review;
@@ -224,6 +240,7 @@ export type Mutation = {
   createUser: User;
   deleteMeal?: Maybe<Scalars['Boolean']['output']>;
   deleteMealPlan?: Maybe<Scalars['Boolean']['output']>;
+  deleteMenuItem?: Maybe<Scalars['Boolean']['output']>;
   deleteRecipe?: Maybe<Scalars['Boolean']['output']>;
   deleteRestaurant?: Maybe<Scalars['Boolean']['output']>;
   deleteReview?: Maybe<Scalars['Boolean']['output']>;
@@ -235,9 +252,11 @@ export type Mutation = {
   resetPassword?: Maybe<Scalars['Boolean']['output']>;
   updateMeal?: Maybe<Meal>;
   updateMealPlan?: Maybe<MealPlan>;
+  updateMenuItem?: Maybe<MenuItem>;
   updateRecipe?: Maybe<Recipe>;
   updateRestaurant?: Maybe<Restaurant>;
   updateUser?: Maybe<User>;
+  upsertQuestionnaire?: Maybe<Questionnaire>;
 };
 
 
@@ -273,6 +292,20 @@ export type MutationCreateMealPlanArgs = {
   title?: InputMaybe<Scalars['String']['input']>;
   totalCalories?: InputMaybe<Scalars['Int']['input']>;
   userId: Scalars['ID']['input'];
+};
+
+
+/**
+ * Mutation definitions for Fine Dining.
+ * Each mutation should implement robust security, input validations, and logging.
+ */
+export type MutationCreateMenuItemArgs = {
+  allergens?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  mealName: Scalars['String']['input'];
+  nutritionFacts?: InputMaybe<Scalars['String']['input']>;
+  price?: InputMaybe<Scalars['Float']['input']>;
+  restaurantId: Scalars['ID']['input'];
 };
 
 
@@ -357,6 +390,15 @@ export type MutationDeleteMealArgs = {
  * Each mutation should implement robust security, input validations, and logging.
  */
 export type MutationDeleteMealPlanArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+/**
+ * Mutation definitions for Fine Dining.
+ * Each mutation should implement robust security, input validations, and logging.
+ */
+export type MutationDeleteMenuItemArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -484,6 +526,20 @@ export type MutationUpdateMealPlanArgs = {
  * Mutation definitions for Fine Dining.
  * Each mutation should implement robust security, input validations, and logging.
  */
+export type MutationUpdateMenuItemArgs = {
+  allergens?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  mealName?: InputMaybe<Scalars['String']['input']>;
+  nutritionFacts?: InputMaybe<Scalars['String']['input']>;
+  price?: InputMaybe<Scalars['Float']['input']>;
+};
+
+
+/**
+ * Mutation definitions for Fine Dining.
+ * Each mutation should implement robust security, input validations, and logging.
+ */
 export type MutationUpdateRecipeArgs = {
   difficulty?: InputMaybe<Difficulty>;
   estimatedCost?: InputMaybe<Scalars['Float']['input']>;
@@ -520,6 +576,22 @@ export type MutationUpdateRestaurantArgs = {
 export type MutationUpdateUserArgs = {
   id: Scalars['ID']['input'];
   input: UpdateUserInput;
+};
+
+
+/**
+ * Mutation definitions for Fine Dining.
+ * Each mutation should implement robust security, input validations, and logging.
+ */
+export type MutationUpsertQuestionnaireArgs = {
+  id: Scalars['ID']['input'];
+  input: QuestionnaireInput;
+};
+
+export type NearbyRestaurantsResult = {
+  __typename?: 'NearbyRestaurantsResult';
+  restaurants?: Maybe<Array<Maybe<ExternalRestaurant>>>;
+  source?: Maybe<Scalars['String']['output']>;
 };
 
 /** Represents nutrition information for a meal. */
@@ -586,6 +658,13 @@ export type OpeningHour = {
   hours?: Maybe<Scalars['String']['output']>;
 };
 
+/** Statistics on presolve reduction. */
+export type PresolveStats = {
+  __typename?: 'PresolveStats';
+  after: Scalars['Int']['output'];
+  before: Scalars['Int']['output'];
+};
+
 /**
  * Restaurant price range enumeration.
  * Provides a controlled vocabulary for price classification.
@@ -609,11 +688,14 @@ export type PriceRangeInput = {
  */
 export type Query = {
   __typename?: 'Query';
-  findNearbyRestaurants?: Maybe<Array<Maybe<ExternalRestaurant>>>;
+  findNearbyRestaurants?: Maybe<NearbyRestaurantsResult>;
   getAllMeals?: Maybe<Array<Maybe<Meal>>>;
   getMealPlan?: Maybe<MealPlan>;
   getMealPlans?: Maybe<Array<Maybe<MealPlan>>>;
   getMeals?: Maybe<Array<Maybe<Meal>>>;
+  getMenuItem?: Maybe<MenuItem>;
+  getMenuItemsByRestaurant?: Maybe<Array<Maybe<MenuItem>>>;
+  getQuestionnaire?: Maybe<Questionnaire>;
   getRecipe?: Maybe<Recipe>;
   getRecipes?: Maybe<Array<Maybe<Recipe>>>;
   getRestaurant?: Maybe<Restaurant>;
@@ -624,6 +706,7 @@ export type Query = {
   getUser?: Maybe<User>;
   getUsers?: Maybe<Array<Maybe<User>>>;
   ping?: Maybe<Scalars['String']['output']>;
+  presolveStats?: Maybe<PresolveStats>;
   searchRecipes?: Maybe<Array<Maybe<Recipe>>>;
   searchRestaurants?: Maybe<Array<Maybe<Restaurant>>>;
   searchUsers?: Maybe<Array<Maybe<User>>>;
@@ -686,6 +769,35 @@ export type QueryGetMealsArgs = {
   nutritionRange?: InputMaybe<NutritionRangeInput>;
   page?: InputMaybe<Scalars['Int']['input']>;
   priceRange?: InputMaybe<PriceRangeInput>;
+};
+
+
+/**
+ * Query definitions for retrieving data in Fine Dining.
+ * Each query includes security and validation considerations.
+ */
+export type QueryGetMenuItemArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+/**
+ * Query definitions for retrieving data in Fine Dining.
+ * Each query includes security and validation considerations.
+ */
+export type QueryGetMenuItemsByRestaurantArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  restaurantId: Scalars['ID']['input'];
+};
+
+
+/**
+ * Query definitions for retrieving data in Fine Dining.
+ * Each query includes security and validation considerations.
+ */
+export type QueryGetQuestionnaireArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -800,6 +912,21 @@ export type QuerySearchUsersArgs = {
   keyword: Scalars['String']['input'];
 };
 
+export type Questionnaire = {
+  __typename?: 'Questionnaire';
+  activityLevel?: Maybe<Scalars['Int']['output']>;
+  allergies?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  dietaryPattern?: Maybe<Scalars['String']['output']>;
+  disallowedIngredients?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+};
+
+export type QuestionnaireInput = {
+  activityLevel?: InputMaybe<Scalars['Int']['input']>;
+  allergies?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  dietaryPattern?: InputMaybe<Scalars['String']['input']>;
+  disallowedIngredients?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
 /** Represents a Recipe with details including instructions, ingredients, and ratings. */
 export type Recipe = {
   __typename?: 'Recipe';
@@ -890,6 +1017,7 @@ export type User = {
   __typename?: 'User';
   accountStatus: AccountStatus;
   allergies?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  avatarUrl?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Date']['output'];
   dailyCalories?: Maybe<Scalars['Int']['output']>;
   email: Scalars['String']['output'];
@@ -901,6 +1029,7 @@ export type User = {
   measurementSystem: MeasurementSystem;
   name: Scalars['String']['output'];
   nutritionTargets?: Maybe<NutritionTargets>;
+  questionnaire?: Maybe<Questionnaire>;
   role: UserRole;
   updatedAt: Scalars['Date']['output'];
   weight?: Maybe<Scalars['Float']['output']>;
@@ -1160,7 +1289,7 @@ export type GetUserQueryVariables = Exact<{
 }>;
 
 
-export type GetUserQuery = { __typename?: 'Query', getUser?: { __typename?: 'User', id: string, name: string, email: string, role: UserRole, accountStatus: AccountStatus, weight?: number | null, height?: number | null, gender: Gender, measurementSystem: MeasurementSystem, dailyCalories?: number | null, createdAt: any } | null };
+export type GetUserQuery = { __typename?: 'Query', getUser?: { __typename?: 'User', id: string, name: string, email: string, role: UserRole, accountStatus: AccountStatus, weight?: number | null, height?: number | null, gender: Gender, measurementSystem: MeasurementSystem, dailyCalories?: number | null, avatarUrl?: string | null, createdAt: any } | null };
 
 export type GetUsersQueryVariables = Exact<{
   page?: InputMaybe<Scalars['Int']['input']>;
@@ -1262,12 +1391,12 @@ export type GetReviewsForTargetQuery = { __typename?: 'Query', getReviewsForTarg
 export type FindNearbyRestaurantsQueryVariables = Exact<{
   latitude: Scalars['Float']['input'];
   longitude: Scalars['Float']['input'];
-  radius?: InputMaybe<Scalars['Int']['input']>;
+  radius: Scalars['Int']['input'];
   keyword?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type FindNearbyRestaurantsQuery = { __typename?: 'Query', findNearbyRestaurants?: Array<{ __typename?: 'ExternalRestaurant', placeId: string, name?: string | null, vicinity?: string | null, rating?: number | null, userRatingsTotal?: number | null, location?: { __typename?: 'LatLng', latitude?: number | null, longitude?: number | null } | null } | null> | null };
+export type FindNearbyRestaurantsQuery = { __typename?: 'Query', findNearbyRestaurants?: { __typename?: 'NearbyRestaurantsResult', source?: string | null, restaurants?: Array<{ __typename?: 'ExternalRestaurant', placeId: string, name?: string | null, vicinity?: string | null, rating?: number | null, userRatingsTotal?: number | null, location?: { __typename?: 'LatLng', latitude?: number | null, longitude?: number | null } | null } | null> | null } | null };
 
 export type PingQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -1302,7 +1431,7 @@ export const CreateStatsDocument = {"kind":"Document","definitions":[{"kind":"Op
 export const DeleteStatsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteStats"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteStats"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]} as unknown as DocumentNode<DeleteStatsMutation, DeleteStatsMutationVariables>;
 export const CreateReviewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateReview"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"targetType"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"targetId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"rating"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"comment"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createReview"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"targetType"},"value":{"kind":"Variable","name":{"kind":"Name","value":"targetType"}}},{"kind":"Argument","name":{"kind":"Name","value":"targetId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"targetId"}}},{"kind":"Argument","name":{"kind":"Name","value":"rating"},"value":{"kind":"Variable","name":{"kind":"Name","value":"rating"}}},{"kind":"Argument","name":{"kind":"Name","value":"comment"},"value":{"kind":"Variable","name":{"kind":"Name","value":"comment"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rating"}},{"kind":"Field","name":{"kind":"Name","value":"comment"}},{"kind":"Field","name":{"kind":"Name","value":"targetType"}},{"kind":"Field","name":{"kind":"Name","value":"targetId"}}]}}]}}]} as unknown as DocumentNode<CreateReviewMutation, CreateReviewMutationVariables>;
 export const DeleteReviewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteReview"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteReview"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}]}}]} as unknown as DocumentNode<DeleteReviewMutation, DeleteReviewMutationVariables>;
-export const GetUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetUser"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getUser"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"accountStatus"}},{"kind":"Field","name":{"kind":"Name","value":"weight"}},{"kind":"Field","name":{"kind":"Name","value":"height"}},{"kind":"Field","name":{"kind":"Name","value":"gender"}},{"kind":"Field","name":{"kind":"Name","value":"measurementSystem"}},{"kind":"Field","name":{"kind":"Name","value":"dailyCalories"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<GetUserQuery, GetUserQueryVariables>;
+export const GetUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetUser"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getUser"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"accountStatus"}},{"kind":"Field","name":{"kind":"Name","value":"weight"}},{"kind":"Field","name":{"kind":"Name","value":"height"}},{"kind":"Field","name":{"kind":"Name","value":"gender"}},{"kind":"Field","name":{"kind":"Name","value":"measurementSystem"}},{"kind":"Field","name":{"kind":"Name","value":"dailyCalories"}},{"kind":"Field","name":{"kind":"Name","value":"avatarUrl"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<GetUserQuery, GetUserQueryVariables>;
 export const GetUsersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetUsers"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"page"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getUsers"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"page"},"value":{"kind":"Variable","name":{"kind":"Name","value":"page"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"role"}}]}}]}}]} as unknown as DocumentNode<GetUsersQuery, GetUsersQueryVariables>;
 export const SearchUsersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SearchUsers"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"keyword"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"searchUsers"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"keyword"},"value":{"kind":"Variable","name":{"kind":"Name","value":"keyword"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"email"}}]}}]}}]} as unknown as DocumentNode<SearchUsersQuery, SearchUsersQueryVariables>;
 export const GetRecipeDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetRecipe"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getRecipe"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"recipeName"}},{"kind":"Field","name":{"kind":"Name","value":"ingredients"}},{"kind":"Field","name":{"kind":"Name","value":"instructions"}},{"kind":"Field","name":{"kind":"Name","value":"prepTime"}},{"kind":"Field","name":{"kind":"Name","value":"difficulty"}},{"kind":"Field","name":{"kind":"Name","value":"nutritionFacts"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"Field","name":{"kind":"Name","value":"images"}},{"kind":"Field","name":{"kind":"Name","value":"estimatedCost"}},{"kind":"Field","name":{"kind":"Name","value":"averageRating"}},{"kind":"Field","name":{"kind":"Name","value":"ratingCount"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<GetRecipeQuery, GetRecipeQueryVariables>;
@@ -1316,6 +1445,6 @@ export const GetMealPlansDocument = {"kind":"Document","definitions":[{"kind":"O
 export const GetStatsByUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetStatsByUser"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"userId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getStatsByUser"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"userId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"userId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"dateLogged"}},{"kind":"Field","name":{"kind":"Name","value":"macros"}},{"kind":"Field","name":{"kind":"Name","value":"micros"}},{"kind":"Field","name":{"kind":"Name","value":"caloriesConsumed"}},{"kind":"Field","name":{"kind":"Name","value":"waterIntake"}},{"kind":"Field","name":{"kind":"Name","value":"steps"}}]}}]}}]} as unknown as DocumentNode<GetStatsByUserQuery, GetStatsByUserQueryVariables>;
 export const GetReviewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetReview"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getReview"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rating"}},{"kind":"Field","name":{"kind":"Name","value":"comment"}},{"kind":"Field","name":{"kind":"Name","value":"targetType"}},{"kind":"Field","name":{"kind":"Name","value":"targetId"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<GetReviewQuery, GetReviewQueryVariables>;
 export const GetReviewsForTargetDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetReviewsForTarget"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"targetType"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"targetId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"getReviewsForTarget"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"targetType"},"value":{"kind":"Variable","name":{"kind":"Name","value":"targetType"}}},{"kind":"Argument","name":{"kind":"Name","value":"targetId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"targetId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rating"}},{"kind":"Field","name":{"kind":"Name","value":"comment"}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]} as unknown as DocumentNode<GetReviewsForTargetQuery, GetReviewsForTargetQueryVariables>;
-export const FindNearbyRestaurantsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"FindNearbyRestaurants"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"latitude"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"longitude"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"radius"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"keyword"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"findNearbyRestaurants"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"latitude"},"value":{"kind":"Variable","name":{"kind":"Name","value":"latitude"}}},{"kind":"Argument","name":{"kind":"Name","value":"longitude"},"value":{"kind":"Variable","name":{"kind":"Name","value":"longitude"}}},{"kind":"Argument","name":{"kind":"Name","value":"radius"},"value":{"kind":"Variable","name":{"kind":"Name","value":"radius"}}},{"kind":"Argument","name":{"kind":"Name","value":"keyword"},"value":{"kind":"Variable","name":{"kind":"Name","value":"keyword"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"placeId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"vicinity"}},{"kind":"Field","name":{"kind":"Name","value":"rating"}},{"kind":"Field","name":{"kind":"Name","value":"userRatingsTotal"}},{"kind":"Field","name":{"kind":"Name","value":"location"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"latitude"}},{"kind":"Field","name":{"kind":"Name","value":"longitude"}}]}}]}}]}}]} as unknown as DocumentNode<FindNearbyRestaurantsQuery, FindNearbyRestaurantsQueryVariables>;
+export const FindNearbyRestaurantsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"FindNearbyRestaurants"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"latitude"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"longitude"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Float"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"radius"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"keyword"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"findNearbyRestaurants"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"latitude"},"value":{"kind":"Variable","name":{"kind":"Name","value":"latitude"}}},{"kind":"Argument","name":{"kind":"Name","value":"longitude"},"value":{"kind":"Variable","name":{"kind":"Name","value":"longitude"}}},{"kind":"Argument","name":{"kind":"Name","value":"radius"},"value":{"kind":"Variable","name":{"kind":"Name","value":"radius"}}},{"kind":"Argument","name":{"kind":"Name","value":"keyword"},"value":{"kind":"Variable","name":{"kind":"Name","value":"keyword"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"source"}},{"kind":"Field","name":{"kind":"Name","value":"restaurants"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"placeId"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"vicinity"}},{"kind":"Field","name":{"kind":"Name","value":"rating"}},{"kind":"Field","name":{"kind":"Name","value":"userRatingsTotal"}},{"kind":"Field","name":{"kind":"Name","value":"location"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"latitude"}},{"kind":"Field","name":{"kind":"Name","value":"longitude"}}]}}]}}]}}]}}]} as unknown as DocumentNode<FindNearbyRestaurantsQuery, FindNearbyRestaurantsQueryVariables>;
 export const PingDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"Ping"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"ping"}}]}}]} as unknown as DocumentNode<PingQuery, PingQueryVariables>;
 export const GenerateOptimizedMealPlanDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"GenerateOptimizedMealPlan"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"generateOptimizedMealPlan"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"meals"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"mealId"}},{"kind":"Field","name":{"kind":"Name","value":"mealName"}},{"kind":"Field","name":{"kind":"Name","value":"servings"}},{"kind":"Field","name":{"kind":"Name","value":"pricePerServing"}},{"kind":"Field","name":{"kind":"Name","value":"totalPrice"}},{"kind":"Field","name":{"kind":"Name","value":"nutrition"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"carbohydrates"}},{"kind":"Field","name":{"kind":"Name","value":"protein"}},{"kind":"Field","name":{"kind":"Name","value":"fat"}},{"kind":"Field","name":{"kind":"Name","value":"sodium"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"totalCost"}},{"kind":"Field","name":{"kind":"Name","value":"totalNutrition"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"carbohydrates"}},{"kind":"Field","name":{"kind":"Name","value":"protein"}},{"kind":"Field","name":{"kind":"Name","value":"fat"}},{"kind":"Field","name":{"kind":"Name","value":"sodium"}}]}}]}}]}}]} as unknown as DocumentNode<GenerateOptimizedMealPlanMutation, GenerateOptimizedMealPlanMutationVariables>;

@@ -4,8 +4,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import { Box, Button, CssBaseline, useTheme, CircularProgress, Typography, Tabs, Tab, Alert } from '@mui/material';
-import { useMutation, useLazyQuery, useQuery, gql } from '@apollo/client';
-import { CreateMealDocument } from '@/gql/graphql';
+import { useQuery, gql } from '@apollo/client';
 import NewHeader from '@/components/Dashboard/NewHeader';
 import GreetingSegment from '@/components/Dashboard/GreetingSegment';
 import DailySummary from '@/components/Dashboard/DailySummary';
@@ -17,64 +16,9 @@ import NewNavigationDrawer from '@/components/Dashboard/NewNavigationDrawer';
 import OptimizedMealPlanDisplay from '@/components/Dashboard/OptimizedMealPlanDisplay';
 import MealCatalog from '@/components/Dashboard/MealCatalog';
 import NutritionRequirementsForm from '@/components/Dashboard/NutritionRequirementsForm';
-import { useDashStore } from '@/components/Dashboard/store';
 import { useAuth } from '@/context/AuthContext';
-
-const GENERATE_OPTIMIZED_MEAL_PLAN = gql`
-  mutation GenerateOptimizedMealPlan($selectedMealIds: [ID], $customNutritionTargets: CustomNutritionTargetsInput) {
-    generateOptimizedMealPlan(selectedMealIds: $selectedMealIds, customNutritionTargets: $customNutritionTargets) {
-      meals {
-        mealId
-        mealName
-        servings
-        pricePerServing
-        totalPrice
-        nutrition {
-          carbohydrates
-          protein
-          fat
-          sodium
-        }
-      }
-      totalCost
-      totalNutrition {
-        carbohydrates
-        protein
-        fat
-        sodium
-      }
-    }
-  }
-`;
-
-const FIND_NEARBY_RESTAURANTS = gql`
-  query FindNearbyRestaurants(
-    $latitude: Float!
-    $longitude: Float!
-    $radius: Int!
-    $keyword: String
-  ) {
-    findNearbyRestaurants(
-      latitude: $latitude
-      longitude: $longitude
-      radius: $radius
-      keyword: $keyword
-    ) {
-      source
-      restaurants {
-        placeId
-        name
-        vicinity
-        rating
-        userRatingsTotal
-        location {
-          latitude
-          longitude
-        }
-      }
-    }
-  }
-`;
+import useRestaurants from '@/hooks/useRestaurants';
+import useMealOptimization from '@/hooks/useMealOptimization';
 
 /* ------------------------------------------------------------------------ */
 /* Data hooks powered by GraphQL.                                         */
@@ -96,7 +40,7 @@ const GET_MEALS = gql`
 `;
 
 const useDailyMeals = (count = 3) => {
-  const { data } = useQuery(GET_MEALS, {
+  const { data, loading, error } = useQuery(GET_MEALS, {
     variables: { page: 1, limit: count },
     fetchPolicy: 'network-only',
   });
@@ -117,10 +61,13 @@ const useDailyMeals = (count = 3) => {
     })),
   [data]);
 
-  return meals;
+  return { meals, loading, error };
 };
 
-const useHeroMeal = () => useDailyMeals(1)[0];
+const useHeroMeal = () => {
+  const { meals, loading, error } = useDailyMeals(1);
+  return { meal: meals[0], loading, error };
+};
 const useMeal = useHeroMeal;
 /* ------------------------------------------------------------------------ */
 
@@ -138,135 +85,31 @@ export default function Dashboard() {
   }, [user]);
 
 
-  const meal        = useMeal();
-  const [fetchRestaurants, {
-    loading: restaurantsLoading,
-    error: restaurantsError,
-    data: restaurantsData,
-  }] = useLazyQuery(FIND_NEARBY_RESTAURANTS);
-  const theme       = useTheme();
-  const searchTerm  = useDashStore(s => s.searchTerm);
-  const { restaurants = [], source } =
-    restaurantsData?.findNearbyRestaurants || {};
+  const { meal, loading: mealLoading, error: mealError } = useMeal();
+  const theme = useTheme();
 
-  // Fetch nearby restaurants based on browser geolocation
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        fetchRestaurants({
-          variables: {
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-            radius: 1500
-          }
-        });
-      },
-      (err) => {
-        console.warn('Geolocation error — falling back to Newport, TN coords:', err);
-        // Newport, TN approximate coordinates
-        fetchRestaurants({
-          variables: {
-            latitude: 35.968,
-            longitude: -83.187,
-            radius: 1500
-          }
-        });
-      }
-    );
-  }, [fetchRestaurants]);
+  // Use custom hooks for restaurant and optimization management
+  const {
+    restaurants,
+    source,
+    isLoading: restaurantsLoading,
+    restaurantsError,
+    retryRestaurants,
+    isEmpty: restaurantsEmpty,
+  } = useRestaurants();
 
-  // State for tabs
-  const [tabValue, setTabValue] = useState(0);
-
-  // State for optimized meal plan
-  const [optimizedMealPlan, setOptimizedMealPlan] = useState(null);
-
-  // State for selected meals
-  const [selectedMeals, setSelectedMeals] = useState([]);
-
-  // State for custom nutrition targets
-  const [customNutritionTargets, setCustomNutritionTargets] = useState(null);
-
-  // GraphQL mutation for generating optimized meal plan
-  const [generateOptimizedMealPlan, { loading: optimizationLoading, error: optimizationError }] =
-    useMutation(GENERATE_OPTIMIZED_MEAL_PLAN, {
-      onCompleted: (data) => {
-        setOptimizedMealPlan(data.generateOptimizedMealPlan);
-        // Switch to the results tab
-        setTabValue(2);
-      },
-      onError: (error) => {
-        console.error('Error generating optimized meal plan:', error);
-        // You could add error handling UI here
-      }
-    });
-
-  // GraphQL mutation for adding meals to a meal plan
-  const [createMeal] = useMutation(CreateMealDocument);
-
-  // Handle generate button click
-  const handleGenerateOptimizedPlan = () => {
-    setOptimizedMealPlan(null); // Clear any previous results
-    generateOptimizedMealPlan({
-      variables: {
-        selectedMealIds: selectedMeals.length > 0 ? selectedMeals : undefined,
-        customNutritionTargets: customNutritionTargets
-      }
-    });
-  };
-
-  // Handle meal selection
-  const handleMealSelection = (mealId) => {
-    setSelectedMeals(prev => {
-      if (prev.includes(mealId)) {
-        return prev.filter(id => id !== mealId);
-      } else {
-        return [...prev, mealId];
-      }
-    });
-  };
-
-  // Handle adding selected meals to the active meal plan
-  const activeMealPlanId = 'YOUR_MEAL_PLAN_ID'; // TODO: replace with real ID
-  const handleAddMeals = async (meals) => {
-    try {
-      for (const meal of meals) {
-        await createMeal({
-          variables: {
-            mealPlanId: activeMealPlanId,
-            date: new Date().toISOString(),
-            mealType: 'DINNER',
-            mealName: meal.mealName,
-            price: meal.price,
-            nutrition: meal.nutrition,
-            allergens: meal.allergens,
-          }
-        });
-      }
-      setSelectedMeals([]);
-    } catch (err) {
-      console.error('Error adding meals:', err);
-    }
-  };
-
-  // Handle nutrition targets change
-  const handleNutritionTargetsChange = (values) => {
-    setCustomNutritionTargets(values);
-  };
-
-  // Handle tab change
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-  };
-
-  const filtered = useMemo(
-    () =>
-      restaurants.filter((r) =>
-        (r.name || '').toLowerCase().includes(searchTerm.toLowerCase())
-      ),
-    [restaurants, searchTerm],
-  );
+  const {
+    selectedMeals,
+    optimizedMealPlan,
+    tabValue,
+    optimizationLoading,
+    optimizationError,
+    handleMealSelection,
+    handleNutritionTargetsChange,
+    handleTabChange,
+    handleGenerateOptimizedPlan,
+    handleAddMeals,
+  } = useMealOptimization();
 
   return (
     <>
@@ -284,9 +127,30 @@ export default function Dashboard() {
         }}
       >
         <GreetingSegment userName={(isClient && currentUser?.name) || 'Guest'} />
-        <DailySummary meal={meal} />
-        <GreetingSegment userName={user?.name || 'Guest'} />
-        <DailySummary meals={meal ? [meal] : []} />
+
+        {/* Meal Loading Error */}
+        {mealError && (
+          <Box sx={{ my: 2, textAlign: 'center' }}>
+            <Alert severity="error" sx={{ mb: 2 }}>
+              Error loading meals: {mealError.message || 'Internal server error.'}
+            </Alert>
+          </Box>
+        )}
+
+        {/* Meal Loading Indicator */}
+        {mealLoading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+            <CircularProgress />
+            <Typography variant="body2" sx={{ ml: 2, alignSelf: 'center' }}>
+              Loading meals...
+            </Typography>
+          </Box>
+        )}
+
+        {/* Daily Summary - only show if meal is loaded and no error */}
+        {!mealLoading && !mealError && (
+          <DailySummary meals={meal ? [meal] : []} />
+        )}
 
         {/* Tabs for Meal Plan Optimization */}
         <Box sx={{ width: '100%', mt: 3 }}>
@@ -355,7 +219,10 @@ export default function Dashboard() {
           )}
         </Box>
 
-        <MealCard meal={meal} />
+        {/* Meal Card - only show if meal is loaded and no error */}
+        {!mealLoading && !mealError && meal && (
+          <MealCard meal={meal} />
+        )}
 
         <DiscoveryHeader />
 
@@ -379,55 +246,20 @@ export default function Dashboard() {
             <Button
               variant="outlined"
               size="small"
-              onClick={() => {
-                // Retry with current location or fallback
-                if (navigator.geolocation) {
-                  navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                      fetchRestaurants({
-                        variables: {
-                          latitude: pos.coords.latitude,
-                          longitude: pos.coords.longitude,
-                          radius: 1500
-                        }
-                      });
-                    },
-                    (err) => {
-                      console.warn('Geolocation error on retry — falling back to Newport, TN coords:', err);
-                      // Newport, TN approximate coordinates
-                      fetchRestaurants({
-                        variables: {
-                          latitude: 35.968,
-                          longitude: -83.187,
-                          radius: 1500
-                        }
-                      });
-                    }
-                  );
-                } else {
-                  // Fallback if geolocation is not available
-                  fetchRestaurants({
-                    variables: {
-                      latitude: 35.968,
-                      longitude: -83.187,
-                      radius: 1500
-                    }
-                  });
-                }
-              }}
+              onClick={retryRestaurants}
             >
               Retry
             </Button>
           </Box>
         )}
 
-        {!restaurantsLoading && !restaurantsError && filtered.length === 0 && (
+        {restaurantsEmpty && (
           <Typography variant="body2" color="text.secondary" align="center" sx={{ my: 2 }}>
             No nearby restaurants found.
           </Typography>
         )}
 
-        {filtered.map(r => (
+        {restaurants.map(r => (
           <RestaurantCard key={r.placeId} restaurant={r} source={source} />
         ))}
       </Box>

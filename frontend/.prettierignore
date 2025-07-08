@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.next/
+.cache/
+
+# Build outputs
+dist/
+build/
+out/
+
+# Generated files
+src/gql/
+*.generated.*
+
+# Package files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment files
+.env*
+
+# Logs
+*.log
+
+# Test outputs
+coverage/
+test-results/
+playwright-report/
+
+# Documentation
+*.md
+
+# Configuration files that should maintain their format
+*.config.js
+*.config.mjs
+*.config.ts

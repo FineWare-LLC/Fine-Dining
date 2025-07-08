@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+.next/
+out/
+
+# Generated files
+src/gql/graphql.ts
+src/gql/gql.ts
+src/gql/fragment-masking.ts
+
+# Build artifacts
+.next/
+dist/
+build/
+
+# Test artifacts
+coverage/
+test-results/
+playwright-report/
+.nyc_output/
+
+# Cache directories
+.eslintcache
+.cache/
+
+# Environment files
+.env*
+
+# Configuration files that don't need linting
+*.config.js
+*.config.mjs
+*.config.ts
+next.config.mjs
+tailwind.config.js
+postcss.config.mjs
+playwright.config.js
+playwright-ct.config.js
+
+# Documentation
+*.md
+*.txt
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

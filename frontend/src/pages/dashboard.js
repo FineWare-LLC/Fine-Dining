@@ -3,7 +3,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
-import { Box, Button, CssBaseline, useTheme, CircularProgress, Typography, Tabs, Tab, Alert } from '@mui/material';
+import { Box, CssBaseline, useTheme, CircularProgress, Typography, Alert, Button } from '@mui/material';
 import { useQuery, gql } from '@apollo/client';
 import NewHeader from '@/components/Dashboard/NewHeader';
 import GreetingSegment from '@/components/Dashboard/GreetingSegment';
@@ -13,9 +13,7 @@ import DiscoveryHeader from '@/components/Dashboard/DiscoveryHeader';
 import RestaurantCard from '@/components/Dashboard/RestaurantCard';
 import BottomSearchRail from "@/components/Dashboard/BottomSearchRail.js";
 import NewNavigationDrawer from '@/components/Dashboard/NewNavigationDrawer';
-import OptimizedMealPlanDisplay from '@/components/Dashboard/OptimizedMealPlanDisplay';
-import MealCatalog from '@/components/Dashboard/MealCatalog';
-import NutritionRequirementsForm from '@/components/Dashboard/NutritionRequirementsForm';
+import MealPlanOptimizer from '@/components/Dashboard/MealPlanOptimizer';
 import { useAuth } from '@/context/AuthContext';
 import useRestaurants from '@/hooks/useRestaurants';
 import useMealOptimization from '@/hooks/useMealOptimization';
@@ -152,72 +150,19 @@ export default function Dashboard() {
           <DailySummary meals={meal ? [meal] : []} />
         )}
 
-        {/* Tabs for Meal Plan Optimization */}
-        <Box sx={{ width: '100%', mt: 3 }}>
-          <Tabs
-            value={tabValue}
-            onChange={handleTabChange}
-            variant="fullWidth"
-            indicatorColor="primary"
-            textColor="primary"
-            aria-label="meal plan optimization tabs"
-          >
-            <Tab label="Meal Catalog" />
-            <Tab label="Nutrition Requirements" />
-            <Tab label="Results" />
-          </Tabs>
-
-          {/* Tab 1: Meal Catalog */}
-          {tabValue === 0 && (
-            <MealCatalog
-              selectedMeals={selectedMeals}
-              onSelectMeal={handleMealSelection}
-              onAddMeals={handleAddMeals}
-            />
-          )}
-
-          {/* Tab 2: Nutrition Requirements */}
-          {tabValue === 1 && (
-            <NutritionRequirementsForm
-              onChange={handleNutritionTargetsChange}
-            />
-          )}
-
-          {/* Tab 3: Results */}
-          {tabValue === 2 && (
-            <>
-              {optimizedMealPlan ? (
-                <OptimizedMealPlanDisplay mealPlan={optimizedMealPlan} />
-              ) : (
-                <Box sx={{ mt: 3, textAlign: 'center' }}>
-                  <Typography variant="body1" color="text.secondary" gutterBottom>
-                    No optimized meal plan generated yet.
-                  </Typography>
-                </Box>
-              )}
-            </>
-          )}
-
-          {/* Generate Button */}
-          <Box sx={{ mt: 3, mb: 2, display: 'flex', justifyContent: 'center' }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleGenerateOptimizedPlan}
-              disabled={optimizationLoading}
-              startIcon={optimizationLoading ? <CircularProgress size={20} color="inherit" /> : null}
-            >
-              {optimizationLoading ? 'Generating...' : 'Generate Optimized Meal Plan'}
-            </Button>
-          </Box>
-
-          {/* Display optimization error if any */}
-          {optimizationError && (
-            <Box sx={{ mt: 2, color: 'error.main', textAlign: 'center' }}>
-              Error: {optimizationError.message || 'Failed to generate meal plan'}
-            </Box>
-          )}
-        </Box>
+        {/* Meal Plan Optimization */}
+        <MealPlanOptimizer
+          selectedMeals={selectedMeals}
+          optimizedMealPlan={optimizedMealPlan}
+          tabValue={tabValue}
+          optimizationLoading={optimizationLoading}
+          optimizationError={optimizationError}
+          onMealSelection={handleMealSelection}
+          onNutritionTargetsChange={handleNutritionTargetsChange}
+          onTabChange={handleTabChange}
+          onGenerateOptimizedPlan={handleGenerateOptimizedPlan}
+          onAddMeals={handleAddMeals}
+        />
 
         {/* Meal Card - only show if meal is loaded and no error */}
         {!mealLoading && !mealError && meal && (

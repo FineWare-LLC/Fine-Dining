@@ -18,6 +18,16 @@ For each food chain, the scraper collects the following information:
 - Nutrition information (calories, protein, carbohydrates, fat, sodium)
 - Allergens
 
+## Running as a Microservice
+
+Install dependencies and start the pipeline separately if you want to run it as
+its own service:
+
+```bash
+npm install
+npm start        # or: node src/main_pipeline.mjs
+```
+
 ## Implementation Details
 
 The scraper is implemented in the `src/fetcher/scraper.mjs` file and is integrated into the existing fetcher in `src/fetcher/index.mjs`. The implementation uses the following libraries:
@@ -75,5 +85,16 @@ on subsequent runs.
 
 ```bash
 node src/solver/index.mjs --tune
+```
+
+## Setup Script
+
+The `setup.mjs` script prepares the directory structure for the HiGHS pipeline.
+It no longer creates placeholder step files because those modules already exist
+under `src/`. Running the script is only necessary if the `data/` or `src/`
+folders are missing.
+
+```bash
+node setup.mjs
 ```
 

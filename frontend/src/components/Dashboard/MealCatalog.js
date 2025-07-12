@@ -32,7 +32,7 @@ import {
 import React, { useState } from 'react';
 
 // Local JSON data of scraped menu items
-import menuItems from '@/lib/HiGHS/data/raw/scraped_data_test.json';
+import menuItems from '@highs/data/raw/scraped_data_test.json';
 
 // GraphQL query to fetch all available meals
 const GET_ALL_MEALS = gql`

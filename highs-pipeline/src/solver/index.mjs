@@ -1,5 +1,5 @@
 /**
- * src/lib/HiGHS/index.js
+ * highs-pipeline/index.js
  * ------------------------------------------------------------
  * Feasibility MIP: build a one-day meal plan that satisfies
  * calorie, protein, carbohydrate, and sodium ranges using HiGHS.

@@ -3,9 +3,9 @@
  * @fileoverview Enhanced hero section for Fine Dining landing page with modern design
  */
 
-import React from 'react';
-import { Box, Typography, Container, Chip, useTheme } from '@mui/material';
 import { keyframes } from '@emotion/react';
+import { Box, Typography, Container, Chip, useTheme } from '@mui/material';
+import React from 'react';
 
 // Animation keyframes
 const fadeInUp = keyframes`
@@ -63,7 +63,7 @@ export default function HeroSection() {
                         opacity: 0.05,
                         borderRadius: 4,
                         zIndex: -1,
-                    }
+                    },
                 }}
             >
                 {/* Floating Logo */}
@@ -98,15 +98,15 @@ export default function HeroSection() {
                                 zIndex: -1,
                                 animation: `${shimmer} 2s linear infinite`,
                                 backgroundSize: '200px 100%',
-                            }
+                            },
                         }}
                     >
                         <Box
                             component="img"
                             src="/plate-logo.png"
                             alt="Fine Dining Logo"
-                            sx={{ 
-                                width: '60px', 
+                            sx={{
+                                width: '60px',
                                 height: '60px',
                                 filter: 'brightness(0) invert(1)',
                             }}
@@ -115,8 +115,8 @@ export default function HeroSection() {
                 </Box>
 
                 {/* Main Title with Gradient Text */}
-                <Typography 
-                    variant="h1" 
+                <Typography
+                    variant="h1"
                     sx={{
                         background: theme.palette.gradient.hero,
                         backgroundClip: 'text',
@@ -132,8 +132,8 @@ export default function HeroSection() {
                 </Typography>
 
                 {/* Subtitle with Animation */}
-                <Typography 
-                    variant="h5" 
+                <Typography
+                    variant="h5"
                     sx={{
                         color: 'text.secondary',
                         mb: 3,
@@ -148,7 +148,7 @@ export default function HeroSection() {
                 </Typography>
 
                 {/* Feature Chips */}
-                <Box 
+                <Box
                     sx={{
                         display: 'flex',
                         flexWrap: 'wrap',
@@ -171,15 +171,15 @@ export default function HeroSection() {
                                 '&:hover': {
                                     transform: 'scale(1.05)',
                                     transition: 'transform 0.2s ease',
-                                }
+                                },
                             }}
                         />
                     ))}
                 </Box>
 
                 {/* Call to Action Text */}
-                <Typography 
-                    variant="body1" 
+                <Typography
+                    variant="body1"
                     sx={{
                         color: 'text.secondary',
                         animation: `${fadeInUp} 1s ease-out 0.6s both`,

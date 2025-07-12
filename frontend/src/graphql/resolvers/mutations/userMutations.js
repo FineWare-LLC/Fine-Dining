@@ -1,6 +1,6 @@
 import {withErrorHandling} from './baseImports.js';
-import User from '@/models/User/index.js';
 import { sanitizeString } from '@/lib/sanitize.js';
+import User from '@/models/User/index.js';
 
 /**
  * Creates a new user with the provided input.
@@ -18,43 +18,43 @@ import { sanitizeString } from '@/lib/sanitize.js';
  * @throws {Error} Throws an error if the email is already in use.
  */
 export const createUser = withErrorHandling(async (_parent, { input }, context) => {
-  // Validate required fields
-  if (!input.email) {
-    throw new Error('Email is required.');
-  }
-  if (!input.password || input.password.length < 8) {
-    throw new Error('Password must be at least 8 characters long.');
-  }
-
-  // Optionally validate email format here using regex if needed
-  // Example:
-  // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  // if (!emailRegex.test(input.email)) {
-  //   throw new Error('Invalid email format.');
-  // }
-
-  // Prevent user from setting sensitive fields on creation
-  if (input.role) delete input.role;
-  if (input.accountStatus) delete input.accountStatus;
-
-  const sanitizedInput = {};
-  for (const [key, value] of Object.entries(input)) {
-    if (typeof value === 'string') {
-      sanitizedInput[key] = sanitizeString(value.trim());
-    } else if (Array.isArray(value)) {
-      sanitizedInput[key] = value.map(v => typeof v === 'string' ? sanitizeString(v) : v);
-    } else {
-      sanitizedInput[key] = value;
+    // Validate required fields
+    if (!input.email) {
+        throw new Error('Email is required.');
     }
-  }
+    if (!input.password || input.password.length < 8) {
+        throw new Error('Password must be at least 8 characters long.');
+    }
 
-  const existingUser = await User.findOne({ email: sanitizedInput.email });
-  if (existingUser) {
-    throw new Error('Email already in use');
-  }
+    // Optionally validate email format here using regex if needed
+    // Example:
+    // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // if (!emailRegex.test(input.email)) {
+    //   throw new Error('Invalid email format.');
+    // }
 
-  // Create user; note that password hashing is expected to be done via middleware on the User model.
-  return User.create(sanitizedInput);
+    // Prevent user from setting sensitive fields on creation
+    if (input.role) delete input.role;
+    if (input.accountStatus) delete input.accountStatus;
+
+    const sanitizedInput = {};
+    for (const [key, value] of Object.entries(input)) {
+        if (typeof value === 'string') {
+            sanitizedInput[key] = sanitizeString(value.trim());
+        } else if (Array.isArray(value)) {
+            sanitizedInput[key] = value.map(v => typeof v === 'string' ? sanitizeString(v) : v);
+        } else {
+            sanitizedInput[key] = value;
+        }
+    }
+
+    const existingUser = await User.findOne({ email: sanitizedInput.email });
+    if (existingUser) {
+        throw new Error('Email already in use');
+    }
+
+    // Create user; note that password hashing is expected to be done via middleware on the User model.
+    return User.create(sanitizedInput);
 });
 
 /**
@@ -72,34 +72,34 @@ export const createUser = withErrorHandling(async (_parent, { input }, context) 
  * @throws {Error} Throws an error if the user is not found.
  */
 export const updateUser = withErrorHandling(async (_parent, { id, input }, context) => {
-  // Authentication check
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
-  // Prevent non-admins from modifying sensitive fields
-  if (context.user.role !== 'ADMIN') {
-    delete input.role;
-    delete input.accountStatus;
-  }
-  // Authorization: Only allow self-update or admin privilege
-  if (context.user.userId !== id && context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: You can only update your own profile.');
-  }
-  const user = await User.findById(id);
-  if (!user) {
-    throw new Error(`User with ID ${id} not found`);
-  }
-  const sanitizedInput = {};
-  for (const [key, value] of Object.entries(input)) {
-    if (typeof value === 'string') {
-      sanitizedInput[key] = sanitizeString(value.trim());
-    } else if (Array.isArray(value)) {
-      sanitizedInput[key] = value.map(v => typeof v === 'string' ? sanitizeString(v) : v);
-    } else {
-      sanitizedInput[key] = value;
+    // Authentication check
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
     }
-  }
-  return User.findByIdAndUpdate(id, { ...sanitizedInput }, { new: true });
+    // Prevent non-admins from modifying sensitive fields
+    if (context.user.role !== 'ADMIN') {
+        delete input.role;
+        delete input.accountStatus;
+    }
+    // Authorization: Only allow self-update or admin privilege
+    if (context.user.userId !== id && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only update your own profile.');
+    }
+    const user = await User.findById(id);
+    if (!user) {
+        throw new Error(`User with ID ${id} not found`);
+    }
+    const sanitizedInput = {};
+    for (const [key, value] of Object.entries(input)) {
+        if (typeof value === 'string') {
+            sanitizedInput[key] = sanitizeString(value.trim());
+        } else if (Array.isArray(value)) {
+            sanitizedInput[key] = value.map(v => typeof v === 'string' ? sanitizeString(v) : v);
+        } else {
+            sanitizedInput[key] = value;
+        }
+    }
+    return User.findByIdAndUpdate(id, { ...sanitizedInput }, { new: true });
 });
 
 /**
@@ -115,40 +115,40 @@ export const updateUser = withErrorHandling(async (_parent, { id, input }, conte
  * @throws {Error} Throws an error if the user is not authorized to delete the profile.
  */
 export const deleteUser = withErrorHandling(async (_parent, { id }, context) => {
-  // Ensure the user is authenticated
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
-  // Only allow self-deletion or admin privilege
-  if (context.user.userId !== id && context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: You can only delete your own profile or be an admin.');
-  }
-  const result = await User.findByIdAndDelete(id);
-  return Boolean(result);
+    // Ensure the user is authenticated
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    // Only allow self-deletion or admin privilege
+    if (context.user.userId !== id && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only delete your own profile or be an admin.');
+    }
+    const result = await User.findByIdAndDelete(id);
+    return Boolean(result);
 });
 
 export const upsertQuestionnaire = withErrorHandling(async (_parent, { id, input }, context) => {
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
-  if (context.user.userId !== id && context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: You can only update your own questionnaire or be an admin.');
-  }
-  const user = await User.findById(id);
-  if (!user) {
-    throw new Error(`User with ID ${id} not found`);
-  }
-  const sanitizedInput = {};
-  for (const [key, value] of Object.entries(input)) {
-    if (typeof value === 'string') {
-      sanitizedInput[key] = sanitizeString(value.trim());
-    } else if (Array.isArray(value)) {
-      sanitizedInput[key] = value.map(v => typeof v === 'string' ? sanitizeString(v) : v);
-    } else {
-      sanitizedInput[key] = value;
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
     }
-  }
-  user.questionnaire = { ...(user.questionnaire || {}), ...sanitizedInput };
-  await user.save();
-  return user.questionnaire;
+    if (context.user.userId !== id && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only update your own questionnaire or be an admin.');
+    }
+    const user = await User.findById(id);
+    if (!user) {
+        throw new Error(`User with ID ${id} not found`);
+    }
+    const sanitizedInput = {};
+    for (const [key, value] of Object.entries(input)) {
+        if (typeof value === 'string') {
+            sanitizedInput[key] = sanitizeString(value.trim());
+        } else if (Array.isArray(value)) {
+            sanitizedInput[key] = value.map(v => typeof v === 'string' ? sanitizeString(v) : v);
+        } else {
+            sanitizedInput[key] = value;
+        }
+    }
+    user.questionnaire = { ...(user.questionnaire || {}), ...sanitizedInput };
+    await user.save();
+    return user.questionnaire;
 });

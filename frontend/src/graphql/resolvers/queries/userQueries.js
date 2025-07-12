@@ -12,13 +12,13 @@ import { paginateQuery } from '@/utils/pagination.js';
  * @returns {Promise<User|null>} The user document or null.
  */
 export const getUser = withErrorHandling(async (_parent, { id }, context) => {
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
-  if (context.user.userId !== id && context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: You can only get your own profile or be an admin.');
-  }
-  return User.findById(id);
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    if (context.user.userId !== id && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only get your own profile or be an admin.');
+    }
+    return User.findById(id);
 });
 
 /**
@@ -31,10 +31,10 @@ export const getUser = withErrorHandling(async (_parent, { id }, context) => {
  * @returns {Promise<User[]>} An array of user documents.
  */
 export const getUsers = withErrorHandling(async (_parent, { page, limit }, context) => {
-  if (!context.user?.userId || context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: Only admins can get all users.');
-  }
-  return paginateQuery(User, page, limit);
+    if (!context.user?.userId || context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: Only admins can get all users.');
+    }
+    return paginateQuery(User, page, limit);
 });
 
 /**
@@ -47,27 +47,27 @@ export const getUsers = withErrorHandling(async (_parent, { page, limit }, conte
  * @returns {Promise<User[]>} An array of user documents.
  */
 export const searchUsers = withErrorHandling(async (_parent, { keyword }, context) => {
-  if (!context.user?.userId || context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: Only admins can search users.');
-  }
-  return User.find({
-    $or: [
-      { name: { $regex: keyword, $options: 'i' } },
-      { email: { $regex: keyword, $options: 'i' } }
-    ]
-  });
+    if (!context.user?.userId || context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: Only admins can search users.');
+    }
+    return User.find({
+        $or: [
+            { name: { $regex: keyword, $options: 'i' } },
+            { email: { $regex: keyword, $options: 'i' } },
+        ],
+    });
 });
 
 export const getQuestionnaire = withErrorHandling(async (_parent, { id }, context) => {
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
-  if (context.user.userId !== id && context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: You can only access your own questionnaire or be an admin.');
-  }
-  const user = await User.findById(id);
-  if (!user) {
-    throw new Error(`User with ID ${id} not found`);
-  }
-  return user.questionnaire || {};
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    if (context.user.userId !== id && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only access your own questionnaire or be an admin.');
+    }
+    const user = await User.findById(id);
+    if (!user) {
+        throw new Error(`User with ID ${id} not found`);
+    }
+    return user.questionnaire || {};
 });

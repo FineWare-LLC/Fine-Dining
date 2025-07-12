@@ -6,12 +6,12 @@ import '../src/styles/globals.css'; // Adjust this path if your global CSS is el
 
 // You can add any global context providers here
 beforeMount(async ({ App, component }) => {
-  // You can wrap your components with context providers here
-  return ({ 
-    component
-  });
+    // You can wrap your components with context providers here
+    return ({
+        component,
+    });
 });
 
 afterMount(async ({ page }) => {
-  // You can add any cleanup or post-mount actions here
+    // You can add any cleanup or post-mount actions here
 });

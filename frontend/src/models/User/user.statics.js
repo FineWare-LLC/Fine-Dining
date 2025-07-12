@@ -40,7 +40,7 @@ export async function softDeleteUser(userId) {
     return this.findByIdAndUpdate(
         userId,
         { accountStatus: 'DELETED' },
-        { new: true }
+        { new: true },
     );
 }
 
@@ -62,7 +62,7 @@ export async function restoreUser(userId) {
     return this.findByIdAndUpdate(
         userId,
         { accountStatus: 'ACTIVE', deletedAt: null },
-        { new: true }
+        { new: true },
     );
 }
 
@@ -162,7 +162,7 @@ export async function resetLoginAttempts(userId) {
     return this.findByIdAndUpdate(
         userId,
         { loginAttempts: 0, lockUntil: null },
-        { new: true }
+        { new: true },
     );
 }
 
@@ -181,7 +181,7 @@ export async function searchUsers(query) {
     return this.find({
         $or: [
             { name: regex },
-            { email: regex }
-        ]
+            { email: regex },
+        ],
     });
 }

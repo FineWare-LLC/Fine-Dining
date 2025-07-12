@@ -1,7 +1,7 @@
-import highsDefault from 'highs-addon';
 import fs from 'fs';
 import path from 'path';
 import { performance } from 'perf_hooks';
+import highsDefault from 'highs-addon';
 
 const { Solver } = highsDefault;
 
@@ -22,7 +22,7 @@ export async function autoTune(data, buildModel, configFile) {
     const search = [
         { threads: 1 },
         { threads: 2 },
-        { threads: 4 }
+        { threads: 4 },
     ];
 
     let best = null;

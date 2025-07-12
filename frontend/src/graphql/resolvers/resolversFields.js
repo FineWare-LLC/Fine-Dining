@@ -4,9 +4,9 @@
  ****************************************************************/
 
 import { MealModel} from '@/models/Meal';
+import {MealPlanModel} from '@/models/MealPlan';
 import {RecipeModel} from '@/models/Recipe';
-import {RestaurantModel} from "@/models/Restaurant/index.js";
-import {MealPlanModel} from "@/models/MealPlan";
+import {RestaurantModel} from '@/models/Restaurant/index.js';
 import User from '@/models/User/index.js';
 
 /**

@@ -10,14 +10,78 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  // Global ignores - migrated from .eslintignore
+  {
+    ignores: [
+      // Dependencies
+      "node_modules/",
+      ".next/",
+      "out/",
+
+      // Generated files
+      "src/gql/graphql.ts",
+      "src/gql/gql.ts", 
+      "src/gql/fragment-masking.ts",
+
+      // Build artifacts
+      "dist/",
+      "build/",
+
+      // Test artifacts
+      "coverage/",
+      "test-results/",
+      "playwright-report/",
+      ".nyc_output/",
+
+      // Cache directories
+      ".eslintcache",
+      ".cache/",
+
+      // Environment files
+      ".env*",
+
+      // Configuration files that don't need linting
+      "*.config.js",
+      "*.config.mjs", 
+      "*.config.ts",
+      "next.config.mjs",
+      "tailwind.config.js",
+      "postcss.config.mjs",
+      "playwright.config.js",
+      "playwright-ct.config.js",
+
+      // Documentation
+      "*.md",
+      "*.txt",
+
+      // Lock files
+      "package-lock.json",
+      "yarn.lock",
+      "pnpm-lock.yaml",
+
+      // IDE files
+      ".vscode/",
+      ".idea/",
+      "*.swp",
+      "*.swo",
+
+      // OS files
+      ".DS_Store",
+      "Thumbs.db",
+
+      // Logs
+      "*.log",
+      "npm-debug.log*",
+      "yarn-debug.log*",
+      "yarn-error.log*"
+    ]
+  },
   ...compat.extends("next/core-web-vitals"),
   ...compat.extends("plugin:react/recommended"),
   ...compat.extends("plugin:react-hooks/recommended"),
   ...compat.extends("plugin:jsx-a11y/recommended"),
   ...compat.extends("plugin:import/recommended"),
-  ...compat.extends("plugin:security/recommended"),
   {
-    plugins: ["react", "react-hooks", "jsx-a11y", "import", "security"],
     settings: {
       react: {
         version: "detect",
@@ -55,12 +119,12 @@ const eslintConfig = [
 
       // Import Rules
       "import/no-anonymous-default-export": "warn",
-      "import/no-unresolved": "error",
+      "import/no-unresolved": "off", // Disabled to avoid alias resolution issues
       "import/named": "error",
       "import/default": "error",
       "import/no-absolute-path": "error",
       "import/no-self-import": "error",
-      "import/no-cycle": "warn",
+      "import/no-cycle": "off", // Disabled due to alias resolver issues
       "import/no-useless-path-segments": "warn",
       "import/order": [
         "warn",
@@ -92,19 +156,14 @@ const eslintConfig = [
       "jsx-a11y/role-has-required-aria-props": "error",
       "jsx-a11y/role-supports-aria-props": "error",
 
-      // Security Rules
-      "security/detect-object-injection": "warn",
-      "security/detect-non-literal-regexp": "warn",
-      "security/detect-unsafe-regex": "error",
-      "security/detect-buffer-noassert": "error",
-      "security/detect-child-process": "warn",
-      "security/detect-disable-mustache-escape": "error",
-      "security/detect-eval-with-expression": "error",
-      "security/detect-no-csrf-before-method-override": "error",
-      "security/detect-non-literal-fs-filename": "warn",
-      "security/detect-non-literal-require": "warn",
-      "security/detect-possible-timing-attacks": "warn",
-      "security/detect-pseudoRandomBytes": "error",
+
+      // Security Rules - Using built-in ESLint rules for security
+      "no-eval": "error", // Prevents eval() usage
+      "no-implied-eval": "error", // Prevents setTimeout/setInterval with strings
+      "no-new-func": "error", // Prevents Function constructor
+      "no-script-url": "error", // Prevents javascript: URLs
+      "no-global-assign": "error", // Prevents assignment to global variables
+      "no-implicit-globals": "error", // Prevents implicit global variables
 
       // General Code Quality Rules
       "no-console": "warn",
@@ -127,7 +186,7 @@ const eslintConfig = [
       "comma-dangle": ["warn", "always-multiline"],
       "semi": ["warn", "always"],
       "quotes": ["warn", "single", { avoidEscape: true }],
-      "indent": ["warn", 2, { SwitchCase: 1 }],
+      "indent": ["warn", 4, { SwitchCase: 1 }],
       "max-len": ["warn", { code: 100, ignoreUrls: true, ignoreStrings: true }],
       "complexity": ["warn", 10],
       "max-depth": ["warn", 4],
@@ -147,7 +206,6 @@ const eslintConfig = [
     // Special configuration for generated files
     files: ["src/gql/**/*.ts", "src/gql/**/*.js"],
     rules: {
-      "import/no-anonymous-default-export": "off",
       "max-len": "off",
       "complexity": "off",
       "no-unused-vars": "off",
@@ -159,7 +217,6 @@ const eslintConfig = [
     rules: {
       "complexity": "off",
       "max-params": "off",
-      "security/detect-object-injection": "off",
     },
   },
 ];

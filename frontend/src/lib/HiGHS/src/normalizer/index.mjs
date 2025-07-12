@@ -5,10 +5,10 @@
  * @returns {Promise<Array>} Normalized meal data
  */
 export async function run(rawData) {
-    console.log("Running normalizer step...");
+    console.log('Running normalizer step...');
 
     if (!rawData || !Array.isArray(rawData)) {
-        console.error("Error: No valid data provided to normalizer");
+        console.error('Error: No valid data provided to normalizer');
         return [];
     }
 

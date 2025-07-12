@@ -1,8 +1,8 @@
 // src/writer/index.mjs
-import { stringify } from 'csv-stringify/sync';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { stringify } from 'csv-stringify/sync';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,10 +13,10 @@ const __dirname = path.dirname(__filename);
  * @returns {Promise<string>} Path to the written file
  */
 export async function run(sampledData) {
-    console.log("Running writer step...");
+    console.log('Running writer step...');
 
     if (!sampledData || !Array.isArray(sampledData)) {
-        console.error("Error: No valid data provided to writer");
+        console.error('Error: No valid data provided to writer');
         return null;
     }
 
@@ -33,7 +33,7 @@ export async function run(sampledData) {
         // Write the data to CSV
         const csvData = stringify(sampledData, {
             header: true,
-            columns: Object.keys(sampledData[0] || {})
+            columns: Object.keys(sampledData[0] || {}),
         });
 
         await fs.writeFile(outputFile, csvData, 'utf8');
@@ -42,13 +42,13 @@ export async function run(sampledData) {
         const solverFile = path.join(outputDir, 'restaurant_meals_processed.csv');
         await fs.writeFile(solverFile, csvData, 'utf8');
 
-        console.log(`Writer completed. Files written to:`);
+        console.log('Writer completed. Files written to:');
         console.log(`- ${outputFile}`);
         console.log(`- ${solverFile}`);
 
         return solverFile;
     } catch (error) {
-        console.error("Error writing CSV:", error);
+        console.error('Error writing CSV:', error);
         return null;
     }
 }

@@ -11,7 +11,7 @@ import { Review as ReviewModel } from '@/graphql/resolvers/resolversFields.js';
  * @returns {Promise<Object|null>} The review document or null.
  */
 export const getReview = withErrorHandling(async (_parent, { id }, context) => {
-  return ReviewModel.findById(id).populate('user');
+    return ReviewModel.findById(id).populate('user');
 });
 
 /**
@@ -24,5 +24,5 @@ export const getReview = withErrorHandling(async (_parent, { id }, context) => {
  * @returns {Promise<Object[]>} An array of review documents.
  */
 export const getReviewsForTarget = withErrorHandling(async (_parent, { targetType, targetId }, context) => {
-  return ReviewModel.find({ targetType, targetId }).populate('user');
+    return ReviewModel.find({ targetType, targetId }).populate('user');
 });

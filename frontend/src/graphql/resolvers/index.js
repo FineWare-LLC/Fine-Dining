@@ -4,8 +4,8 @@
  * a single export for a GraphQL schema.
  ****************************************************************/
 
-import { Query } from './queries';
 import { Mutation } from './mutations';
+import { Query } from './queries';
 import { MealPlan, Meal, Stats, Review, MenuItem, DateScalar } from './resolversFields';
 
 /**
@@ -23,5 +23,5 @@ export const resolvers = {
     Meal,
     Stats,
     Review,
-    MenuItem
+    MenuItem,
 };

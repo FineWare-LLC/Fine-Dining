@@ -12,15 +12,15 @@ import { paginateQuery } from '@/utils/pagination.js';
  * @returns {Promise<Object|null>} The meal plan document or null.
  */
 export const getMealPlan = withErrorHandling(async (_parent, { id }, context) => {
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
-  const mealPlan = await MealPlanModel.findById(id);
-  if (!mealPlan) throw new Error('Meal plan not found');
-  if (mealPlan.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: You can only get your own meal plans or be an admin.');
-  }
-  return mealPlan.populate('user').populate('meals');
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    const mealPlan = await MealPlanModel.findById(id);
+    if (!mealPlan) throw new Error('Meal plan not found');
+    if (mealPlan.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only get your own meal plans or be an admin.');
+    }
+    return mealPlan.populate('user').populate('meals');
 });
 
 /**
@@ -33,16 +33,16 @@ export const getMealPlan = withErrorHandling(async (_parent, { id }, context) =>
  * @returns {Promise<Object[]>} An array of meal plan documents.
  */
 export const getMealPlans = withErrorHandling(async (_parent, { userId, page, limit }, context) => {
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
-  if (userId && context.user.userId !== userId && context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: You can only get your own meal plans or be an admin.');
-  }
-  const filter = userId ? { user: userId } : {};
-  return paginateQuery(
-    MealPlanModel.find(filter).populate('user'),
-    page,
-    limit
-  );
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    if (userId && context.user.userId !== userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only get your own meal plans or be an admin.');
+    }
+    const filter = userId ? { user: userId } : {};
+    return paginateQuery(
+        MealPlanModel.find(filter).populate('user'),
+        page,
+        limit,
+    );
 });

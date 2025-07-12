@@ -6,11 +6,11 @@ import User from '../models/User/index.js';
  * @returns {Promise<Object|null>}
  */
 export function findUserById(id) {
-  return User.findById(id);
+    return User.findById(id);
 }
 
 const UserRepository = {
-  findUserById,
+    findUserById,
 };
 
 export default UserRepository;

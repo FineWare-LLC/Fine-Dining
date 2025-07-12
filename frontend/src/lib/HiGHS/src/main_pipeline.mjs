@@ -1,15 +1,15 @@
 // src/main_pipeline.mjs
 // Orchestrates the data processing pipeline steps.
 
-import * as fetcher from './fetcher/index.mjs';
-import * as normalizer from './normalizer/index.mjs';
 import * as enricher from './enricher/index.mjs';
+import * as fetcher from './fetcher/index.mjs';
+import * as logger from './logger/index.mjs';
+import * as normalizer from './normalizer/index.mjs';
 import * as sampler from './sampler/index.mjs';
 import * as writer from './writer/index.mjs';
-import * as logger from './logger/index.mjs';
 
 async function runPipeline() {
-    console.log("Starting data pipeline...");
+    console.log('Starting data pipeline...');
 
     try {
         // Start tracking pipeline execution
@@ -47,12 +47,12 @@ async function runPipeline() {
         console.log(`Pipeline completed successfully! Output file: ${outputFile}`);
     } catch (error) {
         logger.recordError('pipeline', error);
-        console.error("Pipeline failed:", error);
+        console.error('Pipeline failed:', error);
         logger.logSummary();
     }
 }
 
 runPipeline().catch(error => {
-    console.error("Uncaught pipeline error:", error);
+    console.error('Uncaught pipeline error:', error);
     process.exit(1);
 });

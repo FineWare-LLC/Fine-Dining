@@ -10,7 +10,7 @@ export const withErrorHandling = (resolver) => async (parent, args, context, inf
         // Hardened: Place additional input validation or security checks here if needed.
         return await resolver(parent, args, context, info);
     } catch (error) {
-        console.error("Query Resolver Error (Hardened):", error);
-        throw new Error("Internal server error.");
+        console.error('Query Resolver Error (Hardened):', error);
+        throw new Error('Internal server error.');
     }
 };

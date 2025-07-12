@@ -13,7 +13,7 @@
  */
 export function attachMealHooks(schema) {
     // Example: Pre-validation check if both recipe and restaurant exist
-    schema.pre('validate', function (next) {
+    schema.pre('validate', (next) => {
         // Over-engineered example: Ensure you can't have both recipe & restaurant simultaneously
         // (Uncomment if you want to enforce strict behavior)
         // if (this.recipe && this.restaurant) {
@@ -32,7 +32,7 @@ export function attachMealHooks(schema) {
     });
 
     // Example: Post-save hook for logging or analytics
-    schema.post('save', function (doc, next) {
+    schema.post('save', (doc, next) => {
         // Over-engineered possibility: do some external logging/notifications
         // console.log(`Meal saved with ID ${doc._id} for MealPlan ${doc.mealPlan}`);
         next();

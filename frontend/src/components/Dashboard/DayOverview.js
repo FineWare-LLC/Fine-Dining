@@ -1,7 +1,7 @@
 // src/components/Dashboard/DayOverview.js
-import React from 'react';
-import PropTypes from 'prop-types';
 import { Box, Card, CardMedia, Typography } from '@mui/material';
+import PropTypes from 'prop-types';
+import React from 'react';
 // Removed style constants/functions
 
 const DayOverview = React.memo(({ meal }) => {

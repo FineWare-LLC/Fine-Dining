@@ -6,20 +6,20 @@
 import mongoose from 'mongoose';
 
 // Enums
-import rolesEnum from './enums/rolesEnum.js';
+import encrypt from 'mongoose-encryption';
 import accountStatusEnum from './enums/accountStatusEnum.js';
-import twoFAMethodEnum from './enums/twoFAMethodEnum.js';
+import rolesEnum from './enums/rolesEnum.js';
 import subscriptionPlanEnum from './enums/subscriptionPlanEnum.js';
+import twoFAMethodEnum from './enums/twoFAMethodEnum.js';
 
 // Sub-schemas
-import paymentMethodSchema from './subSchemas/paymentMethodSchema.js';
-import loginHistorySchema from './subSchemas/loginHistorySchema.js';
 import addressSchema from './subSchemas/addressSchema.js';
+import loginHistorySchema from './subSchemas/loginHistorySchema.js';
+import paymentMethodSchema from './subSchemas/paymentMethodSchema.js';
 import preferencesSchema from './subSchemas/preferencesSchema.js';
 import questionnaireSchema from './subSchemas/questionnaireSchema.js';
 import securityQuestionSchema from './subSchemas/securityQuestionSchema.js';
 import socialAccountSchema from './subSchemas/socialAccountSchema.js';
-import encrypt from 'mongoose-encryption';
 
 // Methods
 import {
@@ -32,10 +32,10 @@ import {
 } from './user.methods.js';
 
 // (Optional) Statics
+import { userPreSave } from './user.preHooks.js';
 import { findByEmailCaseInsensitive, softDeleteUser } from './user.statics.js';
 
 // Pre-hooks
-import { userPreSave } from './user.preHooks.js';
 
 const userSchema = new mongoose.Schema(
     {
@@ -285,7 +285,7 @@ const userSchema = new mongoose.Schema(
         timestamps: true,
         // Configure toJSON to remove sensitive fields before outputting.
         toJSON: {
-            transform: function (doc, ret) {
+            transform (doc, ret) {
                 // Remove sensitive data
                 delete ret.password;
                 delete ret.twoFactorSecret;
@@ -300,7 +300,7 @@ const userSchema = new mongoose.Schema(
                 return ret;
             },
         },
-    }
+    },
 );
 
 /* -------------------------------

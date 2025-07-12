@@ -1,7 +1,7 @@
-import { withErrorHandling } from './baseImports.js';
-import { RestaurantModel } from '@/models/Restaurant/index.js';
 import mongoose from 'mongoose';
+import { withErrorHandling } from './baseImports.js';
 import { sanitizeString } from '@/lib/sanitize.js';
+import { RestaurantModel } from '@/models/Restaurant/index.js';
 
 /**
  * Creates a new restaurant.
@@ -19,42 +19,42 @@ import { sanitizeString } from '@/lib/sanitize.js';
  * @returns {Promise<Object>} The created restaurant.
  */
 export const createRestaurant = withErrorHandling(async (_parent, args, context) => {
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
 
-  // Validate required fields
-  const { restaurantName, address, phone, website, cuisineType, priceRange } = args;
-  if (!restaurantName || typeof restaurantName !== 'string' || !restaurantName.trim()) {
-    throw new Error('Restaurant name is required');
-  }
-  if (!address || typeof address !== 'string' || !address.trim()) {
-    throw new Error('Address is required');
-  }
-  if (!phone || typeof phone !== 'string' || !phone.trim()) {
-    throw new Error('Phone number is required');
-  }
-  if (!website || typeof website !== 'string' || !website.trim()) {
-    throw new Error('Website is required');
-  }
-  if (!cuisineType || typeof cuisineType !== 'string' || !cuisineType.trim()) {
-    throw new Error('Cuisine type is required');
-  }
-  if (!priceRange) {
-    throw new Error('Price range is required');
-  }
+    // Validate required fields
+    const { restaurantName, address, phone, website, cuisineType, priceRange } = args;
+    if (!restaurantName || typeof restaurantName !== 'string' || !restaurantName.trim()) {
+        throw new Error('Restaurant name is required');
+    }
+    if (!address || typeof address !== 'string' || !address.trim()) {
+        throw new Error('Address is required');
+    }
+    if (!phone || typeof phone !== 'string' || !phone.trim()) {
+        throw new Error('Phone number is required');
+    }
+    if (!website || typeof website !== 'string' || !website.trim()) {
+        throw new Error('Website is required');
+    }
+    if (!cuisineType || typeof cuisineType !== 'string' || !cuisineType.trim()) {
+        throw new Error('Cuisine type is required');
+    }
+    if (!priceRange) {
+        throw new Error('Price range is required');
+    }
 
-  // Sanitize inputs
-  const sanitizedData = {
-    restaurantName: sanitizeString(restaurantName.trim()),
-    address: sanitizeString(address.trim()),
-    phone: sanitizeString(phone.trim()),
-    website: sanitizeString(website.trim()),
-    cuisineType: sanitizeString(cuisineType.trim()),
-    priceRange,
-  };
+    // Sanitize inputs
+    const sanitizedData = {
+        restaurantName: sanitizeString(restaurantName.trim()),
+        address: sanitizeString(address.trim()),
+        phone: sanitizeString(phone.trim()),
+        website: sanitizeString(website.trim()),
+        cuisineType: sanitizeString(cuisineType.trim()),
+        priceRange,
+    };
 
-  return RestaurantModel.create(sanitizedData);
+    return RestaurantModel.create(sanitizedData);
 });
 
 /**
@@ -74,57 +74,57 @@ export const createRestaurant = withErrorHandling(async (_parent, args, context)
  * @returns {Promise<Object>} The updated restaurant.
  */
 export const updateRestaurant = withErrorHandling(async (_parent, { id, restaurantName, address, phone, website, cuisineType, priceRange }, context) => {
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
-  if (context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: Only admins can update restaurants.');
-  }
-  // Validate the restaurant ID
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new Error('Invalid restaurant ID');
-  }
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    if (context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: Only admins can update restaurants.');
+    }
+    // Validate the restaurant ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error('Invalid restaurant ID');
+    }
 
-  const updateData = {};
-  if (restaurantName !== undefined) {
-    if (typeof restaurantName !== 'string' || !restaurantName.trim()) {
-      throw new Error('Invalid restaurant name');
+    const updateData = {};
+    if (restaurantName !== undefined) {
+        if (typeof restaurantName !== 'string' || !restaurantName.trim()) {
+            throw new Error('Invalid restaurant name');
+        }
+        updateData.restaurantName = sanitizeString(restaurantName.trim());
     }
-    updateData.restaurantName = sanitizeString(restaurantName.trim());
-  }
-  if (address !== undefined) {
-    if (typeof address !== 'string' || !address.trim()) {
-      throw new Error('Invalid address');
+    if (address !== undefined) {
+        if (typeof address !== 'string' || !address.trim()) {
+            throw new Error('Invalid address');
+        }
+        updateData.address = sanitizeString(address.trim());
     }
-    updateData.address = sanitizeString(address.trim());
-  }
-  if (phone !== undefined) {
-    if (typeof phone !== 'string' || !phone.trim()) {
-      throw new Error('Invalid phone number');
+    if (phone !== undefined) {
+        if (typeof phone !== 'string' || !phone.trim()) {
+            throw new Error('Invalid phone number');
+        }
+        updateData.phone = sanitizeString(phone.trim());
     }
-    updateData.phone = sanitizeString(phone.trim());
-  }
-  if (website !== undefined) {
-    if (typeof website !== 'string' || !website.trim()) {
-      throw new Error('Invalid website URL');
+    if (website !== undefined) {
+        if (typeof website !== 'string' || !website.trim()) {
+            throw new Error('Invalid website URL');
+        }
+        updateData.website = sanitizeString(website.trim());
     }
-    updateData.website = sanitizeString(website.trim());
-  }
-  if (cuisineType !== undefined) {
-    if (typeof cuisineType !== 'string' || !cuisineType.trim()) {
-      throw new Error('Invalid cuisine type');
+    if (cuisineType !== undefined) {
+        if (typeof cuisineType !== 'string' || !cuisineType.trim()) {
+            throw new Error('Invalid cuisine type');
+        }
+        updateData.cuisineType = sanitizeString(cuisineType.trim());
     }
-    updateData.cuisineType = sanitizeString(cuisineType.trim());
-  }
-  if (priceRange !== undefined) {
-    updateData.priceRange = priceRange;
-  }
+    if (priceRange !== undefined) {
+        updateData.priceRange = priceRange;
+    }
 
-  const updatedRestaurant = await RestaurantModel.findByIdAndUpdate(id, updateData, { new: true });
-  if (!updatedRestaurant) {
-    throw new Error('Restaurant not found');
-  }
-  return updatedRestaurant;
+    const updatedRestaurant = await RestaurantModel.findByIdAndUpdate(id, updateData, { new: true });
+    if (!updatedRestaurant) {
+        throw new Error('Restaurant not found');
+    }
+    return updatedRestaurant;
 });
 
 /**
@@ -138,15 +138,15 @@ export const updateRestaurant = withErrorHandling(async (_parent, { id, restaura
  * @returns {Promise<Boolean>} True if deletion was successful.
  */
 export const deleteRestaurant = withErrorHandling(async (_parent, { id }, context) => {
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
-  if (context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: Only admins can delete restaurants.');
-  }
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new Error('Invalid restaurant ID');
-  }
-  const result = await RestaurantModel.findByIdAndDelete(id);
-  return Boolean(result);
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    if (context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: Only admins can delete restaurants.');
+    }
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error('Invalid restaurant ID');
+    }
+    const result = await RestaurantModel.findByIdAndDelete(id);
+    return Boolean(result);
 });

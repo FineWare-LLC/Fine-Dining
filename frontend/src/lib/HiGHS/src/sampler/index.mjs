@@ -5,10 +5,10 @@
  * @returns {Promise<Array>} Sampled meal data
  */
 export async function run(enrichedData) {
-    console.log("Running sampler step...");
+    console.log('Running sampler step...');
 
     if (!enrichedData || !Array.isArray(enrichedData)) {
-        console.error("Error: No valid data provided to sampler");
+        console.error('Error: No valid data provided to sampler');
         return [];
     }
 

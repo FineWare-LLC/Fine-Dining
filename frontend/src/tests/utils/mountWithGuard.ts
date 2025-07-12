@@ -1,5 +1,4 @@
-import { Page } from '@playwright/test';
-import type { Locator } from '@playwright/test';
+import { Page, type Locator } from '@playwright/test';
 import { JSX } from 'react';
 
 /**
@@ -22,11 +21,11 @@ type MountFn = (component: JSX.Element, options?: any) => Promise<Locator>;
  * @returns A Locator pointing to the mounted component
  */
 export async function mountWithGuard(
-  page: Page, // page might not be strictly necessary if only forwarding to mount
-  mount: MountFn,
-  component: JSX.Element,
-  options?: any // Allow passing standard mount options (like props or hooksConfig)
+    page: Page, // page might not be strictly necessary if only forwarding to mount
+    mount: MountFn,
+    component: JSX.Element,
+    options?: any, // Allow passing standard mount options (like props or hooksConfig)
 ): Promise<Locator> {
-  // Remove the incorrect serverOptions block
-  return mount(component, options); // Pass through any valid mount options
+    // Remove the incorrect serverOptions block
+    return mount(component, options); // Pass through any valid mount options
 }

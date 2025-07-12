@@ -1,15 +1,15 @@
-import React from 'react';
-import {Avatar, Box, Card, CardContent, Chip, Grid, Typography} from '@mui/material';
-import WorkIcon from '@mui/icons-material/Work';
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import MonitorWeightIcon from '@mui/icons-material/MonitorWeight';
-import HeightIcon from '@mui/icons-material/Height';
-import WcIcon from '@mui/icons-material/Wc';
-import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import HeightIcon from '@mui/icons-material/Height';
+import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
+import MonitorWeightIcon from '@mui/icons-material/MonitorWeight';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import WcIcon from '@mui/icons-material/Wc';
+import WorkIcon from '@mui/icons-material/Work';
+import {Avatar, Box, Card, CardContent, Chip, Grid, Typography} from '@mui/material';
+import React from 'react';
+import CalorieProgressRing from './CalorieProgressRing';
 import ProfileDetailItem from './ProfileDetailItem';
 import {generateInitialsAvatar} from '@/utils/avatar';
-import CalorieProgressRing from './CalorieProgressRing';
 
 export default function ProfileDetails({user}) {
     if (!user) return null;
@@ -28,9 +28,9 @@ export default function ProfileDetails({user}) {
                         />
                     </Grid>
                     <Grid item>
-            <CalorieProgressRing userId={user.id} dailyCalories={user.dailyCalories} />
-          </Grid>
-          <Grid item xs>
+                        <CalorieProgressRing userId={user.id} dailyCalories={user.dailyCalories} />
+                    </Grid>
+                    <Grid item xs>
                         <Typography variant="h6" fontWeight={600}>{user.name}</Typography>
                         <Typography variant="body2" color="text.secondary">{user.email}</Typography>
                         <Grid container spacing={1} sx={{mt: 1}}>
@@ -43,9 +43,9 @@ export default function ProfileDetails({user}) {
                                         color: 'common.white',
                                         boxShadow: 1,
                                         '@keyframes fadeIn': {
-                                            from: {opacity: 0}, to: {opacity: 1}
+                                            from: {opacity: 0}, to: {opacity: 1},
                                         },
-                                        animation: 'fadeIn 0.3s ease-in'
+                                        animation: 'fadeIn 0.3s ease-in',
                                     }}
                                 />
                             </Grid>
@@ -58,9 +58,9 @@ export default function ProfileDetails({user}) {
                                         color: 'common.white',
                                         boxShadow: 1,
                                         '@keyframes fadeIn': {
-                                            from: {opacity: 0}, to: {opacity: 1}
+                                            from: {opacity: 0}, to: {opacity: 1},
                                         },
-                                        animation: 'fadeIn 0.3s ease-in'
+                                        animation: 'fadeIn 0.3s ease-in',
                                     }}
                                 />
                             </Grid>
@@ -69,7 +69,7 @@ export default function ProfileDetails({user}) {
                 </Grid>
 
                 <Box component="dl"
-                     sx={{mt: 2, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 2}}>
+                    sx={{mt: 2, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 2}}>
                     <ProfileDetailItem
                         icon={<WorkIcon fontSize="small"/>}
                         term="Role"
@@ -85,7 +85,7 @@ export default function ProfileDetails({user}) {
                 </Box>
 
                 <Box component="dl"
-                     sx={{mt: 2, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 2}}>
+                    sx={{mt: 2, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 2}}>
                     <ProfileDetailItem
                         icon={<MonitorWeightIcon fontSize="small"/>}
                         term="Weight"

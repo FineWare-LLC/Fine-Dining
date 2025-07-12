@@ -1,8 +1,7 @@
 /**
  * DailySummary — all components now share the dynamic tint colour.
  */
-import React, {useState, useEffect, useMemo} from 'react';
-import PropTypes from 'prop-types';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import {
     Box,
     Card,
@@ -15,14 +14,15 @@ import {
     IconButton,
     useTheme,
 } from '@mui/material';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import PropTypes from 'prop-types';
+import React, {useState, useEffect, useMemo} from 'react';
 
 /* ─── ColourStops Atom ────────────────────────────────────────────── */
 const COLOUR_STOPS = [
-    { t: 0,   rgb: [255, 204, 128] },
+    { t: 0, rgb: [255, 204, 128] },
     { t: 0.3, rgb: [ 98, 195, 254] },
     { t: 0.6, rgb: [ 34, 129, 199] },
-    { t: 1,   rgb: [125,  80, 163] },
+    { t: 1, rgb: [125, 80, 163] },
 ];
 const interpolateColour = (p) => {
     const idx = COLOUR_STOPS.findIndex((s) => p <= s.t);
@@ -39,8 +39,8 @@ const GRADIENT = `linear-gradient(90deg, ${COLOUR_STOPS
 /* ─── LoaderSkeleton Molecule ────────────────────────────────────── */
 const LoaderSkeleton = () => (
     <Box sx={{ mt: 2 }}>
-        <Skeleton animation="pulse" variant="rectangular" height={80}  sx={{ borderRadius: 22 }} />
-        <Skeleton animation="pulse" variant="rectangular" height={6}   sx={{ my: 1, borderRadius: 3 }} />
+        <Skeleton animation="pulse" variant="rectangular" height={80} sx={{ borderRadius: 22 }} />
+        <Skeleton animation="pulse" variant="rectangular" height={6} sx={{ my: 1, borderRadius: 3 }} />
         <Skeleton animation="pulse" variant="rectangular" height={220} sx={{ borderRadius: 2 }} />
     </Box>
 );
@@ -225,7 +225,7 @@ export default function DailySummary({ meals, loading, onAddMeal, nutritionTarge
 
     const list = useMemo(
         () => (Array.isArray(meals) ? meals : []),
-        [meals]
+        [meals],
     );
     const total = list.length;
     const baseColour = interpolateColour(0);
@@ -247,11 +247,11 @@ export default function DailySummary({ meals, loading, onAddMeal, nutritionTarge
     const totals = useMemo(
         () => list.reduce((acc, m) => ({
             calories: acc.calories + (m.calories || 0),
-            protein:  acc.protein  + (m.protein  || 0),
+            protein:  acc.protein + (m.protein || 0),
             carbohydrates: acc.carbohydrates + (m.carbohydrates || 0),
             fat: acc.fat + (m.fat || 0),
         }), { calories: 0, protein: 0, carbohydrates: 0, fat: 0 }),
-        [list]
+        [list],
     );
 
     const remaining = useMemo(() => ({
@@ -303,7 +303,7 @@ DailySummary.propTypes = {
             carbohydrates:PropTypes.number,
             fat:          PropTypes.number,
             imageUrl:     PropTypes.string.isRequired,
-        })
+        }),
     ),
     nutritionTargets: PropTypes.shape({
         calories:     PropTypes.number,

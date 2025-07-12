@@ -1,7 +1,7 @@
 // src/components/Dashboard/WelcomeBanner.js
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { Box, Typography } from '@mui/material';
+import PropTypes from 'prop-types';
+import React, { useState, useEffect } from 'react';
 // Removed useTheme and style constants/functions
 
 const WelcomeBanner = React.memo(({ userName }) => {

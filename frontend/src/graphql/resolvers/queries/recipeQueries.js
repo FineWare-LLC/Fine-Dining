@@ -12,7 +12,7 @@ import { paginateQuery } from '@/utils/pagination.js';
  * @returns {Promise<Object|null>} The recipe document or null.
  */
 export const getRecipe = withErrorHandling(async (_parent, { id }, context) => {
-  return RecipeModel.findById(id).populate('author');
+    return RecipeModel.findById(id).populate('author');
 });
 
 /**
@@ -25,7 +25,7 @@ export const getRecipe = withErrorHandling(async (_parent, { id }, context) => {
  * @returns {Promise<Object[]>} An array of recipe documents.
  */
 export const getRecipes = withErrorHandling(async (_parent, { page, limit }, context) => {
-  return paginateQuery(RecipeModel, page, limit);
+    return paginateQuery(RecipeModel, page, limit);
 });
 
 /**
@@ -38,7 +38,7 @@ export const getRecipes = withErrorHandling(async (_parent, { page, limit }, con
  * @returns {Promise<Object[]>} An array of matching recipes.
  */
 export const searchRecipes = withErrorHandling(async (_parent, { keyword }, context) => {
-  return RecipeModel.find({
-    recipeName: { $regex: keyword, $options: 'i' }
-  });
+    return RecipeModel.find({
+        recipeName: { $regex: keyword, $options: 'i' },
+    });
 });

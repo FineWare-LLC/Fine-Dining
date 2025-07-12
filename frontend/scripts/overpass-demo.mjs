@@ -11,8 +11,8 @@ dotenv.config({ path: '.env.local' });
 const [,, latArg, lonArg, radiusArg = '1000', keyword = ''] = process.argv;
 
 if (!latArg || !lonArg) {
-  console.error('Usage: node scripts/overpass-demo.mjs <lat> <lon> [radius] [keyword]');
-  process.exit(1);
+    console.error('Usage: node scripts/overpass-demo.mjs <lat> <lon> [radius] [keyword]');
+    process.exit(1);
 }
 
 const lat = parseFloat(latArg);
@@ -20,15 +20,15 @@ const lon = parseFloat(lonArg);
 const radius = parseInt(radiusArg, 10);
 
 const provider = new OverpassProvider(
-  process.env.OVERPASS_URL || 'https://overpass-api.de/api/interpreter'
+    process.env.OVERPASS_URL || 'https://overpass-api.de/api/interpreter',
 );
 
 provider.findNearby(lat, lon, radius, keyword)
-  .then((restaurants) => {
-    console.log(JSON.stringify(restaurants, null, 2));
-  })
-  .catch((err) => {
-    console.error('Error querying Overpass:', err.message);
-    process.exit(1);
-  });
+    .then((restaurants) => {
+        console.log(JSON.stringify(restaurants, null, 2));
+    })
+    .catch((err) => {
+        console.error('Error querying Overpass:', err.message);
+        process.exit(1);
+    });
 

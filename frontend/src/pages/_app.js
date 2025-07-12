@@ -12,21 +12,20 @@
  * Note: For server-side environments, consider alternative token retrieval methods as localStorage is only available client-side.
  */
 
-import React from 'react';
-import PropTypes from 'prop-types';
-import Head from 'next/head';
-import { ThemeProvider, CssBaseline } from '@mui/material';
 import { ApolloProvider, ApolloClient, InMemoryCache, HttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ToastProvider } from '../context/ToastContext';
-
-import createEmotionCache from '../utils/createEmotionCache'; // [cite: frontend/src/utils/createEmotionCache.js]
 import { CacheProvider } from '@emotion/react';
-import useCustomTheme from '../theme/useCustomTheme'; // [cite: frontend/src/theme/useCustomTheme.js]
-import { ThemePreferenceProvider } from '../context/ThemePreferenceContext';
-import { AuthProvider } from '../context/AuthContext';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import Head from 'next/head';
+import PropTypes from 'prop-types';
+import React from 'react';
 import ToastStack from '../components/ToastStack';
+import { AuthProvider } from '../context/AuthContext';
+import { ThemePreferenceProvider } from '../context/ThemePreferenceContext';
+import { ToastProvider } from '../context/ToastContext';
+import useCustomTheme from '../theme/useCustomTheme'; // [cite: frontend/src/theme/useCustomTheme.js]
+import createEmotionCache from '../utils/createEmotionCache'; // [cite: frontend/src/utils/createEmotionCache.js]
 
 /**
  * Creates an authenticated Apollo Link that attaches the authorization token to every request.
@@ -42,7 +41,7 @@ const createAuthLink = setContext((_, { headers }) => {
     return {
         headers: {
             ...headers,
-            authorization: authToken ? `Bearer ${authToken}` : "",
+            authorization: authToken ? `Bearer ${authToken}` : '',
         },
     };
 });

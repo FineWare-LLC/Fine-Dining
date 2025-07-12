@@ -6,18 +6,18 @@ import { chromium } from 'playwright';
 // This test assumes the Next.js dev server is running via Playwright config.
 
 test('profile page CLS below 0.1', async () => {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-  await page.goto('http://localhost:3000/profile');
+    const browser = await chromium.launch();
+    const page = await browser.newPage();
+    await page.goto('http://localhost:3000/profile');
 
-  const port = new URL(browser.wsEndpoint()).port;
-  const { lhr } = await lighthouse('http://localhost:3000/profile', {
-    port,
-    output: 'json',
-    logLevel: 'error',
-    onlyCategories: ['performance'],
-  });
-  const cls = lhr.audits['cumulative-layout-shift'].numericValue;
-  await browser.close();
-  expect(cls).toBeLessThan(0.1);
+    const {port} = new URL(browser.wsEndpoint());
+    const { lhr } = await lighthouse('http://localhost:3000/profile', {
+        port,
+        output: 'json',
+        logLevel: 'error',
+        onlyCategories: ['performance'],
+    });
+    const cls = lhr.audits['cumulative-layout-shift'].numericValue;
+    await browser.close();
+    expect(cls).toBeLessThan(0.1);
 });

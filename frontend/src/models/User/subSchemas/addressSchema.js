@@ -16,7 +16,7 @@ const addressSchema = new mongoose.Schema({
         type: String, default: '', trim: true,
     }, postalCode: {
         type: String, default: '', trim: true, validate: {
-            validator: function (v) {
+            validator (v) {
                 // Allow empty postal codes or ones that contain alphanumeric characters,
                 // spaces, or dashes.
                 return v === '' || /^[a-zA-Z0-9\s\-]+$/.test(v);
@@ -25,7 +25,7 @@ const addressSchema = new mongoose.Schema({
     }, country: {
         type: String, default: '', trim: true, // Convert country code to uppercase
         set: (val) => (val ? val.trim().toUpperCase() : val), validate: {
-            validator: function (v) {
+            validator (v) {
                 // Allow empty strings or a two-letter ISO country code
                 return v === '' || /^[A-Z]{2}$/.test(v);
             }, message: props => `${props.value} is not a valid ISO country code!`,

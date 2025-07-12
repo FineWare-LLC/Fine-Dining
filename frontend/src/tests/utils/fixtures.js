@@ -8,19 +8,19 @@
  * @returns {Object} Mock user object
  */
 export function createMockUser(overrides = {}) {
-  return {
-    id: 'user-123',
-    name: 'Test User',
-    email: 'test@example.com',
-    role: 'user',
-    avatarUrl: 'https://example.com/avatar.jpg',
-    createdAt: new Date('2024-01-01'),
-    preferences: {
-      theme: 'light',
-      notifications: true,
-    },
-    ...overrides,
-  };
+    return {
+        id: 'user-123',
+        name: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        avatarUrl: 'https://example.com/avatar.jpg',
+        createdAt: new Date('2024-01-01'),
+        preferences: {
+            theme: 'light',
+            notifications: true,
+        },
+        ...overrides,
+    };
 }
 
 /**
@@ -29,12 +29,12 @@ export function createMockUser(overrides = {}) {
  * @returns {Object} Mock admin user object
  */
 export function createMockAdmin(overrides = {}) {
-  return createMockUser({
-    role: 'admin',
-    name: 'Admin User',
-    email: 'admin@example.com',
-    ...overrides,
-  });
+    return createMockUser({
+        role: 'admin',
+        name: 'Admin User',
+        email: 'admin@example.com',
+        ...overrides,
+    });
 }
 
 /**
@@ -43,28 +43,28 @@ export function createMockAdmin(overrides = {}) {
  * @returns {Object} Mock meal plan object
  */
 export function createMockMealPlan(overrides = {}) {
-  return {
-    id: 'meal-plan-123',
-    name: 'Test Meal Plan',
-    description: 'A test meal plan for testing purposes',
-    meals: [
-      {
-        id: 'meal-1',
-        name: 'Breakfast',
-        calories: 350,
-        ingredients: ['eggs', 'toast', 'orange juice'],
-      },
-      {
-        id: 'meal-2',
-        name: 'Lunch',
-        calories: 500,
-        ingredients: ['chicken', 'rice', 'vegetables'],
-      },
-    ],
-    totalCalories: 850,
-    createdAt: new Date('2024-01-01'),
-    ...overrides,
-  };
+    return {
+        id: 'meal-plan-123',
+        name: 'Test Meal Plan',
+        description: 'A test meal plan for testing purposes',
+        meals: [
+            {
+                id: 'meal-1',
+                name: 'Breakfast',
+                calories: 350,
+                ingredients: ['eggs', 'toast', 'orange juice'],
+            },
+            {
+                id: 'meal-2',
+                name: 'Lunch',
+                calories: 500,
+                ingredients: ['chicken', 'rice', 'vegetables'],
+            },
+        ],
+        totalCalories: 850,
+        createdAt: new Date('2024-01-01'),
+        ...overrides,
+    };
 }
 
 /**
@@ -74,11 +74,11 @@ export function createMockMealPlan(overrides = {}) {
  * @returns {Object} Mock GraphQL response
  */
 export function createMockGraphQLResponse(data, errors = null) {
-  const response = { data };
-  if (errors) {
-    response.errors = errors;
-  }
-  return response;
+    const response = { data };
+    if (errors) {
+        response.errors = errors;
+    }
+    return response;
 }
 
 /**
@@ -87,16 +87,16 @@ export function createMockGraphQLResponse(data, errors = null) {
  * @returns {string} Mock JWT token
  */
 export function createMockAuthToken(payload = {}) {
-  const defaultPayload = {
-    userId: 'user-123',
-    email: 'test@example.com',
-    role: 'user',
-    exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour from now
-    ...payload,
-  };
-  
-  // This is a mock token for testing - not a real JWT
-  return `mock.jwt.token.${btoa(JSON.stringify(defaultPayload))}`;
+    const defaultPayload = {
+        userId: 'user-123',
+        email: 'test@example.com',
+        role: 'user',
+        exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour from now
+        ...payload,
+    };
+
+    // This is a mock token for testing - not a real JWT
+    return `mock.jwt.token.${btoa(JSON.stringify(defaultPayload))}`;
 }
 
 /**
@@ -105,18 +105,18 @@ export function createMockAuthToken(payload = {}) {
  * @returns {Object} Mock form data
  */
 export function createMockFormData(overrides = {}) {
-  return {
-    name: 'Test Name',
-    email: 'test@example.com',
-    password: 'TestPassword123!',
-    confirmPassword: 'TestPassword123!',
-    age: 25,
-    height: 170,
-    weight: 70,
-    activityLevel: 'moderate',
-    dietaryRestrictions: [],
-    ...overrides,
-  };
+    return {
+        name: 'Test Name',
+        email: 'test@example.com',
+        password: 'TestPassword123!',
+        confirmPassword: 'TestPassword123!',
+        age: 25,
+        height: 170,
+        weight: 70,
+        activityLevel: 'moderate',
+        dietaryRestrictions: [],
+        ...overrides,
+    };
 }
 
 /**
@@ -126,12 +126,12 @@ export function createMockFormData(overrides = {}) {
  * @returns {Object} Mock error response
  */
 export function createMockError(message = 'Test error', status = 400) {
-  return {
-    message,
-    status,
-    code: 'TEST_ERROR',
-    timestamp: new Date().toISOString(),
-  };
+    return {
+        message,
+        status,
+        code: 'TEST_ERROR',
+        timestamp: new Date().toISOString(),
+    };
 }
 
 /**
@@ -140,12 +140,12 @@ export function createMockError(message = 'Test error', status = 400) {
  * @returns {Object} Mock component props
  */
 export function createMockProps(overrides = {}) {
-  return {
-    user: createMockUser(),
-    onSubmit: () => {},
-    onCancel: () => {},
-    loading: false,
-    error: null,
-    ...overrides,
-  };
+    return {
+        user: createMockUser(),
+        onSubmit: () => {},
+        onCancel: () => {},
+        loading: false,
+        error: null,
+        ...overrides,
+    };
 }

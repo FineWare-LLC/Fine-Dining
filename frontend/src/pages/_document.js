@@ -8,24 +8,23 @@
  */
 
 
-import React from 'react';
 import { Html, Head, Main, NextScript } from 'next/document';
+import React from 'react';
 
 export default function Document(props = {}) {
-  const { locale, __NEXT_DATA__ } = props;
-  const lang = locale || 'en';
-  const dir = ['ar', 'he', 'fa'].includes(lang) ? 'rtl' : 'ltr';
-  const pathSpecificClass =
+    const { locale, __NEXT_DATA__ } = props;
+    const lang = locale || 'en';
+    const dir = ['ar', 'he', 'fa'].includes(lang) ? 'rtl' : 'ltr';
+    const pathSpecificClass =
     __NEXT_DATA__?.page === '/signin' ? 'body-signin-page' : '';
 
-  return (
-    <Html lang={lang} dir={dir} style={{ height: '100%' }}>
-      <Head>
-      </Head>
-      <body className={pathSpecificClass} style={{ height: '100%', margin: 0 }}>
-        <Main />
-        <NextScript />
-      </body>
-    </Html>
-  );
+    return (
+        <Html lang={lang} dir={dir} style={{ height: '100%' }}>
+            <Head />
+            <body className={pathSpecificClass} style={{ height: '100%', margin: 0 }}>
+                <Main />
+                <NextScript />
+            </body>
+        </Html>
+    );
 }

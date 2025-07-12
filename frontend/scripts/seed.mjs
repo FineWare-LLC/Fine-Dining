@@ -4,21 +4,21 @@
  *              Run via: `node scripts/seed.mjs`
  */
 
+import {faker} from '@faker-js/faker/locale/en';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import {faker} from '@faker-js/faker/locale/en';
 
 /* Adjust if your dbConnect is in a different path or uses a different name. */
 import {dbConnect} from '../src/lib/dbConnect.js';
 
 /* Mongoose Models */
-import User from "../src/models/User/index.js";
-import {RecipeModel} from "../src/models/Recipe/index.js";
-import {RestaurantModel} from "../src/models/Restaurant/index.js";
-import {MealPlanModel} from "../src/models/MealPlan/index.js";
-import {MealModel} from "../src/models/Meal/index.js";
-import {StatsModel} from "../src/models/Stats/index.js";
-import {Review as ReviewModel} from "../src/models/Review/index.js";
+import {MealModel} from '../src/models/Meal/index.js';
+import {MealPlanModel} from '../src/models/MealPlan/index.js';
+import {RecipeModel} from '../src/models/Recipe/index.js';
+import {RestaurantModel} from '../src/models/Restaurant/index.js';
+import {Review as ReviewModel} from '../src/models/review/review.model.js';
+import {StatsModel} from '../src/models/Stats/index.js';
+import User from '../src/models/User/index.js';
 
 // Try to load both .env and .env.local files
 dotenv.config({path: '.env'});
@@ -96,7 +96,7 @@ async function seedDatabase() {
     }
 
     // Clear existing collections to avoid duplicates
-    await Promise.all([User.deleteMany({}), RecipeModel.deleteMany({}), RestaurantModel.deleteMany({}), MealPlanModel.deleteMany({}), MealModel.deleteMany({}), StatsModel.deleteMany({}), ReviewModel.deleteMany({}),]);
+    await Promise.all([User.deleteMany({}), RecipeModel.deleteMany({}), RestaurantModel.deleteMany({}), MealPlanModel.deleteMany({}), MealModel.deleteMany({}), StatsModel.deleteMany({}), ReviewModel.deleteMany({})]);
     console.log('Databases cleared. Generating data...');
 
     /* ---------------------------------------------
@@ -130,11 +130,11 @@ async function seedDatabase() {
     let restaurantDocs = [];
     for (let i = 0; i < NUM_RESTAURANTS; i++) {
         restaurantDocs.push({
-            restaurantName: faker.company.name() + ' ' + faker.company.buzzNoun(),
+            restaurantName: `${faker.company.name()} ${faker.company.buzzNoun()}`,
             address: faker.location.streetAddress(),
             phone: faker.phone.number(),
             website: faker.internet.url(),
-            cuisineType: faker.helpers.arrayElement(['Italian', 'Chinese', 'Mexican', 'American', 'French',]),
+            cuisineType: faker.helpers.arrayElement(['Italian', 'Chinese', 'Mexican', 'American', 'French']),
             priceRange: faker.helpers.arrayElement(['$', '$$', '$$$']),
             averageRating: 0,
             ratingCount: 0,
@@ -242,19 +242,19 @@ async function seedDatabase() {
                 // Add nutrition object with required fields
                 nutrition: {
                     carbohydrates: carbs,
-                    protein: protein,
-                    fat: fat,
-                    sodium: sodium
+                    protein,
+                    fat,
+                    sodium,
                 },
                 // Add allergens array (randomly include some allergens)
-                allergens: faker.datatype.boolean(0.3) ? 
-                    [faker.helpers.arrayElement(['Gluten', 'Dairy', 'Nuts', 'Soy', 'Eggs', 'Fish', 'Shellfish'])] : 
+                allergens: faker.datatype.boolean(0.3) ?
+                    [faker.helpers.arrayElement(['Gluten', 'Dairy', 'Nuts', 'Soy', 'Eggs', 'Fish', 'Shellfish'])] :
                     [],
                 nutritionFacts: JSON.stringify({
                     calories: faker.number.int({min: 200, max: 1000}),
-                    fat: fat,
-                    protein: protein,
-                    carbs: carbs,
+                    fat,
+                    protein,
+                    carbs,
                 }),
                 portionSize: generatePortionSize(),
                 notes: faker.lorem.sentence(), // if you want to store notes
@@ -406,7 +406,7 @@ async function recalcAverageRatings(targetType, targetModel) {
             $group: {
                 _id: '$targetId', count: {$sum: 1}, avgRating: {$avg: '$rating'},
             },
-        },]);
+        }]);
 
         const statsMap = {};
         for (const r of reviews) {

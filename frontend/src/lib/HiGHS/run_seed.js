@@ -3,10 +3,10 @@
 
 // Import the seed_database.mjs file using dynamic import
 import('./seed_database.mjs')
-  .then(() => {
-    console.log('Database seeding completed');
-  })
-  .catch((error) => {
-    console.error('Error seeding database:', error);
-    process.exit(1);
-  });
+    .then(() => {
+        console.log('Database seeding completed');
+    })
+    .catch((error) => {
+        console.error('Error seeding database:', error);
+        process.exit(1);
+    });

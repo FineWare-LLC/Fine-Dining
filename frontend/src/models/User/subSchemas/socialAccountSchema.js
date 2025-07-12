@@ -34,7 +34,7 @@ const socialAccountSchema = new mongoose.Schema(
             trim: true,
         },
     },
-    { _id: false }
+    { _id: false },
 );
 
 export default socialAccountSchema;

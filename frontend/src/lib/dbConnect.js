@@ -4,7 +4,7 @@
 import mongoose from 'mongoose';
 
 // Read from environment
-const MONGODB_URI = process.env.MONGODB_URI;
+const {MONGODB_URI} = process.env;
 
 // Throw if there's no URI
 if (!MONGODB_URI) {

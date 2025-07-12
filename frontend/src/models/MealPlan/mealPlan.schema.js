@@ -57,7 +57,7 @@ const mealPlanSchema = new mongoose.Schema(
     },
     {
         timestamps: true,
-    }
+    },
 );
 
 export default mealPlanSchema;

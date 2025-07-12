@@ -18,6 +18,6 @@ export function attachMealIndexes(schema) {
         {
             unique: true,
             name: 'idx_unique_meal_per_type_per_date',
-        }
+        },
     );
 }

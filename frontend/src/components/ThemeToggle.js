@@ -1,7 +1,7 @@
-import React from 'react';
-import { ToggleButtonGroup, ToggleButton } from '@mui/material';
-import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import { ToggleButtonGroup, ToggleButton } from '@mui/material';
+import React from 'react';
 import { useThemePreference } from '../context/ThemePreferenceContext';
 
 export default function ThemeToggle(props) {

@@ -16,10 +16,10 @@ export {
     /**
      * @description The Restaurant Mongoose model.
      */
-        RestaurantModel,
+    RestaurantModel,
 
     /**
      * @description The Mongoose schema for Restaurant, if needed for advanced customization.
      */
-        restaurantSchema
+    restaurantSchema,
 };

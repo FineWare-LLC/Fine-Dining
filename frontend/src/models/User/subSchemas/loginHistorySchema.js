@@ -11,7 +11,7 @@ const loginHistorySchema = new mongoose.Schema(
         userAgent: { type: String, default: '' },
         timestamp: { type: Date, default: Date.now },
     },
-    { _id: false }
+    { _id: false },
 );
 
 export default loginHistorySchema;

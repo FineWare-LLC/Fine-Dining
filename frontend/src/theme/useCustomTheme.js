@@ -3,11 +3,11 @@
  * @fileoverview A custom hook that manages Material UI theme (light/dark).
  */
 
-import { useMemo } from 'react';
 import { createTheme } from '@mui/material';
-import lightThemeOptions from './lightTheme';
-import darkThemeOptions from './darkTheme';
+import { useMemo } from 'react';
 import { useThemePreference } from '../context/ThemePreferenceContext';
+import darkThemeOptions from './darkTheme';
+import lightThemeOptions from './lightTheme';
 
 /**
  * useCustomTheme - Hook to choose between light or dark theme

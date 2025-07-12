@@ -21,7 +21,7 @@ const directories = [
     'src/writer',
     'src/logger',
     'src/solver',
-    'tools' // Ensure tools directory exists if build-meal-csv.mjs wasn't already in it
+    'tools', // Ensure tools directory exists if build-meal-csv.mjs wasn't already in it
 ];
 
 const pipelineSteps = [
@@ -30,51 +30,51 @@ const pipelineSteps = [
     'enricher',
     'sampler',
     'writer',
-    'logger'
+    'logger',
 ];
 
 const filesToCreate = {
     // Placeholder scripts for each pipeline step
     ...Object.fromEntries(pipelineSteps.map(step => [
         `src/${step}/index.mjs`,
-        `// src/${step}/index.mjs\n// Placeholder for the ${step} step.\n\nconsole.log("Running ${step} step...");\n\n// TODO: Implement ${step} logic\n`
+        `// src/${step}/index.mjs\n// Placeholder for the ${step} step.\n\nconsole.log("Running ${step} step...");\n\n// TODO: Implement ${step} logic\n`,
     ])),
     // Placeholder for the main pipeline orchestration script
-    'src/main_pipeline.mjs': `// src/main_pipeline.mjs\n// Orchestrates the data processing pipeline steps.\n\nimport * as fetcher from './fetcher/index.mjs';\nimport * as normalizer from './normalizer/index.mjs';\nimport * as enricher from './enricher/index.mjs';\nimport * as sampler from './sampler/index.mjs';\nimport * as writer from './writer/index.mjs';\nimport * as logger from './logger/index.mjs';\n\nasync function runPipeline() {\n    console.log("Starting data pipeline...");\n    // const rawData = await fetcher.run();\n    // const normalizedData = await normalizer.run(rawData);\n    // const enrichedData = await enricher.run(normalizedData); // Optional\n    // const sampledData = await sampler.run(enrichedData);\n    // await writer.run(sampledData);\n    // logger.logSummary();\n    console.log("Pipeline finished (placeholders executed).");\n}\n\nrunPipeline().catch(console.error);\n`,
+    'src/main_pipeline.mjs': '// src/main_pipeline.mjs\n// Orchestrates the data processing pipeline steps.\n\nimport * as fetcher from \'./fetcher/index.mjs\';\nimport * as normalizer from \'./normalizer/index.mjs\';\nimport * as enricher from \'./enricher/index.mjs\';\nimport * as sampler from \'./sampler/index.mjs\';\nimport * as writer from \'./writer/index.mjs\';\nimport * as logger from \'./logger/index.mjs\';\n\nasync function runPipeline() {\n    console.log("Starting data pipeline...");\n    // const rawData = await fetcher.run();\n    // const normalizedData = await normalizer.run(rawData);\n    // const enrichedData = await enricher.run(normalizedData); // Optional\n    // const sampledData = await sampler.run(enrichedData);\n    // await writer.run(sampledData);\n    // logger.logSummary();\n    console.log("Pipeline finished (placeholders executed).");\n}\n\nrunPipeline().catch(console.error);\n',
     // Basic package.json
     'package.json': JSON.stringify({
-        name: "highs-meal-pipeline",
-        version: "1.0.0",
-        description: "Data pipeline for processing and optimizing meal plans using HiGHS.",
-        type: "module", // Use ES modules
-        main: "src/main_pipeline.mjs",
+        name: 'highs-meal-pipeline',
+        version: '1.0.0',
+        description: 'Data pipeline for processing and optimizing meal plans using HiGHS.',
+        type: 'module', // Use ES modules
+        main: 'src/main_pipeline.mjs',
         scripts: {
-            "start": "node src/main_pipeline.mjs",
-            "setup": "node setup_pipeline.mjs",
-            "build-csv": "node tools/build-meal-csv.mjs",
-            "solve": "node src/solver/index.mjs"
+            'start': 'node src/main_pipeline.mjs',
+            'setup': 'node setup_pipeline.mjs',
+            'build-csv': 'node tools/build-meal-csv.mjs',
+            'solve': 'node src/solver/index.mjs',
         },
-        author: "",
-        license: "ISC",
+        author: '',
+        license: 'ISC',
         dependencies: {
             // Add initial dependencies - highs-addon might need manual setup
             // "highs-addon": "latest", // Add if you install it via npm
-            "csv-parse": "^5.5.6", // From build-meal-csv.mjs
-            "csv-stringify": "^6.5.0", // From build-meal-csv.mjs
-            "node-fetch": "^3.3.2" // From build-meal-csv.mjs
-        }
-    }, null, 2) // Pretty print JSON
+            'csv-parse': '^5.5.6', // From build-meal-csv.mjs
+            'csv-stringify': '^6.5.0', // From build-meal-csv.mjs
+            'node-fetch': '^3.3.2', // From build-meal-csv.mjs
+        },
+    }, null, 2), // Pretty print JSON
 };
 
 const filesToMove = [
     {
         source: 'restaurant_meals_8000_full.csv',
-        destination: 'data/raw/restaurant_meals_8000_full.csv'
+        destination: 'data/raw/restaurant_meals_8000_full.csv',
     },
     {
         source: 'index.js', // Original solver script
-        destination: 'src/solver/index.mjs' // Rename to .mjs for consistency
-    }
+        destination: 'src/solver/index.mjs', // Rename to .mjs for consistency
+    },
     // Keep tools/build-meal-csv.mjs where it is, just ensure tools dir exists
 ];
 
@@ -139,28 +139,28 @@ async function moveFile(sourcePath, destPath) {
 
 // --- Main Execution ---
 async function setup() {
-    console.log("🚀 Starting project setup...");
+    console.log('🚀 Starting project setup...');
 
     // 1. Create Directories
-    console.log("\n--- Creating Directories ---");
+    console.log('\n--- Creating Directories ---');
     for (const dir of directories) {
         await ensureDir(dir);
     }
 
     // 2. Create Placeholder Files
-    console.log("\n--- Creating Placeholder Files ---");
+    console.log('\n--- Creating Placeholder Files ---');
     for (const [filePath, content] of Object.entries(filesToCreate)) {
         await createFile(filePath, content);
     }
 
     // 3. Move Existing Files
-    console.log("\n--- Moving Existing Files ---");
+    console.log('\n--- Moving Existing Files ---');
     for (const { source, destination } of filesToMove) {
         await moveFile(source, destination);
     }
 
-    console.log("\n🎉 Project setup complete!");
-    console.log("Next steps:");
+    console.log('\n🎉 Project setup complete!');
+    console.log('Next steps:');
     console.log("1. Run 'npm install' or 'yarn install' to install dependencies.");
     console.log("2. Implement the logic in the placeholder scripts within the 'src' directory.");
     console.log("3. Run the main pipeline using 'npm start' or 'node src/main_pipeline.mjs'.");
@@ -168,6 +168,6 @@ async function setup() {
 }
 
 setup().catch(err => {
-    console.error("\n❌ Setup failed:", err);
+    console.error('\n❌ Setup failed:', err);
     process.exit(1);
 });

@@ -7,6 +7,6 @@ import StatsModel from './stats.model.js';
 import statsSchema from './stats.schema.js';
 
 export {
-    StatsModel,  // The Mongoose model
+    StatsModel, // The Mongoose model
     statsSchema, // The raw schema (if needed directly)
 };

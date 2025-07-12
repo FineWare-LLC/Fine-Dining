@@ -19,18 +19,18 @@ import { ApolloServer, ApolloServerErrorCode } from '@apollo/server';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { startServerAndCreateNextHandler } from '@as-integrations/next';
 import jwt from 'jsonwebtoken';
-import { setSecurityHeaders, setCORSHeaders, assignRequestId } from '@/utils/headers';
-import { typeDefs } from '@/graphql/typeDefs'; // [cite: frontend/src/graphql/typeDefs.js]
 import { resolvers } from '@/graphql/resolvers'; // [cite: frontend/src/graphql/resolvers/index.js]
+import { typeDefs } from '@/graphql/typeDefs'; // [cite: frontend/src/graphql/typeDefs.js]
 import { dbConnect } from '@/lib/dbConnect'; // [cite: frontend/src/lib/dbConnect.js]
 import logger from '@/lib/logger.js';
 import { requestCounter, errorCounter } from '@/lib/metrics.js';
+import { setSecurityHeaders, setCORSHeaders, assignRequestId } from '@/utils/headers';
 
 // --- Configuration ---
 const isProduction = process.env.NODE_ENV === 'production';
 const JWT_ALGORITHM = 'HS256';
 const MAX_REQUEST_BODY_SIZE = 1 * 1024 * 1024; // 1 MB
-const JWT_SECRET = process.env.JWT_SECRET;
+const {JWT_SECRET} = process.env;
 const JWT_ISSUER = process.env.JWT_ISSUER || undefined;
 const JWT_AUDIENCE = process.env.JWT_AUDIENCE || undefined;
 // --- Early Failure Check ---
@@ -259,7 +259,7 @@ export default async function handler(req, res) {
         res.statusCode = 415;
         res.setHeader('Content-Type', 'application/json');
         return res.end(
-            JSON.stringify({ errors: [{ message: 'Unsupported Media Type. Expected application/json.' }] })
+            JSON.stringify({ errors: [{ message: 'Unsupported Media Type. Expected application/json.' }] }),
         );
     }
 
@@ -303,7 +303,7 @@ export default async function handler(req, res) {
                     res.statusCode = 400;
                     res.setHeader('Content-Type', 'application/json');
                     return res.end(
-                        JSON.stringify({ errors: [{ message: 'Invalid JSON format in request body.' }] })
+                        JSON.stringify({ errors: [{ message: 'Invalid JSON format in request body.' }] }),
                     );
                 }
             }

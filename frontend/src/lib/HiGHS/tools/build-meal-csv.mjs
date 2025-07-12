@@ -2,10 +2,10 @@
 // tools/build-meal-csv.mjs
 // Comprehensive 8,000-meal CSV builder with full nutrition and variety
 
-import { parse } from 'csv-parse/sync';
-import { stringify } from 'csv-stringify/sync';
 import fs from 'fs/promises';
 import path from 'path';
+import { parse } from 'csv-parse/sync';
+import { stringify } from 'csv-stringify/sync';
 import fetch from 'node-fetch';
 
 const OUT_CSV = 'restaurant_meals_8000_full.csv';
@@ -42,10 +42,10 @@ async function fetchCSV(url) {
  * @returns {Array} Array of objects representing meals with detailed nutritional data
  */
 async function buildMeals(sources, targetCount) {
-    let allMeals = [];
+    const allMeals = [];
 
     // Fetch and merge data from each source
-    for (let source of sources) {
+    for (const source of sources) {
         const meals = await fetchCSV(source);
         allMeals.push(...meals);
     }

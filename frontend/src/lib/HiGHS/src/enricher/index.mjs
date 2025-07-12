@@ -5,10 +5,10 @@
  * @returns {Promise<Array>} Enriched meal data
  */
 export async function run(normalizedData) {
-    console.log("Running enricher step...");
+    console.log('Running enricher step...');
 
     if (!normalizedData || !Array.isArray(normalizedData)) {
-        console.error("Error: No valid data provided to enricher");
+        console.error('Error: No valid data provided to enricher');
         return [];
     }
 

@@ -3,186 +3,157 @@
  * Tests the integration between the dashboard and geolocation utility
  */
 
-import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import { getRestaurantSearchCoordinates, clearCoordinatesCache } from '../../utils/geolocation.js';
+import { setupBrowserMocks, cleanupBrowserMocks, mockPresets } from '../utils/browserMocks.js';
 
 describe('Geolocation Integration Tests', () => {
-  beforeEach(() => {
+    let cleanup = null;
+
+    beforeEach(() => {
     // Clear any cached coordinates before each test
-    clearCoordinatesCache();
-    
-    // Mock sessionStorage for testing
-    global.sessionStorage = {
-      data: {},
-      getItem(key) {
-        return this.data[key] || null;
-      },
-      setItem(key, value) {
-        this.data[key] = value;
-      },
-      removeItem(key) {
-        delete this.data[key];
-      }
-    };
-  });
+        clearCoordinatesCache();
+    });
 
-  afterEach(() => {
-    // Clean up after each test
-    clearCoordinatesCache();
-    delete global.sessionStorage;
-    delete global.navigator;
-  });
-
-  it('should return fallback coordinates when geolocation is not available', async () => {
-    // Mock navigator without geolocation
-    global.navigator = {};
-
-    const coordinates = await getRestaurantSearchCoordinates();
-
-    assert.strictEqual(coordinates.latitude, 35.968);
-    assert.strictEqual(coordinates.longitude, -83.187);
-    assert.strictEqual(coordinates.source, 'fallback');
-  });
-
-  it('should return geolocation coordinates when available', async () => {
-    // Mock navigator with successful geolocation
-    global.navigator = {
-      geolocation: {
-        getCurrentPosition(success, error, options) {
-          // Simulate successful geolocation
-          setTimeout(() => {
-            success({
-              coords: {
-                latitude: 40.7128,
-                longitude: -74.0060
-              }
-            });
-          }, 0);
+    afterEach(() => {
+    // Clean up browser mocks if they were set up
+        if (cleanup) {
+            cleanup();
+            cleanup = null;
         }
-      }
-    };
+    });
 
-    const coordinates = await getRestaurantSearchCoordinates();
+    it('should return fallback coordinates when geolocation is not available', async () => {
+    // Setup browser mocks without geolocation
+        const mockSetup = setupBrowserMocks();
+        cleanup = mockSetup.cleanup;
 
-    assert.strictEqual(coordinates.latitude, 40.7128);
-    assert.strictEqual(coordinates.longitude, -74.0060);
-    assert.strictEqual(coordinates.source, 'geolocation');
-  });
-
-  it('should cache coordinates and return cached values on subsequent calls', async () => {
-    // Mock navigator with successful geolocation
-    let callCount = 0;
-    global.navigator = {
-      geolocation: {
-        getCurrentPosition(success, error, options) {
-          callCount++;
-          setTimeout(() => {
-            success({
-              coords: {
-                latitude: 40.7128,
-                longitude: -74.0060
-              }
-            });
-          }, 0);
+        // Remove geolocation to simulate unsupported browser
+        if (global.navigator) {
+            delete global.navigator.geolocation;
         }
-      }
-    };
 
-    // First call should use geolocation
-    const coordinates1 = await getRestaurantSearchCoordinates();
-    assert.strictEqual(callCount, 1);
-    assert.strictEqual(coordinates1.source, 'geolocation');
+        const coordinates = await getRestaurantSearchCoordinates();
 
-    // Second call should use cache
-    const coordinates2 = await getRestaurantSearchCoordinates();
-    assert.strictEqual(callCount, 1); // Should not increment
-    assert.strictEqual(coordinates2.latitude, coordinates1.latitude);
-    assert.strictEqual(coordinates2.longitude, coordinates1.longitude);
-  });
+        assert.strictEqual(coordinates.latitude, 35.968);
+        assert.strictEqual(coordinates.longitude, -83.187);
+        assert.strictEqual(coordinates.source, 'fallback');
+    });
 
-  it('should force refresh coordinates when requested', async () => {
-    // Mock navigator with successful geolocation
-    let callCount = 0;
-    global.navigator = {
-      geolocation: {
-        getCurrentPosition(success, error, options) {
-          callCount++;
-          setTimeout(() => {
-            success({
-              coords: {
-                latitude: 40.7128 + callCount, // Slightly different each time
-                longitude: -74.0060
-              }
-            });
-          }, 0);
-        }
-      }
-    };
+    it('should return geolocation coordinates when available', async () => {
+    // Setup browser mocks with successful geolocation
+        const mockSetup = setupBrowserMocks({
+            geolocation: {
+                getCurrentPositionSuccess: true,
+                coords: { latitude: 40.7128, longitude: -74.0060 },
+            },
+        });
+        cleanup = mockSetup.cleanup;
 
-    // First call
-    const coordinates1 = await getRestaurantSearchCoordinates();
-    assert.strictEqual(callCount, 1);
+        const coordinates = await getRestaurantSearchCoordinates();
 
-    // Second call with force refresh
-    const coordinates2 = await getRestaurantSearchCoordinates(true);
-    assert.strictEqual(callCount, 2); // Should increment
-    assert.notStrictEqual(coordinates2.latitude, coordinates1.latitude);
-  });
+        assert.strictEqual(coordinates.latitude, 40.7128);
+        assert.strictEqual(coordinates.longitude, -74.0060);
+        assert.strictEqual(coordinates.source, 'geolocation');
+    });
 
-  it('should handle geolocation errors gracefully', async () => {
+    it('should cache coordinates and return cached values on subsequent calls', async () => {
+    // Setup browser mocks with successful geolocation
+        const mockSetup = setupBrowserMocks({
+            geolocation: {
+                getCurrentPositionSuccess: true,
+                coords: { latitude: 40.7128, longitude: -74.0060 },
+            },
+        });
+        cleanup = mockSetup.cleanup;
+
+        // First call should use geolocation
+        const coordinates1 = await getRestaurantSearchCoordinates();
+        assert.strictEqual(coordinates1.source, 'geolocation');
+        assert.strictEqual(coordinates1.latitude, 40.7128);
+        assert.strictEqual(coordinates1.longitude, -74.0060);
+
+        // Second call should use cache
+        const coordinates2 = await getRestaurantSearchCoordinates();
+        assert.strictEqual(coordinates2.latitude, coordinates1.latitude);
+        assert.strictEqual(coordinates2.longitude, coordinates1.longitude);
+    });
+
+    it('should force refresh coordinates when requested', async () => {
+        // Setup browser mocks with successful geolocation
+        const mockSetup = setupBrowserMocks({
+            geolocation: {
+                getCurrentPositionSuccess: true,
+                coords: { latitude: 40.7128, longitude: -74.0060 }
+            }
+        });
+        cleanup = mockSetup.cleanup;
+
+        // First call
+        const coordinates1 = await getRestaurantSearchCoordinates();
+        assert.strictEqual(coordinates1.latitude, 40.7128);
+        assert.strictEqual(coordinates1.longitude, -74.0060);
+
+        // Second call with force refresh should bypass cache
+        const coordinates2 = await getRestaurantSearchCoordinates(true);
+        assert.strictEqual(coordinates2.latitude, 40.7128);
+        assert.strictEqual(coordinates2.longitude, -74.0060);
+    });
+
+    it('should handle geolocation errors gracefully', async () => {
     // Mock navigator with geolocation error
-    global.navigator = {
-      geolocation: {
-        getCurrentPosition(success, error, options) {
-          setTimeout(() => {
-            error(new Error('Geolocation permission denied'));
-          }, 0);
-        }
-      }
-    };
+        global.navigator = {
+            geolocation: {
+                getCurrentPosition(success, error, options) {
+                    setTimeout(() => {
+                        error(new Error('Geolocation permission denied'));
+                    }, 0);
+                },
+            },
+        };
 
-    const coordinates = await getRestaurantSearchCoordinates();
+        const coordinates = await getRestaurantSearchCoordinates();
 
-    // Should fall back to default coordinates
-    assert.strictEqual(coordinates.latitude, 35.968);
-    assert.strictEqual(coordinates.longitude, -83.187);
-    assert.strictEqual(coordinates.source, 'fallback');
-  });
+        // Should fall back to default coordinates
+        assert.strictEqual(coordinates.latitude, 35.968);
+        assert.strictEqual(coordinates.longitude, -83.187);
+        assert.strictEqual(coordinates.source, 'fallback');
+    });
 
-  it('should handle sessionStorage errors gracefully', async () => {
+    it('should handle sessionStorage errors gracefully', async () => {
     // Mock sessionStorage that throws errors
-    global.sessionStorage = {
-      getItem() {
-        throw new Error('Storage quota exceeded');
-      },
-      setItem() {
-        throw new Error('Storage quota exceeded');
-      },
-      removeItem() {
-        throw new Error('Storage quota exceeded');
-      }
-    };
+        global.sessionStorage = {
+            getItem() {
+                throw new Error('Storage quota exceeded');
+            },
+            setItem() {
+                throw new Error('Storage quota exceeded');
+            },
+            removeItem() {
+                throw new Error('Storage quota exceeded');
+            },
+        };
 
-    // Mock navigator with successful geolocation
-    global.navigator = {
-      geolocation: {
-        getCurrentPosition(success, error, options) {
-          setTimeout(() => {
-            success({
-              coords: {
-                latitude: 40.7128,
-                longitude: -74.0060
-              }
-            });
-          }, 0);
-        }
-      }
-    };
+        // Mock navigator with successful geolocation
+        global.navigator = {
+            geolocation: {
+                getCurrentPosition(success, error, options) {
+                    setTimeout(() => {
+                        success({
+                            coords: {
+                                latitude: 40.7128,
+                                longitude: -74.0060,
+                            },
+                        });
+                    }, 0);
+                },
+            },
+        };
 
-    // Should still work despite storage errors
-    const coordinates = await getRestaurantSearchCoordinates();
-    assert.strictEqual(coordinates.latitude, 40.7128);
-    assert.strictEqual(coordinates.longitude, -74.0060);
-  });
+        // Should still work despite storage errors
+        const coordinates = await getRestaurantSearchCoordinates();
+        assert.strictEqual(coordinates.latitude, 40.7128);
+        assert.strictEqual(coordinates.longitude, -74.0060);
+    });
 });

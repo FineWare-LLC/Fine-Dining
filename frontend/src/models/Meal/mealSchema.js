@@ -101,5 +101,5 @@ export const mealSchema = new Schema(
     },
     {
         timestamps: true,
-    }
+    },
 );

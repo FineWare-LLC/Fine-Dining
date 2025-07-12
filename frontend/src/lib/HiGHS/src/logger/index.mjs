@@ -6,7 +6,7 @@ const stats = {
     startTime: null,
     endTime: null,
     steps: {},
-    errors: []
+    errors: [],
 };
 
 /**
@@ -21,7 +21,7 @@ export function startStep(step, inputCount) {
 
     stats.steps[step] = {
         startTime: new Date(),
-        inputCount
+        inputCount,
     };
 
     console.log(`[LOGGER] Starting ${step} step with ${inputCount} items`);
@@ -56,7 +56,7 @@ export function recordError(step, error) {
         step,
         time: new Date(),
         message: error.message,
-        stack: error.stack
+        stack: error.stack,
     });
 
     console.error(`[LOGGER] Error in ${step} step:`, error.message);
@@ -66,28 +66,28 @@ export function recordError(step, error) {
  * Logs a summary of the pipeline run
  */
 export function logSummary() {
-    console.log("Running logger step...");
+    console.log('Running logger step...');
 
     stats.endTime = new Date();
     const totalDuration = stats.endTime - (stats.startTime || stats.endTime);
 
-    console.log("\n=== PIPELINE SUMMARY ===");
+    console.log('\n=== PIPELINE SUMMARY ===');
     console.log(`Total duration: ${totalDuration}ms (${(totalDuration/1000).toFixed(2)}s)`);
 
-    console.log("\nStep statistics:");
+    console.log('\nStep statistics:');
     Object.entries(stats.steps).forEach(([step, stepStats]) => {
         console.log(`- ${step}: ${stepStats.inputCount || 0} → ${stepStats.outputCount || 0} items (${stepStats.duration || 0}ms)`);
     });
 
     console.log(`\nErrors: ${stats.errors.length}`);
     if (stats.errors.length > 0) {
-        console.log("First 5 errors:");
+        console.log('First 5 errors:');
         stats.errors.slice(0, 5).forEach((error, i) => {
             console.log(`  ${i+1}. [${error.step}] ${error.message}`);
         });
     }
 
-    console.log("=======================");
+    console.log('=======================');
 
     return stats;
 }

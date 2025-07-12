@@ -6,7 +6,7 @@ import { MealModel } from '../models/Meal/index.js';
  * @returns {Promise<number>}
  */
 export function countMeals(query = {}) {
-  return MealModel.countDocuments(query);
+    return MealModel.countDocuments(query);
 }
 
 /**
@@ -15,7 +15,7 @@ export function countMeals(query = {}) {
  * @returns {Promise<Array>}
  */
 export function findMeals(query = {}) {
-  return MealModel.find(query);
+    return MealModel.find(query);
 }
 
 /**
@@ -24,13 +24,13 @@ export function findMeals(query = {}) {
  * @returns {Promise<Object|null>}
  */
 export function findMealById(id) {
-  return MealModel.findById(id);
+    return MealModel.findById(id);
 }
 
 const MealRepository = {
-  countMeals,
-  findMeals,
-  findMealById,
+    countMeals,
+    findMeals,
+    findMealById,
 };
 
 export default MealRepository;

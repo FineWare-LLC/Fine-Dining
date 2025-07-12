@@ -98,7 +98,7 @@ test.describe('Sign In Page - Comprehensive Tests', () => {
 
     test('should display appropriately on a mobile viewport', async ({ browser }) => {
         const context = await browser.newContext({
-            viewport: { width: 375, height: 812 } // iPhone X dimensions
+            viewport: { width: 375, height: 812 }, // iPhone X dimensions
         });
         const page = await context.newPage();
         await page.goto('http://localhost:3000/signin');

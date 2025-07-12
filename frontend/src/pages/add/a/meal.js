@@ -1,15 +1,15 @@
+import { useMutation } from '@apollo/client';
+import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
+import Chip from '@mui/material/Chip';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import styles from '../../../styles/MealEntryForm.module.css';
-import { useMutation } from '@apollo/client';
 import { CreateMealDocument } from '@/gql/graphql';
 
 // --- MUI Imports ---
-import TextField from '@mui/material/TextField';
-import Chip from '@mui/material/Chip';
-import Typography from '@mui/material/Typography';
 // Import createFilterOptions for default filtering + freeSolo handling
-import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
-import ALLERGENS_LIST from "@/lib/Words/Allergens.js";
+import ALLERGENS_LIST from '@/lib/Words/Allergens.js';
 
 // Debounce helper function (remains the same)
 function debounce(func, wait) { /* ... */ let timeout; return function executedFunction(...args) { const later = () => { clearTimeout(timeout); func(...args); }; clearTimeout(timeout); timeout = setTimeout(later, wait); }; }
@@ -23,13 +23,13 @@ function debounce(func, wait) { /* ... */ let timeout; return function executedF
 const isNonNegativeNumber = (value) => { /* ... */ const num = Number(value); return value === '' || (!isNaN(num) && num >= 0); };
 const isPositiveNumber = (value) => { /* ... */ const num = Number(value); return value === '' || (!isNaN(num) && num > 0); };
 const validate = (data) => { /* ... keep existing validation ... */
-    let formErrors = {};
+    const formErrors = {};
     if (!data.restaurantName?.trim()) formErrors.restaurantName = 'Restaurant Name is required.'; else if (data.restaurantName.length > 100) formErrors.restaurantName = 'Max 100 characters.';
     if (!data.mealName?.trim()) formErrors.mealName = 'Meal Name is required.'; else if (data.mealName.length > 150) formErrors.mealName = 'Max 150 characters.';
     if (data.estPrice && !isPositiveNumber(data.estPrice)) formErrors.estPrice = 'Price must be a positive number.';
     const numericFields = ['calories', 'protein', 'carbohydrates', 'fat', 'sodium']; numericFields.forEach(field => { if (data[field] && !isNonNegativeNumber(data[field])) { const fieldName = field.charAt(0).toUpperCase() + field.slice(1); formErrors[field] = `${fieldName} must be a non-negative number.`; } });
     if (data.allergens && data.allergens.some(a => typeof a === 'string' && a.length > 50)) { formErrors.allergens = 'Individual allergens should not exceed 50 characters.'; }
-    if (data.website) { formErrors.honeypot = 'Bot detected.'; console.warn("Honeypot field filled!"); }
+    if (data.website) { formErrors.honeypot = 'Bot detected.'; console.warn('Honeypot field filled!'); }
     return formErrors;
 };
 
@@ -65,7 +65,7 @@ const filterOptionsWithFreeSolo = (options, params) => {
 function MealEntryForm() {
     const [formData, setFormData] = useState({
         restaurantName: '', mealName: '', estPrice: '', calories: '', protein: '',
-        carbohydrates: '', fat: '', sodium: '', allergens: [], website: ''
+        carbohydrates: '', fat: '', sodium: '', allergens: [], website: '',
     });
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,7 +77,7 @@ function MealEntryForm() {
             alert('Meal created successfully!');
             setFormData({
                 restaurantName: '', mealName: '', estPrice: '', calories: '', protein: '',
-                carbohydrates: '', fat: '', sodium: '', allergens: [], website: ''
+                carbohydrates: '', fat: '', sodium: '', allergens: [], website: '',
             });
             setErrors({});
             setIsSubmitting(false);
@@ -86,10 +86,10 @@ function MealEntryForm() {
             console.error('Error creating meal:', error);
             setErrors(prevErrors => ({
                 ...prevErrors,
-                submit: error.message || 'An error occurred while creating the meal.'
+                submit: error.message || 'An error occurred while creating the meal.',
             }));
             setIsSubmitting(false);
-        }
+        },
     });
 
     // Debounced validation (remains the same)
@@ -99,7 +99,7 @@ function MealEntryForm() {
                 setErrors(prevErrors => ({...prevErrors, ...validate(data)}));
             }
         }, 500),
-        [isSubmitting]
+        [isSubmitting],
     );
 
     // Effect for debounced validation (remains the same)
@@ -136,9 +136,9 @@ function MealEntryForm() {
 
             // Prepare variables for GraphQL mutation
             const variables = {
-                mealPlanId: "YOUR_MEAL_PLAN_ID", // This should be dynamically set based on the current user's meal plan
+                mealPlanId: 'YOUR_MEAL_PLAN_ID', // This should be dynamically set based on the current user's meal plan
                 date: new Date().toISOString(), // This should be set based on user input or context
-                mealType: "DINNER", // This should be set based on user input or context
+                mealType: 'DINNER', // This should be set based on user input or context
                 mealName: submissionData.mealName,
                 price: parseFloat(submissionData.estPrice) || 0,
                 ingredients: submissionData.ingredients || [],
@@ -146,9 +146,9 @@ function MealEntryForm() {
                     carbohydrates: parseFloat(submissionData.carbohydrates) || 0,
                     protein: parseFloat(submissionData.protein) || 0,
                     fat: parseFloat(submissionData.fat) || 0,
-                    sodium: parseFloat(submissionData.sodium) || 0
+                    sodium: parseFloat(submissionData.sodium) || 0,
                 },
-                allergens: submissionData.allergens || []
+                allergens: submissionData.allergens || [],
             };
 
             // Call the mutation
@@ -159,7 +159,7 @@ function MealEntryForm() {
             setIsSubmitting(false);
             const firstErrorField = Object.keys(formErrors)[0];
             if (firstErrorField && formRef.current) {
-                const el = formRef.current.querySelector(`[name="${firstErrorField}"]`) || 
+                const el = formRef.current.querySelector(`[name="${firstErrorField}"]`) ||
                           formRef.current.querySelector('#allergens-autocomplete-input');
                 if (el) el.focus();
             }
@@ -176,7 +176,7 @@ function MealEntryForm() {
 
 
             {/* Standard Fields */}
-            {Object.keys(formData).filter(key => key !== 'website' && key !== 'allergens').map((key) => { /* ... Renders standard inputs ... */ const labelText = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()); let inputType="text"; let step, min, maxLength, placeholder=''; if (['estPrice','calories','protein','carbohydrates','fat','sodium'].includes(key)) { inputType="number"; min="0"; step=(key === 'estPrice')?"0.01":"any"; } if (key === 'restaurantName') maxLength=100; if (key === 'mealName') maxLength=150; const isRequired = ['restaurantName','mealName'].includes(key); const errorId=`${key}-error`; return (<div key={key} className={styles['meal-form__group']}> <label htmlFor={key} className={styles['meal-form__label']}>{labelText}{isRequired?'*':''}:</label> <input type={inputType} id={key} name={key} className={`${styles['meal-form__input']} ${errors[key]?styles['meal-form__input--error']:''}`} value={formData[key]} onChange={handleChange} required={isRequired} step={step} min={min} maxLength={maxLength} placeholder={placeholder} aria-describedby={errors[key]?errorId:undefined} aria-invalid={!!errors[key]} /> {errors[key] && <p id={errorId} className={styles['meal-form__error']} role="alert">{errors[key]}</p>} </div>); })}
+            {Object.keys(formData).filter(key => key !== 'website' && key !== 'allergens').map((key) => { /* ... Renders standard inputs ... */ const labelText = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()); let inputType='text'; let step, min, maxLength, placeholder=''; if (['estPrice','calories','protein','carbohydrates','fat','sodium'].includes(key)) { inputType='number'; min='0'; step=(key === 'estPrice')?'0.01':'any'; } if (key === 'restaurantName') maxLength=100; if (key === 'mealName') maxLength=150; const isRequired = ['restaurantName','mealName'].includes(key); const errorId=`${key}-error`; return (<div key={key} className={styles['meal-form__group']}> <label htmlFor={key} className={styles['meal-form__label']}>{labelText}{isRequired?'*':''}:</label> <input type={inputType} id={key} name={key} className={`${styles['meal-form__input']} ${errors[key]?styles['meal-form__input--error']:''}`} value={formData[key]} onChange={handleChange} required={isRequired} step={step} min={min} maxLength={maxLength} placeholder={placeholder} aria-describedby={errors[key]?errorId:undefined} aria-invalid={!!errors[key]} /> {errors[key] && <p id={errorId} className={styles['meal-form__error']} role="alert">{errors[key]}</p>} </div>); })}
 
             {/* --- Allergen Selector Section --- */}
             <div className={styles['meal-form__group']}>

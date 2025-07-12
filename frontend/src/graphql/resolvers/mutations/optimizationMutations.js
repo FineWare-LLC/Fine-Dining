@@ -1,6 +1,6 @@
 /**
  * optimizationMutations.js
- * 
+ *
  * GraphQL resolvers for meal plan optimization mutations.
  */
 
@@ -22,24 +22,24 @@ import OptimizationService from '@/services/OptimizationService.js';
  * @throws {Error} If the optimization fails to find a feasible solution.
  */
 export const generateOptimizedMealPlan = withErrorHandling(async (
-  _parent, 
-  { selectedMealIds, customNutritionTargets }, 
-  context
+    _parent,
+    { selectedMealIds, customNutritionTargets },
+    context,
 ) => {
-  // Authentication check
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
+    // Authentication check
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
 
-  // Get the user ID from the context
-  const userId = context.user.userId;
+    // Get the user ID from the context
+    const {userId} = context.user;
 
-  // Generate the optimized meal plan with optional selected meals and custom nutrition targets
-  const result = await OptimizationService.generateOptimizedMealPlan(
-    userId, 
-    selectedMealIds, 
-    customNutritionTargets
-  );
+    // Generate the optimized meal plan with optional selected meals and custom nutrition targets
+    const result = await OptimizationService.generateOptimizedMealPlan(
+        userId,
+        selectedMealIds,
+        customNutritionTargets,
+    );
 
-  return result;
+    return result;
 });

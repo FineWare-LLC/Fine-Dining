@@ -1,8 +1,8 @@
-import { withErrorHandling } from './baseImports.js';
-import User from '@/models/User/index.js';
-import { RecipeModel } from '@/models/Recipe/index.js';
-import { sanitizeString } from '@/lib/sanitize.js';
 import mongoose from 'mongoose';
+import { withErrorHandling } from './baseImports.js';
+import { sanitizeString } from '@/lib/sanitize.js';
+import { RecipeModel } from '@/models/Recipe/index.js';
+import User from '@/models/User/index.js';
 
 /**
  * Creates a new recipe.
@@ -24,88 +24,88 @@ import mongoose from 'mongoose';
  * @returns {Promise<Object>} The created recipe.
  */
 export const createRecipe = withErrorHandling(async (_parent, { input }, context) => {
-  // Ensure the user is authenticated
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
+    // Ensure the user is authenticated
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
 
-  // Destructure and validate required fields
-  let {
-    recipeName,
-    ingredients,
-    instructions,
-    prepTime,
-    difficulty,
-    nutritionFacts,
-    tags,
-    images,
-    estimatedCost,
-    authorId
-  } = input;
+    // Destructure and validate required fields
+    let {
+        recipeName,
+        ingredients,
+        instructions,
+        prepTime,
+        difficulty,
+        nutritionFacts,
+        tags,
+        images,
+        estimatedCost,
+        authorId,
+    } = input;
 
-  if (!recipeName || typeof recipeName !== 'string' || !recipeName.trim()) {
-    throw new Error('A valid recipe name is required.');
-  }
-  recipeName = sanitizeString(recipeName.trim());
+    if (!recipeName || typeof recipeName !== 'string' || !recipeName.trim()) {
+        throw new Error('A valid recipe name is required.');
+    }
+    recipeName = sanitizeString(recipeName.trim());
 
-  if (!Array.isArray(ingredients) || ingredients.length === 0) {
-    throw new Error('At least one ingredient is required.');
-  }
-  ingredients = ingredients.map(i => sanitizeString(i));
+    if (!Array.isArray(ingredients) || ingredients.length === 0) {
+        throw new Error('At least one ingredient is required.');
+    }
+    ingredients = ingredients.map(i => sanitizeString(i));
 
-  if (!instructions || typeof instructions !== 'string' || !instructions.trim()) {
-    throw new Error('Instructions are required.');
-  }
-  instructions = sanitizeString(instructions.trim());
+    if (!instructions || typeof instructions !== 'string' || !instructions.trim()) {
+        throw new Error('Instructions are required.');
+    }
+    instructions = sanitizeString(instructions.trim());
 
-  if (typeof prepTime !== 'number' || prepTime <= 0) {
-    throw new Error('Preparation time must be a positive number.');
-  }
+    if (typeof prepTime !== 'number' || prepTime <= 0) {
+        throw new Error('Preparation time must be a positive number.');
+    }
 
-  if (!difficulty || typeof difficulty !== 'string' || !difficulty.trim()) {
-    throw new Error('Difficulty is required.');
-  }
-  difficulty = sanitizeString(difficulty.trim());
+    if (!difficulty || typeof difficulty !== 'string' || !difficulty.trim()) {
+        throw new Error('Difficulty is required.');
+    }
+    difficulty = sanitizeString(difficulty.trim());
 
-  // Optional: Validate nutritionFacts, tags, images, estimatedCost if needed
-  // For example, ensure estimatedCost is a non-negative number:
-  if (typeof estimatedCost !== 'number' || estimatedCost < 0) {
-    throw new Error('Estimated cost must be a non-negative number.');
-  }
+    // Optional: Validate nutritionFacts, tags, images, estimatedCost if needed
+    // For example, ensure estimatedCost is a non-negative number:
+    if (typeof estimatedCost !== 'number' || estimatedCost < 0) {
+        throw new Error('Estimated cost must be a non-negative number.');
+    }
 
-  // Authorization: if authorId is provided, only allow if the requester is ADMIN or the id matches
-  if (authorId && authorId !== context.user.userId && context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: You can only create recipes as yourself.');
-  }
+    // Authorization: if authorId is provided, only allow if the requester is ADMIN or the id matches
+    if (authorId && authorId !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only create recipes as yourself.');
+    }
 
-  // Determine the author: if ADMIN and authorId provided, use that; otherwise, use the logged-in user
-  const author = context.user.role === 'ADMIN' && authorId
-      ? await User.findById(authorId)
-      : await User.findById(context.user.userId);
+    // Determine the author: if ADMIN and authorId provided, use that; otherwise, use the logged-in user
+    const author = context.user.role === 'ADMIN' && authorId
+        ? await User.findById(authorId)
+        : await User.findById(context.user.userId);
 
-  if (!author) {
-    throw new Error('Author not found');
-  }
+    if (!author) {
+        throw new Error('Author not found');
+    }
 
-  if (Array.isArray(tags)) {
-    tags = tags.map(t => sanitizeString(t));
-  }
-  if (Array.isArray(images)) {
-    images = images.map(i => sanitizeString(i));
-  }
+    if (Array.isArray(tags)) {
+        tags = tags.map(t => sanitizeString(t));
+    }
+    if (Array.isArray(images)) {
+        images = images.map(i => sanitizeString(i));
+    }
 
-  return RecipeModel.create({
-    recipeName,
-    ingredients,
-    instructions,
-    prepTime,
-    difficulty,
-    nutritionFacts,
-    tags,
-    images,
-    estimatedCost,
-    author: author._id,
-  });
+    return RecipeModel.create({
+        recipeName,
+        ingredients,
+        instructions,
+        prepTime,
+        difficulty,
+        nutritionFacts,
+        tags,
+        images,
+        estimatedCost,
+        author: author._id,
+    });
 });
 
 /**
@@ -130,82 +130,82 @@ export const createRecipe = withErrorHandling(async (_parent, { input }, context
 export const updateRecipe = withErrorHandling(async (
     _parent,
     { id, recipeName, ingredients, instructions, prepTime, difficulty, nutritionFacts, tags, images, estimatedCost },
-    context
+    context,
 ) => {
-  // Authentication check
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
+    // Authentication check
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
 
-  // Validate recipe ID
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new Error('Invalid recipe ID');
-  }
+    // Validate recipe ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error('Invalid recipe ID');
+    }
 
-  const recipe = await RecipeModel.findById(id);
-  if (!recipe) {
-    throw new Error('Recipe not found');
-  }
+    const recipe = await RecipeModel.findById(id);
+    if (!recipe) {
+        throw new Error('Recipe not found');
+    }
 
-  // Authorization check: only owner or admin can update
-  if (recipe.author.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: You can only update your own recipes.');
-  }
+    // Authorization check: only owner or admin can update
+    if (recipe.author.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only update your own recipes.');
+    }
 
-  const updateData = {};
-  if (recipeName !== undefined) {
-    if (typeof recipeName !== 'string' || !recipeName.trim()) {
-      throw new Error('Invalid recipe name');
+    const updateData = {};
+    if (recipeName !== undefined) {
+        if (typeof recipeName !== 'string' || !recipeName.trim()) {
+            throw new Error('Invalid recipe name');
+        }
+        updateData.recipeName = sanitizeString(recipeName.trim());
     }
-    updateData.recipeName = sanitizeString(recipeName.trim());
-  }
-  if (ingredients !== undefined) {
-    if (!Array.isArray(ingredients) || ingredients.length === 0) {
-      throw new Error('Ingredients must be a non-empty array');
+    if (ingredients !== undefined) {
+        if (!Array.isArray(ingredients) || ingredients.length === 0) {
+            throw new Error('Ingredients must be a non-empty array');
+        }
+        updateData.ingredients = ingredients.map(i => sanitizeString(i));
     }
-    updateData.ingredients = ingredients.map(i => sanitizeString(i));
-  }
-  if (instructions !== undefined) {
-    if (typeof instructions !== 'string' || !instructions.trim()) {
-      throw new Error('Invalid instructions');
+    if (instructions !== undefined) {
+        if (typeof instructions !== 'string' || !instructions.trim()) {
+            throw new Error('Invalid instructions');
+        }
+        updateData.instructions = sanitizeString(instructions.trim());
     }
-    updateData.instructions = sanitizeString(instructions.trim());
-  }
-  if (prepTime !== undefined) {
-    if (typeof prepTime !== 'number' || prepTime <= 0) {
-      throw new Error('Preparation time must be a positive number');
+    if (prepTime !== undefined) {
+        if (typeof prepTime !== 'number' || prepTime <= 0) {
+            throw new Error('Preparation time must be a positive number');
+        }
+        updateData.prepTime = prepTime;
     }
-    updateData.prepTime = prepTime;
-  }
-  if (difficulty !== undefined) {
-    if (typeof difficulty !== 'string' || !difficulty.trim()) {
-      throw new Error('Invalid difficulty');
+    if (difficulty !== undefined) {
+        if (typeof difficulty !== 'string' || !difficulty.trim()) {
+            throw new Error('Invalid difficulty');
+        }
+        updateData.difficulty = sanitizeString(difficulty.trim());
     }
-    updateData.difficulty = sanitizeString(difficulty.trim());
-  }
-  if (nutritionFacts !== undefined) {
-    updateData.nutritionFacts = nutritionFacts;
-  }
-  if (tags !== undefined) {
-    if (!Array.isArray(tags)) {
-      throw new Error('Tags must be an array');
+    if (nutritionFacts !== undefined) {
+        updateData.nutritionFacts = nutritionFacts;
     }
-    updateData.tags = tags.map(t => sanitizeString(t));
-  }
-  if (images !== undefined) {
-    if (!Array.isArray(images)) {
-      throw new Error('Images must be an array');
+    if (tags !== undefined) {
+        if (!Array.isArray(tags)) {
+            throw new Error('Tags must be an array');
+        }
+        updateData.tags = tags.map(t => sanitizeString(t));
     }
-    updateData.images = images.map(i => sanitizeString(i));
-  }
-  if (estimatedCost !== undefined) {
-    if (typeof estimatedCost !== 'number' || estimatedCost < 0) {
-      throw new Error('Estimated cost must be a non-negative number');
+    if (images !== undefined) {
+        if (!Array.isArray(images)) {
+            throw new Error('Images must be an array');
+        }
+        updateData.images = images.map(i => sanitizeString(i));
     }
-    updateData.estimatedCost = estimatedCost;
-  }
+    if (estimatedCost !== undefined) {
+        if (typeof estimatedCost !== 'number' || estimatedCost < 0) {
+            throw new Error('Estimated cost must be a non-negative number');
+        }
+        updateData.estimatedCost = estimatedCost;
+    }
 
-  return RecipeModel.findByIdAndUpdate(id, updateData, { new: true });
+    return RecipeModel.findByIdAndUpdate(id, updateData, { new: true });
 });
 
 /**
@@ -219,22 +219,22 @@ export const updateRecipe = withErrorHandling(async (
  * @returns {Promise<Boolean>} True if deletion was successful.
  */
 export const deleteRecipe = withErrorHandling(async (_parent, { id }, context) => {
-  // Authentication check
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
-  // Validate recipe ID
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new Error('Invalid recipe ID');
-  }
-  const recipe = await RecipeModel.findById(id);
-  if (!recipe) {
-    throw new Error('Recipe not found');
-  }
-  // Authorization check: only owner or admin can delete
-  if (recipe.author.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: You can only delete your own recipes.');
-  }
-  const result = await RecipeModel.findByIdAndDelete(id);
-  return !!result;
+    // Authentication check
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    // Validate recipe ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error('Invalid recipe ID');
+    }
+    const recipe = await RecipeModel.findById(id);
+    if (!recipe) {
+        throw new Error('Recipe not found');
+    }
+    // Authorization check: only owner or admin can delete
+    if (recipe.author.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only delete your own recipes.');
+    }
+    const result = await RecipeModel.findByIdAndDelete(id);
+    return !!result;
 });

@@ -1,6 +1,6 @@
 // tests/e2e/fullResolvers.spec.js
-import { test, expect } from '@playwright/test';
 import { faker } from '@faker-js/faker';
+import { test, expect } from '@playwright/test';
 
 /**
  * Helper: Post to /api/graphql with a given query/mutation + variables.
@@ -341,28 +341,28 @@ test.describe('Fine Dining GraphQL API (Full Resolvers)', () => {
     // --- 8) "LIST ALL" QUERIES ---
     //
     test('getUsers (list all)', async ({ request }) => {
-        const query = `query { getUsers { id email } }`;
+        const query = 'query { getUsers { id email } }';
         const { data, errors } = await gqlPost(request, query);
         expect(errors).toBeUndefined();
         expect(Array.isArray(data.getUsers)).toBe(true);
     });
 
     test('getRecipes (list all)', async ({ request }) => {
-        const query = `query { getRecipes { id recipeName } }`;
+        const query = 'query { getRecipes { id recipeName } }';
         const { data, errors } = await gqlPost(request, query);
         expect(errors).toBeUndefined();
         expect(Array.isArray(data.getRecipes)).toBe(true);
     });
 
     test('getRestaurants (list all)', async ({ request }) => {
-        const query = `query { getRestaurants { id restaurantName } }`;
+        const query = 'query { getRestaurants { id restaurantName } }';
         const { data, errors } = await gqlPost(request, query);
         expect(errors).toBeUndefined();
         expect(Array.isArray(data.getRestaurants)).toBe(true);
     });
 
     test('getMealPlans (list all)', async ({ request }) => {
-        const query = `query { getMealPlans { id startDate endDate user { id } } }`;
+        const query = 'query { getMealPlans { id startDate endDate user { id } } }';
         const { data, errors } = await gqlPost(request, query);
         expect(errors).toBeUndefined();
         expect(Array.isArray(data.getMealPlans)).toBe(true);
@@ -372,35 +372,35 @@ test.describe('Fine Dining GraphQL API (Full Resolvers)', () => {
     // --- 9) CLEAN-UP: DELETE STUFF ---
     //
     test('deleteRecipe', async ({ request }) => {
-        const mutation = `mutation ($id: ID!) { deleteRecipe(id: $id) }`;
+        const mutation = 'mutation ($id: ID!) { deleteRecipe(id: $id) }';
         const { data, errors } = await gqlPost(request, mutation, { id: recipeId });
         expect(errors).toBeUndefined();
         expect(data.deleteRecipe).toBe(true);
     });
 
     test('deleteRestaurant', async ({ request }) => {
-        const mutation = `mutation ($id: ID!) { deleteRestaurant(id: $id) }`;
+        const mutation = 'mutation ($id: ID!) { deleteRestaurant(id: $id) }';
         const { data, errors } = await gqlPost(request, mutation, { id: restaurantId });
         expect(errors).toBeUndefined();
         expect(data.deleteRestaurant).toBe(true);
     });
 
     test('deleteMealPlan', async ({ request }) => {
-        const mutation = `mutation ($id: ID!) { deleteMealPlan(id: $id) }`;
+        const mutation = 'mutation ($id: ID!) { deleteMealPlan(id: $id) }';
         const { data, errors } = await gqlPost(request, mutation, { id: mealPlanId });
         expect(errors).toBeUndefined();
         expect(data.deleteMealPlan).toBe(true);
     });
 
     test('deleteStats', async ({ request }) => {
-        const mutation = `mutation ($id: ID!) { deleteStats(id: $id) }`;
+        const mutation = 'mutation ($id: ID!) { deleteStats(id: $id) }';
         const { data, errors } = await gqlPost(request, mutation, { id: statsId });
         expect(errors).toBeUndefined();
         expect(data.deleteStats).toBe(true);
     });
 
     test('deleteUser', async ({ request }) => {
-        const mutation = `mutation ($id: ID!) { deleteUser(id: $id) }`;
+        const mutation = 'mutation ($id: ID!) { deleteUser(id: $id) }';
         const { data, errors } = await gqlPost(request, mutation, { id: userId });
         expect(errors).toBeUndefined();
         expect(data.deleteUser).toBe(true);

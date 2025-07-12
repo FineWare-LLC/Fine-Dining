@@ -10,11 +10,11 @@
  *   npm i highs-addon
  */
 
-import highsDefault from 'highs-addon';
-import fs              from 'fs';
-import { parse }       from 'csv-parse';
-import path            from 'path';
+import fs from 'fs';
+import path from 'path';
 import { fileURLToPath } from 'url';
+import { parse } from 'csv-parse';
+import highsDefault from 'highs-addon';
 import { interpretStatus } from '../../../../io/solverOutput.js';
 import { autoTune, loadConfig } from '../tuner/index.mjs';
 
@@ -34,7 +34,7 @@ console.log(`🔍 HiGHS version: ${solverVersion()}`);
 // 2. Read & parse the 8 000-meal CSV
 // ─────────────────────────────────────────────────────────────
 const __filename = fileURLToPath(import.meta.url);
-const __dirname  = path.dirname(__filename);
+const __dirname = path.dirname(__filename);
 const MEAL_FILE = path.join(__dirname, '../../data/processed/restaurant_meals_processed.csv');
 const CONFIG_FILE = path.join(__dirname, '../tuner/config.json');
 const ARGS = process.argv.slice(2);
@@ -43,19 +43,19 @@ const DO_TUNE = ARGS.includes('--tune');
 async function readMeals() {
     return new Promise((resolve, reject) => {
         const mealNames = [];
-        const cals      = [];
-        const prots     = [];
-        const carbs     = [];
-        const sods      = [];
+        const cals = [];
+        const prots = [];
+        const carbs = [];
+        const sods = [];
 
         const parser = parse({ columns: true, trim: true });
 
         parser.on('data', row => {
             mealNames.push(row.meal_name);
-            cals.push   (parseFloat(row.calories));
-            prots.push  (parseFloat(row.protein));
-            carbs.push  (parseFloat(row.carbohydrates));
-            sods.push   (parseFloat(row.sodium));
+            cals.push (parseFloat(row.calories));
+            prots.push (parseFloat(row.protein));
+            carbs.push (parseFloat(row.carbohydrates));
+            sods.push (parseFloat(row.sodium));
         });
 
         parser.on('error', err => reject(err));
@@ -83,14 +83,14 @@ async function readMeals() {
 // ─────────────────────────────────────────────────────────────
 function buildMealPlanModel({ mealCount, calories, protein, carbs, sodium }) {
     // Variables x_i = number of HALF-servings of meal i
-    const columnCount       = mealCount;
+    const columnCount = mealCount;
     const columnLowerBounds = new Float32Array(mealCount).fill(0);
     const columnUpperBounds = new Float32Array(mealCount).fill(6); // max 3 servings = 6 half-servings
-    const objectiveWeights  = new Float32Array(mealCount).fill(0);
-    const isMaximization    = false;  // minimize 0
+    const objectiveWeights = new Float32Array(mealCount).fill(0);
+    const isMaximization = false; // minimize 0
 
     // Nutrient constraints (unchanged)
-    const rowCount       = 4;
+    const rowCount = 4;
     const rowLowerBounds = new Float32Array([2200, 100, 250, 1500]);
     const rowUpperBounds = new Float32Array([2600, 160, 350, 2300]);
 
@@ -99,7 +99,7 @@ function buildMealPlanModel({ mealCount, calories, protein, carbs, sodium }) {
         mealCount,
         2*mealCount,
         3*mealCount,
-        4*mealCount
+        4*mealCount,
     ]);
 
     const indices = new Int32Array(4 * mealCount);
@@ -115,9 +115,9 @@ function buildMealPlanModel({ mealCount, calories, protein, carbs, sodium }) {
     // etc.
     for (let i = 0; i < mealCount; ++i) {
         values[0 * mealCount + i] = calories[i] * 0.5;
-        values[1 * mealCount + i] = protein[i]  * 0.5;
-        values[2 * mealCount + i] = carbs[i]    * 0.5;
-        values[3 * mealCount + i] = sodium[i]   * 0.5;
+        values[1 * mealCount + i] = protein[i] * 0.5;
+        values[2 * mealCount + i] = carbs[i] * 0.5;
+        values[3 * mealCount + i] = sodium[i] * 0.5;
     }
 
     return {
@@ -129,7 +129,7 @@ function buildMealPlanModel({ mealCount, calories, protein, carbs, sodium }) {
         rowUpperBounds,
         weights: { offsets, indices, values },
         objectiveLinearWeights: objectiveWeights,
-        isMaximization
+        isMaximization,
     };
 }
 
@@ -168,7 +168,7 @@ async function main() {
         }
 
         const info = solver.getInfo();
-        const sol  = solver.getSolution();
+        const sol = solver.getSolution();
 
         console.log('\n───────── Meal Plan Solution ─────────');
         console.log(`Objective value: ${info.objective_function_value.toFixed(2)}\n`);
@@ -183,7 +183,7 @@ async function main() {
                 totals.kcal += servings * data.calories[i];
                 totals.prot += servings * data.protein[i];
                 totals.carb += servings * data.carbs[i];
-                totals.sod  += servings * data.sodium[i];
+                totals.sod += servings * data.sodium[i];
             }
         });
 
@@ -192,7 +192,7 @@ async function main() {
             'Calories (kcal)': { Value: Math.round(totals.kcal), Target: `${model.rowLowerBounds[0]}–${model.rowUpperBounds[0]}` },
             'Protein (g)'    : { Value: totals.prot.toFixed(1), Target: `${model.rowLowerBounds[1]}–${model.rowUpperBounds[1]}` },
             'Carbs (g)'      : { Value: totals.carb.toFixed(1), Target: `${model.rowLowerBounds[2]}–${model.rowUpperBounds[2]}` },
-            'Sodium (mg)'    : { Value: Math.round(totals.sod), Target: `${model.rowLowerBounds[3]}–${model.rowUpperBounds[3]}` }
+            'Sodium (mg)'    : { Value: Math.round(totals.sod), Target: `${model.rowLowerBounds[3]}–${model.rowUpperBounds[3]}` },
         });
         console.log('─────────────────────────────────────────');
     });

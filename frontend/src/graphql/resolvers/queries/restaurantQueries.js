@@ -12,7 +12,7 @@ import { paginateQuery } from '@/utils/pagination.js';
  * @returns {Promise<Object|null>} The restaurant document or null.
  */
 export const getRestaurant = withErrorHandling(async (_parent, { id }, context) => {
-  return RestaurantModel.findById(id);
+    return RestaurantModel.findById(id);
 });
 
 /**
@@ -25,7 +25,7 @@ export const getRestaurant = withErrorHandling(async (_parent, { id }, context) 
  * @returns {Promise<Object[]>} An array of restaurant documents.
  */
 export const getRestaurants = withErrorHandling(async (_parent, { page, limit }, context) => {
-  return paginateQuery(RestaurantModel.find(), page, limit);
+    return paginateQuery(RestaurantModel.find(), page, limit);
 });
 
 /**
@@ -38,9 +38,9 @@ export const getRestaurants = withErrorHandling(async (_parent, { page, limit },
  * @returns {Promise<Object[]>} An array of matching restaurants.
  */
 export const searchRestaurants = withErrorHandling(async (_parent, { keyword }, context) => {
-  return RestaurantModel.find({
-    restaurantName: { $regex: keyword, $options: 'i' }
-  });
+    return RestaurantModel.find({
+        restaurantName: { $regex: keyword, $options: 'i' },
+    });
 });
 /**
  * Finds nearby restaurants using the Google Places API.
@@ -53,10 +53,10 @@ export const searchRestaurants = withErrorHandling(async (_parent, { keyword }, 
  *   Object containing restaurant list and the provider source
  */
 export const findNearbyRestaurants = withErrorHandling(async (
-  _parent,
-  { latitude, longitude, radius, keyword },
-  context
+    _parent,
+    { latitude, longitude, radius, keyword },
+    context,
 ) => {
-  const service = await import('@/services/places.service.js');
-  return service.findNearbyRestaurants(latitude, longitude, radius, keyword);
+    const service = await import('@/services/places.service.js');
+    return service.findNearbyRestaurants(latitude, longitude, radius, keyword);
 });

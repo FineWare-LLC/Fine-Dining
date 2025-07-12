@@ -1,8 +1,8 @@
 // src/fetcher/index.mjs
-import { parse } from 'csv-parse/sync';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { parse } from 'csv-parse/sync';
 import fetch from 'node-fetch';
 import * as scraper from './scraper.mjs';
 
@@ -14,13 +14,13 @@ const __dirname = path.dirname(__filename);
  * @returns {Promise<Array>} Raw meal data
  */
 export async function run() {
-    console.log("Running fetcher step...");
+    console.log('Running fetcher step...');
 
     // Define data sources (local files and/or URLs)
     const sources = [
         {
             type: 'file',
-            path: path.join(__dirname, '../../data/raw/restaurant_meals_8000_full.csv')
+            path: path.join(__dirname, '../../data/raw/restaurant_meals_8000_full.csv'),
         },
         // Add more sources as needed
         // { type: 'url', path: 'https://example.com/meals.csv' }
@@ -55,12 +55,12 @@ export async function run() {
 
     // Run the web scraper to collect data from food chains and Walmart
     try {
-        console.log("Running web scraper to collect data from food chains and Walmart...");
+        console.log('Running web scraper to collect data from food chains and Walmart...');
         const scrapedData = await scraper.run();
         console.log(`Scraped ${scrapedData.length} meals from food chains and Walmart`);
         allMeals = [...allMeals, ...scrapedData];
     } catch (error) {
-        console.error("Error running web scraper:", error);
+        console.error('Error running web scraper:', error);
     }
 
     console.log(`Fetcher completed. Total meals fetched: ${allMeals.length}`);

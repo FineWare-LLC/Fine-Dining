@@ -1,7 +1,7 @@
 // src/components/Dashboard/Recommendations.js
-import React from 'react';
-import PropTypes from 'prop-types';
 import { Box, Grid, Typography } from '@mui/material';
+import PropTypes from 'prop-types';
+import React from 'react';
 import RestaurantCard from './RestaurantCard'; // Import the Tailwind-styled card
 // Removed useTheme and style constants/functions
 
@@ -45,7 +45,7 @@ Recommendations.propTypes = {
             name: PropTypes.string.isRequired,
             description: PropTypes.string,
             imageUrl: PropTypes.string,
-        })
+        }),
     ),
 };
 

@@ -4,8 +4,8 @@
  *              This is the main entry point for the "Recipe" folder.
  */
 
-import recipeSchema from './recipe.schema.js';
 import RecipeModel from './recipe.model.js';
+import recipeSchema from './recipe.schema.js';
 
 /**
  * @module Recipe
@@ -17,5 +17,5 @@ import RecipeModel from './recipe.model.js';
  */
 export {
     recipeSchema,
-    RecipeModel
+    RecipeModel,
 };

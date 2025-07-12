@@ -20,7 +20,7 @@ async function fillAndSubmitCreateAccountForm(
     password,
     confirmPassword,
     gender = 'OTHER',
-    measurementSystem = 'METRIC'
+    measurementSystem = 'METRIC',
 ) {
     await page.fill('input[name="username"]', username);
     await page.fill('input[name="email"]', email);
@@ -160,7 +160,7 @@ test.describe('Create Account Page - Comprehensive Tests', () => {
      */
     test('should be responsive on a mobile viewport', async ({ browser }) => {
         const context = await browser.newContext({
-            viewport: { width: 375, height: 812 } // iPhone X-ish
+            viewport: { width: 375, height: 812 }, // iPhone X-ish
         });
         const page = await context.newPage();
         await page.goto('http://localhost:3000/create-account');

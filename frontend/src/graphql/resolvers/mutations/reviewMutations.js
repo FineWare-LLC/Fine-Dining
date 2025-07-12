@@ -1,9 +1,9 @@
+import mongoose from 'mongoose';
 import { withErrorHandling } from './baseImports.js';
-import { Review as ReviewModel } from '@/models/Review/index.js';
+import { sanitizeString } from '@/lib/sanitize.js';
 import { RecipeModel } from '@/models/Recipe/index.js';
 import { RestaurantModel } from '@/models/Restaurant/index.js';
-import mongoose from 'mongoose';
-import { sanitizeString } from '@/lib/sanitize.js';
+import { Review as ReviewModel } from '@/models/Review/index.js';
 
 /**
  * Creates a new review.
@@ -19,59 +19,59 @@ import { sanitizeString } from '@/lib/sanitize.js';
  * @returns {Promise<Object>} The created review.
  */
 export const createReview = withErrorHandling(async (_parent, { targetType, targetId, rating, comment }, context) => {
-  // Authentication check
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
-
-  // Validate targetType
-  if (!['RECIPE', 'RESTAURANT'].includes(targetType)) {
-    throw new Error('Invalid targetType');
-  }
-
-  // Validate targetId is a valid ObjectId
-  if (!mongoose.Types.ObjectId.isValid(targetId)) {
-    throw new Error('Invalid targetId');
-  }
-
-  // Validate rating: must be a number between 1 and 5.
-  const numericRating = Number(rating);
-  if (isNaN(numericRating) || numericRating < 1 || numericRating > 5) {
-    throw new Error('Rating must be a number between 1 and 5');
-  }
-
-  // Validate and sanitize comment
-  if (typeof comment !== 'string') {
-    throw new Error('Comment must be a string');
-  }
-  comment = sanitizeString(comment.trim());
-
-  const userId = context.user.userId;
-  const newReview = await ReviewModel.create({
-    user: userId,
-    targetType,
-    targetId,
-    rating: numericRating,
-    comment,
-  });
-
-  // Update target's rating aggregates
-  if (targetType === 'RECIPE') {
-    const recipe = await RecipeModel.findById(targetId);
-    if (recipe) {
-      recipe.averageRating = ((recipe.averageRating * recipe.ratingCount) + numericRating) / (recipe.ratingCount + 1);
-      recipe.ratingCount += 1;
-      await recipe.save();
+    // Authentication check
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
     }
-  } else if (targetType === 'RESTAURANT') {
-    const restaurant = await RestaurantModel.findById(targetId);
-    if (restaurant) {
-      restaurant.averageRating = ((restaurant.averageRating * restaurant.ratingCount) + numericRating) / (restaurant.ratingCount + 1);
-      restaurant.ratingCount += 1;
-      await restaurant.save();
+
+    // Validate targetType
+    if (!['RECIPE', 'RESTAURANT'].includes(targetType)) {
+        throw new Error('Invalid targetType');
     }
-  }
-  return newReview;
+
+    // Validate targetId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(targetId)) {
+        throw new Error('Invalid targetId');
+    }
+
+    // Validate rating: must be a number between 1 and 5.
+    const numericRating = Number(rating);
+    if (isNaN(numericRating) || numericRating < 1 || numericRating > 5) {
+        throw new Error('Rating must be a number between 1 and 5');
+    }
+
+    // Validate and sanitize comment
+    if (typeof comment !== 'string') {
+        throw new Error('Comment must be a string');
+    }
+    comment = sanitizeString(comment.trim());
+
+    const {userId} = context.user;
+    const newReview = await ReviewModel.create({
+        user: userId,
+        targetType,
+        targetId,
+        rating: numericRating,
+        comment,
+    });
+
+    // Update target's rating aggregates
+    if (targetType === 'RECIPE') {
+        const recipe = await RecipeModel.findById(targetId);
+        if (recipe) {
+            recipe.averageRating = ((recipe.averageRating * recipe.ratingCount) + numericRating) / (recipe.ratingCount + 1);
+            recipe.ratingCount += 1;
+            await recipe.save();
+        }
+    } else if (targetType === 'RESTAURANT') {
+        const restaurant = await RestaurantModel.findById(targetId);
+        if (restaurant) {
+            restaurant.averageRating = ((restaurant.averageRating * restaurant.ratingCount) + numericRating) / (restaurant.ratingCount + 1);
+            restaurant.ratingCount += 1;
+            await restaurant.save();
+        }
+    }
+    return newReview;
 });
 
 /**
@@ -85,47 +85,47 @@ export const createReview = withErrorHandling(async (_parent, { targetType, targ
  * @returns {Promise<Boolean>} True if deletion was successful.
  */
 export const deleteReview = withErrorHandling(async (_parent, { id }, context) => {
-  // Authentication check
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
-
-  // Validate review id
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new Error('Invalid review id');
-  }
-
-  const review = await ReviewModel.findById(id);
-  if (!review) {
-    throw new Error('Review not found');
-  }
-  // Authorization: only review owner or admin can delete
-  if (review.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: You can only delete your own reviews or be an admin.');
-  }
-
-  // Update target's rating aggregates
-  if (review.targetType === 'RECIPE') {
-    const recipe = await RecipeModel.findById(review.targetId);
-    if (recipe && recipe.ratingCount > 0) {
-      const totalRating = recipe.averageRating * recipe.ratingCount;
-      const newTotal = totalRating - review.rating;
-      const newCount = recipe.ratingCount - 1;
-      recipe.ratingCount = newCount;
-      recipe.averageRating = newCount > 0 ? newTotal / newCount : 0;
-      await recipe.save();
+    // Authentication check
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
     }
-  } else if (review.targetType === 'RESTAURANT') {
-    const restaurant = await RestaurantModel.findById(review.targetId);
-    if (restaurant && restaurant.ratingCount > 0) {
-      const totalRating = restaurant.averageRating * restaurant.ratingCount;
-      const newTotal = totalRating - review.rating;
-      const newCount = restaurant.ratingCount - 1;
-      restaurant.ratingCount = newCount;
-      restaurant.averageRating = newCount > 0 ? newTotal / newCount : 0;
-      await restaurant.save();
+
+    // Validate review id
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        throw new Error('Invalid review id');
     }
-  }
-  await ReviewModel.findByIdAndDelete(id);
-  return true;
+
+    const review = await ReviewModel.findById(id);
+    if (!review) {
+        throw new Error('Review not found');
+    }
+    // Authorization: only review owner or admin can delete
+    if (review.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only delete your own reviews or be an admin.');
+    }
+
+    // Update target's rating aggregates
+    if (review.targetType === 'RECIPE') {
+        const recipe = await RecipeModel.findById(review.targetId);
+        if (recipe && recipe.ratingCount > 0) {
+            const totalRating = recipe.averageRating * recipe.ratingCount;
+            const newTotal = totalRating - review.rating;
+            const newCount = recipe.ratingCount - 1;
+            recipe.ratingCount = newCount;
+            recipe.averageRating = newCount > 0 ? newTotal / newCount : 0;
+            await recipe.save();
+        }
+    } else if (review.targetType === 'RESTAURANT') {
+        const restaurant = await RestaurantModel.findById(review.targetId);
+        if (restaurant && restaurant.ratingCount > 0) {
+            const totalRating = restaurant.averageRating * restaurant.ratingCount;
+            const newTotal = totalRating - review.rating;
+            const newCount = restaurant.ratingCount - 1;
+            restaurant.ratingCount = newCount;
+            restaurant.averageRating = newCount > 0 ? newTotal / newCount : 0;
+            await restaurant.save();
+        }
+    }
+    await ReviewModel.findByIdAndDelete(id);
+    return true;
 });

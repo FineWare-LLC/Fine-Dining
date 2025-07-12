@@ -3,7 +3,8 @@
  * @description FineDining Create Account Page in Next.js & Material UI using generated GraphQL hooks.
  */
 
-import React, { useState } from 'react';
+import { useMutation } from '@apollo/client';
+import { keyframes } from '@emotion/react';
 import {
     Container,
     Box,
@@ -20,10 +21,9 @@ import {
     useTheme,
     alpha,
 } from '@mui/material';
-import { useMutation } from '@apollo/client';
-import { keyframes } from '@emotion/react';
+import React, { useState } from 'react';
 // Import the generated mutation document from your codegen output.
-import { CreateUserDocument} from "@/gql/graphql";
+import { CreateUserDocument} from '@/gql/graphql';
 
 // Animation keyframes
 const slideInUp = keyframes`
@@ -143,7 +143,7 @@ function CreateAccountForm() {
                 },
             });
         } catch (err) {
-            console.error("Error invoking createAccount mutation:", err);
+            console.error('Error invoking createAccount mutation:', err);
             if (!formError) {
                 setFormError('A submission error occurred. Please try again.');
             }
@@ -165,7 +165,7 @@ function CreateAccountForm() {
                     transform: 'translateY(-2px)',
                     boxShadow: `0 25px 50px ${alpha(theme.palette.primary.main, 0.15)}`,
                     transition: 'all 0.3s ease',
-                }
+                },
             }}
         >
             <CardContent sx={{ p: 4 }}>
@@ -201,8 +201,8 @@ function CreateAccountForm() {
                                 '&.Mui-focused': {
                                     transform: 'translateY(-1px)',
                                     boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
-                                }
-                            }
+                                },
+                            },
                         }}
                     />
                     <TextField
@@ -226,11 +226,11 @@ function CreateAccountForm() {
                                 '&.Mui-focused': {
                                     transform: 'translateY(-1px)',
                                     boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
-                                }
-                            }
+                                },
+                            },
                         }}
                     />
-                    <FormControl 
+                    <FormControl
                         fullWidth
                         sx={{
                             '& .MuiOutlinedInput-root': {
@@ -243,8 +243,8 @@ function CreateAccountForm() {
                                 '&.Mui-focused': {
                                     transform: 'translateY(-1px)',
                                     boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
-                                }
-                            }
+                                },
+                            },
                         }}
                     >
                         <InputLabel id="gender-label">Gender</InputLabel>
@@ -262,7 +262,7 @@ function CreateAccountForm() {
                             <MenuItem value="OTHER">Other</MenuItem>
                         </Select>
                     </FormControl>
-                    <FormControl 
+                    <FormControl
                         fullWidth
                         sx={{
                             '& .MuiOutlinedInput-root': {
@@ -275,8 +275,8 @@ function CreateAccountForm() {
                                 '&.Mui-focused': {
                                     transform: 'translateY(-1px)',
                                     boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
-                                }
-                            }
+                                },
+                            },
                         }}
                     >
                         <InputLabel id="measurement-label">Measurement System</InputLabel>
@@ -315,8 +315,8 @@ function CreateAccountForm() {
                                 '&.Mui-focused': {
                                     transform: 'translateY(-1px)',
                                     boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
-                                }
-                            }
+                                },
+                            },
                         }}
                     />
                     <TextField
@@ -340,19 +340,19 @@ function CreateAccountForm() {
                                 '&.Mui-focused': {
                                     transform: 'translateY(-1px)',
                                     boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
-                                }
-                            }
+                                },
+                            },
                         }}
                     />
 
                     {loading && (
-                        <Box sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                        <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 2,
                             justifyContent: 'center',
                             py: 1,
-                            animation: `${slideInUp} 0.3s ease-out`
+                            animation: `${slideInUp} 0.3s ease-out`,
                         }}>
                             <CircularProgress size={20} sx={{ color: theme.palette.primary.main }} />
                             <Typography variant="body2" color="primary">Creating account...</Typography>
@@ -360,10 +360,10 @@ function CreateAccountForm() {
                     )}
 
                     {formError && (
-                        <Typography 
-                            variant="body2" 
-                            color="error" 
-                            role="alert" 
+                        <Typography
+                            variant="body2"
+                            color="error"
+                            role="alert"
                             className="error-message"
                             sx={{
                                 textAlign: 'center',
@@ -371,7 +371,7 @@ function CreateAccountForm() {
                                 borderRadius: 2,
                                 backgroundColor: alpha(theme.palette.error.main, 0.1),
                                 border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
-                                animation: `${slideInUp} 0.3s ease-out`
+                                animation: `${slideInUp} 0.3s ease-out`,
                             }}
                         >
                             {formError}
@@ -379,9 +379,9 @@ function CreateAccountForm() {
                     )}
 
                     {formSuccess && (
-                        <Typography 
-                            variant="body2" 
-                            color="success.main" 
+                        <Typography
+                            variant="body2"
+                            color="success.main"
                             role="status"
                             sx={{
                                 textAlign: 'center',
@@ -389,7 +389,7 @@ function CreateAccountForm() {
                                 borderRadius: 2,
                                 backgroundColor: alpha(theme.palette.success.main, 0.1),
                                 border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-                                animation: `${slideInUp} 0.3s ease-out`
+                                animation: `${slideInUp} 0.3s ease-out`,
                             }}
                         >
                             {formSuccess}
@@ -446,9 +446,9 @@ export default function CreateAccountPage() {
                 background: `linear-gradient(135deg, ${alpha(theme.palette.background.default, 0.8)} 0%, ${alpha(theme.palette.background.paper, 0.9)} 100%)`,
             }}
         >
-            <Typography 
-                variant="h3" 
-                component="h1" 
+            <Typography
+                variant="h3"
+                component="h1"
                 gutterBottom
                 sx={{
                     background: theme.palette.gradient.hero,

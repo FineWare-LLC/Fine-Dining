@@ -14,7 +14,7 @@ const preferencesSchema = new mongoose.Schema(
         smsNotifications: { type: Boolean, default: false },
         marketingOptIn: { type: Boolean, default: false },
     },
-    { _id: false }
+    { _id: false },
 );
 
 export default preferencesSchema;

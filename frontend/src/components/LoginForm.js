@@ -1,31 +1,31 @@
-import React, { useState } from 'react';
-import { useRouter } from 'next/router';
-import { 
-    Box, 
-    TextField, 
-    Button, 
-    Link, 
-    Typography, 
-    CircularProgress, 
+import { useMutation } from '@apollo/client';
+import { keyframes } from '@emotion/react';
+import {
+    Email as EmailIcon,
+    Lock as LockIcon,
+    Visibility,
+    VisibilityOff,
+    Login as LoginIcon,
+} from '@mui/icons-material';
+import {
+    Box,
+    TextField,
+    Button,
+    Link,
+    Typography,
+    CircularProgress,
     Card,
     CardContent,
     InputAdornment,
     IconButton,
     Alert,
     useTheme,
-    alpha
+    alpha,
 } from '@mui/material';
-import { 
-    Email as EmailIcon, 
-    Lock as LockIcon, 
-    Visibility, 
-    VisibilityOff,
-    Login as LoginIcon
-} from '@mui/icons-material';
-import { useMutation } from '@apollo/client';
 import { gql } from 'graphql-tag';
+import { useRouter } from 'next/router';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { keyframes } from '@emotion/react';
 
 const LOGIN_MUTATION = gql`
     mutation LoginUser($email: String!, $password: String!) {
@@ -101,7 +101,7 @@ export default function LoginForm() {
             } else {
                 setErrorMessage('An unexpected error occurred during login.');
             }
-        }
+        },
     });
 
     /**
@@ -185,7 +185,7 @@ export default function LoginForm() {
                     transform: 'translateY(-2px)',
                     boxShadow: `0 25px 50px ${alpha(theme.palette.primary.main, 0.15)}`,
                     transition: 'all 0.3s ease',
-                }
+                },
             }}
         >
             <CardContent sx={{ p: 4 }}>
@@ -217,10 +217,10 @@ export default function LoginForm() {
                             (errorMessage && (!email || !emailRegex.test(email.trim().toLowerCase()))) ? errorMessage : ''
                         }
                         InputLabelProps={{
-                            htmlFor: 'email'
+                            htmlFor: 'email',
                         }}
                         inputProps={{
-                            'aria-invalid': (errorMessage && (!email || !emailRegex.test(email.trim().toLowerCase()))) ? 'true' : 'false'
+                            'aria-invalid': (errorMessage && (!email || !emailRegex.test(email.trim().toLowerCase()))) ? 'true' : 'false',
                         }}
                         sx={{
                             '& .MuiOutlinedInput-root': {
@@ -233,8 +233,8 @@ export default function LoginForm() {
                                 '&.Mui-focused': {
                                     transform: 'translateY(-1px)',
                                     boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
-                                }
-                            }
+                                },
+                            },
                         }}
                     />
                     <TextField
@@ -252,10 +252,10 @@ export default function LoginForm() {
                         error={Boolean(errorMessage) && password.trim() === ''}
                         helperText={(errorMessage && password.trim() === '') ? errorMessage : ''}
                         InputLabelProps={{
-                            htmlFor: 'password'
+                            htmlFor: 'password',
                         }}
                         inputProps={{
-                            'aria-invalid': (errorMessage && password.trim() === '') ? 'true' : 'false'
+                            'aria-invalid': (errorMessage && password.trim() === '') ? 'true' : 'false',
                         }}
                         sx={{
                             '& .MuiOutlinedInput-root': {
@@ -268,19 +268,19 @@ export default function LoginForm() {
                                 '&.Mui-focused': {
                                     transform: 'translateY(-1px)',
                                     boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
-                                }
-                            }
+                                },
+                            },
                         }}
                     />
 
                     {loading && (
-                        <Box sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                        <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 2,
                             justifyContent: 'center',
                             py: 1,
-                            animation: `${slideInUp} 0.3s ease-out`
+                            animation: `${slideInUp} 0.3s ease-out`,
                         }}>
                             <CircularProgress size={20} sx={{ color: theme.palette.primary.main }} />
                             <Typography variant="body2" color="primary">Logging in...</Typography>
@@ -288,10 +288,10 @@ export default function LoginForm() {
                     )}
 
                     {errorMessage && (
-                        <Typography 
-                            color="error" 
-                            variant="body2" 
-                            role="alert" 
+                        <Typography
+                            color="error"
+                            variant="body2"
+                            role="alert"
                             id="form-error-message"
                             sx={{
                                 textAlign: 'center',
@@ -299,7 +299,7 @@ export default function LoginForm() {
                                 borderRadius: 2,
                                 backgroundColor: alpha(theme.palette.error.main, 0.1),
                                 border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
-                                animation: `${slideInUp} 0.3s ease-out`
+                                animation: `${slideInUp} 0.3s ease-out`,
                             }}
                         >
                             {errorMessage}
@@ -307,9 +307,9 @@ export default function LoginForm() {
                     )}
 
                     {successMessage && (
-                        <Typography 
-                            variant="body2" 
-                            color="success.main" 
+                        <Typography
+                            variant="body2"
+                            color="success.main"
                             role="status"
                             sx={{
                                 textAlign: 'center',
@@ -317,7 +317,7 @@ export default function LoginForm() {
                                 borderRadius: 2,
                                 backgroundColor: alpha(theme.palette.success.main, 0.1),
                                 border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
-                                animation: `${slideInUp} 0.3s ease-out`
+                                animation: `${slideInUp} 0.3s ease-out`,
                             }}
                         >
                             {successMessage}
@@ -348,7 +348,7 @@ export default function LoginForm() {
                                 color: theme.palette.action.disabled,
                             },
                         }}
-                        aria-describedby={errorMessage ? "form-error-message" : undefined}
+                        aria-describedby={errorMessage ? 'form-error-message' : undefined}
                     >
                         {loading ? 'Logging In...' : 'Log In'}
                     </Button>
@@ -357,13 +357,13 @@ export default function LoginForm() {
                         <Link
                             href="/forgot-password"
                             variant="body2"
-                            sx={{ 
+                            sx={{
                                 color: theme.palette.text.secondary,
                                 textDecoration: 'none',
                                 '&:hover': {
                                     color: theme.palette.primary.main,
                                     textDecoration: 'underline',
-                                }
+                                },
                             }}
                         >
                             Forgot Password?
@@ -374,13 +374,13 @@ export default function LoginForm() {
                         <Link
                             href="/create-account"
                             variant="body2"
-                            sx={{ 
+                            sx={{
                                 color: theme.palette.primary.main,
                                 textDecoration: 'none',
                                 fontWeight: 500,
                                 '&:hover': {
                                     textDecoration: 'underline',
-                                }
+                                },
                             }}
                         >
                             Don&apos;t have an account? Create one!

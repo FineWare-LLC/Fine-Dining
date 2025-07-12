@@ -8,6 +8,9 @@ export * from './fixtures.js';
 // Export all helpers
 export * from './helpers.js';
 
+// Export browser API mocks
+export * from './browserMocks.js';
+
 // Re-export commonly used Playwright functions for convenience
 export { test, expect } from '@playwright/test';
 export { test as componentTest, expect as componentExpect } from '@playwright/experimental-ct-react';

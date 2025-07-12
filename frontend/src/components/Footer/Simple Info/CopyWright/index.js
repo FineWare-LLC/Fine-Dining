@@ -13,10 +13,10 @@ import React from 'react';
  * @returns {JSX.Element} A functional copyright component.
  */
 export default function CopyrightNotice({
-                                                    companyName = 'YourCompany', // Added default value
-                                                    startYear,
-                                                    message = 'All rights reserved.', // Added default value
-                                                }) {
+    companyName = 'YourCompany', // Added default value
+    startYear,
+    message = 'All rights reserved.', // Added default value
+}) {
     // Get the current year directly
     const currentYear = new Date().getFullYear();
 
@@ -40,7 +40,7 @@ export default function CopyrightNotice({
                 padding: '1rem',
                 border: '2px dashed #ccc',
                 backgroundColor: '#f7f7f7',
-                marginTop: '2rem' // Added some margin for spacing
+                marginTop: '2rem', // Added some margin for spacing
             }}
         >
             <div style={{marginBottom: '0.5rem'}}>

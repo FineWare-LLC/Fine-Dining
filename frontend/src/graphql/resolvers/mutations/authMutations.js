@@ -1,8 +1,8 @@
-import { withErrorHandling } from './baseImports.js';
-import User from '@/models/User/index.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { withErrorHandling } from './baseImports.js';
 import { sanitizeString } from '@/lib/sanitize.js';
+import User from '@/models/User/index.js';
 
 /**
  * Logs in a user by verifying credentials.
@@ -67,7 +67,7 @@ export const loginUser = withErrorHandling(async (_parent, { email, password }, 
     const token = jwt.sign(
         { userId: user._id.toString(), email: user.email, role: user.role },
         secret,
-        { expiresIn: '1d', algorithm: 'HS256' }
+        { expiresIn: '1d', algorithm: 'HS256' },
     );
 
     return {

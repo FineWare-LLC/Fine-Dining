@@ -28,9 +28,9 @@
  * collectively deliver a functional, accessible dashboard.
  */
 
-const fs   = require('fs');
-const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 /* ---------- helpers ------------------------------------------------------ */
 const write = (relPath, data) => {

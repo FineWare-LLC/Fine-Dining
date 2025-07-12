@@ -7,24 +7,24 @@ import { performance } from 'node:perf_hooks';
  * @returns {Object} Mock user object
  */
 export function createMockUser(overrides = {}) {
-  return {
-    _id: 'test-user-id',
-    email: 'test@example.com',
-    name: 'Test User',
-    allergies: [],
-    dislikedIngredients: [],
-    nutritionTargets: {
-      carbohydratesMin: 20,
-      carbohydratesMax: 100,
-      proteinMin: 10,
-      proteinMax: 40,
-      fatMin: 5,
-      fatMax: 20,
-      sodiumMin: 100,
-      sodiumMax: 500
-    },
-    ...overrides
-  };
+    return {
+        _id: 'test-user-id',
+        email: 'test@example.com',
+        name: 'Test User',
+        allergies: [],
+        dislikedIngredients: [],
+        nutritionTargets: {
+            carbohydratesMin: 20,
+            carbohydratesMax: 100,
+            proteinMin: 10,
+            proteinMax: 40,
+            fatMin: 5,
+            fatMax: 20,
+            sodiumMin: 100,
+            sodiumMax: 500,
+        },
+        ...overrides,
+    };
 }
 
 /**
@@ -33,23 +33,23 @@ export function createMockUser(overrides = {}) {
  * @returns {Object} Mock meal object
  */
 export function createMockMeal(overrides = {}) {
-  return {
-    _id: 'test-meal-id',
-    name: 'Test Meal',
-    price: 10.99,
-    allergens: [],
-    ingredients: ['ingredient1', 'ingredient2'],
-    nutrition: {
-      carbohydrates: 45,
-      protein: 25,
-      fat: 15,
-      sodium: 350,
-      calories: 400
-    },
-    restaurant: 'Test Restaurant',
-    category: 'main',
-    ...overrides
-  };
+    return {
+        _id: 'test-meal-id',
+        name: 'Test Meal',
+        price: 10.99,
+        allergens: [],
+        ingredients: ['ingredient1', 'ingredient2'],
+        nutrition: {
+            carbohydrates: 45,
+            protein: 25,
+            fat: 15,
+            sodium: 350,
+            calories: 400,
+        },
+        restaurant: 'Test Restaurant',
+        category: 'main',
+        ...overrides,
+    };
 }
 
 /**
@@ -59,14 +59,14 @@ export function createMockMeal(overrides = {}) {
  * @returns {Array} Array of mock meal objects
  */
 export function createMockMeals(count = 3, baseOverrides = {}) {
-  return Array.from({ length: count }, (_, index) => 
-    createMockMeal({
-      _id: `test-meal-${index + 1}`,
-      name: `Test Meal ${index + 1}`,
-      price: 10 + index,
-      ...baseOverrides
-    })
-  );
+    return Array.from({ length: count }, (_, index) =>
+        createMockMeal({
+            _id: `test-meal-${index + 1}`,
+            name: `Test Meal ${index + 1}`,
+            price: 10 + index,
+            ...baseOverrides,
+        }),
+    );
 }
 
 /**
@@ -76,10 +76,10 @@ export function createMockMeals(count = 3, baseOverrides = {}) {
  * @returns {Promise<{result: any, duration: number}>} Result and duration in milliseconds
  */
 export async function measureExecutionTime(fn, ...args) {
-  const start = performance.now();
-  const result = await fn(...args);
-  const duration = performance.now() - start;
-  return { result, duration };
+    const start = performance.now();
+    const result = await fn(...args);
+    const duration = performance.now() - start;
+    return { result, duration };
 }
 
 /**
@@ -88,15 +88,15 @@ export async function measureExecutionTime(fn, ...args) {
  * @returns {Object} Mock repository object
  */
 export function createMockRepository(mockData = {}) {
-  return {
-    find: async () => mockData.find || [],
-    findById: async (id) => mockData.findById || { _id: id },
-    create: async (data) => ({ _id: 'new-id', ...data }),
-    update: async (id, data) => ({ _id: id, ...data }),
-    delete: async (id) => ({ _id: id, deleted: true }),
-    count: async () => mockData.count || 0,
-    ...mockData.customMethods
-  };
+    return {
+        find: async () => mockData.find || [],
+        findById: async (id) => mockData.findById || { _id: id },
+        create: async (data) => ({ _id: 'new-id', ...data }),
+        update: async (id, data) => ({ _id: id, ...data }),
+        delete: async (id) => ({ _id: id, deleted: true }),
+        count: async () => mockData.count || 0,
+        ...mockData.customMethods,
+    };
 }
 
 /**
@@ -108,16 +108,16 @@ export function createMockRepository(mockData = {}) {
  * @returns {boolean} True if mock was successful, false if skipped due to conflict
  */
 export function safeMock(testContext, target, methodName, implementation) {
-  try {
-    testContext.mock.method(target, methodName, implementation);
-    return true;
-  } catch (err) {
-    if (err.message.includes('Cannot redefine property')) {
-      console.warn(`Mock conflict detected for ${methodName}, skipping...`);
-      return false;
+    try {
+        testContext.mock.method(target, methodName, implementation);
+        return true;
+    } catch (err) {
+        if (err.message.includes('Cannot redefine property')) {
+            console.warn(`Mock conflict detected for ${methodName}, skipping...`);
+            return false;
+        }
+        throw err;
     }
-    throw err;
-  }
 }
 
 /**
@@ -128,21 +128,21 @@ export function safeMock(testContext, target, methodName, implementation) {
  * @returns {Object} Test suite utilities
  */
 export function createTestSuite(suiteName, setupFn = () => {}, teardownFn = () => {}) {
-  let suiteData = {};
+    let suiteData = {};
 
-  return {
-    setup: async () => {
-      console.log(`Setting up test suite: ${suiteName}`);
-      suiteData = await setupFn();
-      return suiteData;
-    },
-    teardown: async () => {
-      console.log(`Tearing down test suite: ${suiteName}`);
-      await teardownFn(suiteData);
-      suiteData = {};
-    },
-    getData: () => suiteData
-  };
+    return {
+        setup: async () => {
+            console.log(`Setting up test suite: ${suiteName}`);
+            suiteData = await setupFn();
+            return suiteData;
+        },
+        teardown: async () => {
+            console.log(`Tearing down test suite: ${suiteName}`);
+            await teardownFn(suiteData);
+            suiteData = {};
+        },
+        getData: () => suiteData,
+    };
 }
 
 /**
@@ -152,17 +152,17 @@ export function createTestSuite(suiteName, setupFn = () => {}, teardownFn = () =
  * @returns {boolean} True if structure matches
  */
 export function validateObjectStructure(obj, expectedStructure) {
-  for (const [key, expectedType] of Object.entries(expectedStructure)) {
-    if (!(key in obj)) {
-      throw new Error(`Missing property: ${key}`);
+    for (const [key, expectedType] of Object.entries(expectedStructure)) {
+        if (!(key in obj)) {
+            throw new Error(`Missing property: ${key}`);
+        }
+
+        const actualType = typeof obj[key];
+        if (actualType !== expectedType && expectedType !== 'any') {
+            throw new Error(`Property ${key} expected ${expectedType}, got ${actualType}`);
+        }
     }
-    
-    const actualType = typeof obj[key];
-    if (actualType !== expectedType && expectedType !== 'any') {
-      throw new Error(`Property ${key} expected ${expectedType}, got ${actualType}`);
-    }
-  }
-  return true;
+    return true;
 }
 
 /**
@@ -171,9 +171,9 @@ export function validateObjectStructure(obj, expectedStructure) {
  * @returns {Promise} Promise that rejects after timeout
  */
 export function createTimeout(ms) {
-  return new Promise((_, reject) => {
-    setTimeout(() => reject(new Error(`Operation timed out after ${ms}ms`)), ms);
-  });
+    return new Promise((_, reject) => {
+        setTimeout(() => reject(new Error(`Operation timed out after ${ms}ms`)), ms);
+    });
 }
 
 /**
@@ -183,8 +183,8 @@ export function createTimeout(ms) {
  * @returns {Promise} Promise that resolves with function result or rejects on timeout
  */
 export async function withTimeout(fn, timeoutMs = 5000) {
-  return Promise.race([
-    fn(),
-    createTimeout(timeoutMs)
-  ]);
+    return Promise.race([
+        fn(),
+        createTimeout(timeoutMs),
+    ]);
 }

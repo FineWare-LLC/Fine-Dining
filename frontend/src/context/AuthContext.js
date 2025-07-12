@@ -1,9 +1,9 @@
 // src/context/AuthContext.js
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/router';
 import { ApolloClient, InMemoryCache, ApolloProvider, useApolloClient } from '@apollo/client'; // Import Apollo client related hooks/utils
 import { gql } from 'graphql-tag';
 import jwt from 'jsonwebtoken';
+import { useRouter } from 'next/router';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 // Create the context
 const AuthContext = createContext(null);
@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
                 id: 'dev-user-123',
                 name: 'Dev User',
                 email: 'dev@finedining.com',
-                role: 'admin'
+                role: 'admin',
             };
 
             // Create a fake JWT token that won't expire for a long time
@@ -32,11 +32,11 @@ export const AuthProvider = ({ children }) => {
                 userId: fakeUser.id,
                 email: fakeUser.email,
                 role: fakeUser.role,
-                exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60) // Expires in 1 year
+                exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60), // Expires in 1 year
             };
 
             // Create a properly signed JWT token for development using environment variable
-            const JWT_SECRET = process.env.JWT_SECRET;
+            const {JWT_SECRET} = process.env;
             if (!JWT_SECRET) {
                 console.error('FATAL ERROR: JWT_SECRET is not defined in environment variables for development auto-login.');
                 setLoading(false);
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
                 const now = Math.floor(Date.now() / 1000); // Current time in seconds
                 return payload.exp && payload.exp > now;
             } catch (e) {
-                console.warn("Token validation failed", e);
+                console.warn('Token validation failed', e);
                 return false;
             }
         };
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }) => {
                 try {
                     setUser(JSON.parse(storedUser));
                 } catch (e) {
-                    console.error("Failed to parse stored user info", e);
+                    console.error('Failed to parse stored user info', e);
                     // Clear potentially corrupted data
                     localStorage.removeItem('authToken');
                     localStorage.removeItem('userInfo');

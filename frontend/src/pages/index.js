@@ -3,9 +3,9 @@
  * @fileoverview FineDinning Landing Page using Next.js & Material UI
  */
 
-import React, { useEffect } from 'react';
-import { useRouter } from 'next/router';
 import { Container, Box } from '@mui/material';
+import { useRouter } from 'next/router';
+import React, { useEffect } from 'react';
 import HeroSection from '../components/HeroSection';
 import LoginForm from '../components/LoginForm';
 import { useAuth } from '../context/AuthContext';
@@ -33,7 +33,7 @@ export default function FineDinningLandingPage() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 height: '100vh',
-                padding: '1rem'
+                padding: '1rem',
             }}
         >
             <HeroSection />

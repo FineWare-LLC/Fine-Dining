@@ -6,12 +6,12 @@
  ******************************************************************************/
 
 import mongoose from 'mongoose';
-import {mealSchema} from './mealSchema.js';
 import {attachMealHooks} from './mealHooks.js';
+import {attachMealIndexes} from './mealIndexes.js';
 import {attachMealMethods} from './mealMethods.js';
+import {mealSchema} from './mealSchema.js';
 import {attachMealStatics} from './mealStatics.js';
 import {attachMealVirtuals} from './mealVirtuals.js';
-import {attachMealIndexes} from './mealIndexes.js';
 
 /**
  * Apply hooks, methods, statics, virtuals, and indexes:

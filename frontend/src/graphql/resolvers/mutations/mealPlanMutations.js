@@ -1,7 +1,7 @@
 import { withErrorHandling } from './baseImports.js';
-import User from '@/models/User/index.js';
-import { MealPlanModel } from "@/models/MealPlan/index.js";
 import { sanitizeString } from '@/lib/sanitize.js';
+import { MealPlanModel } from '@/models/MealPlan/index.js';
+import User from '@/models/User/index.js';
 
 /**
  * Creates a new meal plan.
@@ -13,23 +13,23 @@ import { sanitizeString } from '@/lib/sanitize.js';
  * @returns {Promise<Object>} The created meal plan.
  */
 export const createMealPlan = withErrorHandling(async (_parent, { userId, startDate, endDate, title, status, totalCalories }, context) => {
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
-  if (context.user.userId !== userId && context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: You can only create meal plans for yourself or be an admin.');
-  }
-  const user = await User.findById(userId);
-  if (!user) throw new Error('User not found');
-  const newPlan = await MealPlanModel.create({
-    user: user._id,
-    startDate,
-    endDate,
-    title: title ? sanitizeString(title.trim()) : title,
-    status: status ? sanitizeString(status.trim()) : status,
-    totalCalories,
-  });
-  return newPlan.populate('user');
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    if (context.user.userId !== userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only create meal plans for yourself or be an admin.');
+    }
+    const user = await User.findById(userId);
+    if (!user) throw new Error('User not found');
+    const newPlan = await MealPlanModel.create({
+        user: user._id,
+        startDate,
+        endDate,
+        title: title ? sanitizeString(title.trim()) : title,
+        status: status ? sanitizeString(status.trim()) : status,
+        totalCalories,
+    });
+    return newPlan.populate('user');
 });
 
 /**
@@ -42,21 +42,21 @@ export const createMealPlan = withErrorHandling(async (_parent, { userId, startD
  * @returns {Promise<Object>} The updated meal plan.
  */
 export const updateMealPlan = withErrorHandling(async (_parent, { id, startDate, endDate, title, status, totalCalories }, context) => {
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
-  const mealPlan = await MealPlanModel.findById(id);
-  if (!mealPlan) throw new Error('Meal plan not found');
-  if (mealPlan.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: You can only update your own meal plans or be an admin.');
-  }
-  const updateData = {};
-  if (startDate !== undefined) updateData.startDate = startDate;
-  if (endDate !== undefined) updateData.endDate = endDate;
-  if (title !== undefined) updateData.title = sanitizeString(title.trim());
-  if (status !== undefined) updateData.status = sanitizeString(status.trim());
-  if (totalCalories !== undefined) updateData.totalCalories = totalCalories;
-  return MealPlanModel.findByIdAndUpdate(id, updateData, { new: true }).populate('user');
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    const mealPlan = await MealPlanModel.findById(id);
+    if (!mealPlan) throw new Error('Meal plan not found');
+    if (mealPlan.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only update your own meal plans or be an admin.');
+    }
+    const updateData = {};
+    if (startDate !== undefined) updateData.startDate = startDate;
+    if (endDate !== undefined) updateData.endDate = endDate;
+    if (title !== undefined) updateData.title = sanitizeString(title.trim());
+    if (status !== undefined) updateData.status = sanitizeString(status.trim());
+    if (totalCalories !== undefined) updateData.totalCalories = totalCalories;
+    return MealPlanModel.findByIdAndUpdate(id, updateData, { new: true }).populate('user');
 });
 
 /**
@@ -69,14 +69,14 @@ export const updateMealPlan = withErrorHandling(async (_parent, { id, startDate,
  * @returns {Promise<Boolean>} True if deletion was successful.
  */
 export const deleteMealPlan = withErrorHandling(async (_parent, { id }, context) => {
-  if (!context.user?.userId) {
-    throw new Error('Authentication required');
-  }
-  const mealPlan = await MealPlanModel.findById(id);
-  if (!mealPlan) throw new Error('Meal plan not found');
-  if (mealPlan.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
-    throw new Error('Authorization required: You can only delete your own meal plans or be an admin.');
-  }
-  const result = await MealPlanModel.findByIdAndDelete(id);
-  return !!result;
+    if (!context.user?.userId) {
+        throw new Error('Authentication required');
+    }
+    const mealPlan = await MealPlanModel.findById(id);
+    if (!mealPlan) throw new Error('Meal plan not found');
+    if (mealPlan.user.toString() !== context.user.userId && context.user.role !== 'ADMIN') {
+        throw new Error('Authorization required: You can only delete your own meal plans or be an admin.');
+    }
+    const result = await MealPlanModel.findByIdAndDelete(id);
+    return !!result;
 });

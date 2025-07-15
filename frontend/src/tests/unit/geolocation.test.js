@@ -152,11 +152,20 @@ test('clearCoordinatesCache removes cached coordinates', async () => {
 
 test('isDefaultCoordinates correctly identifies default coordinates', () => {
     // Test with default coordinates
-    assert.strictEqual(isDefaultCoordinates(35.968, -83.187), true);
+    assert.strictEqual(
+        isDefaultCoordinates({ latitude: 35.968, longitude: -83.187 }),
+        true,
+    );
 
     // Test with non-default coordinates
-    assert.strictEqual(isDefaultCoordinates(40.7128, -74.0060), false);
-    assert.strictEqual(isDefaultCoordinates(37.7749, -122.4194), false);
+    assert.strictEqual(
+        isDefaultCoordinates({ latitude: 40.7128, longitude: -74.0060 }),
+        false,
+    );
+    assert.strictEqual(
+        isDefaultCoordinates({ latitude: 37.7749, longitude: -122.4194 }),
+        false,
+    );
 });
 
 test('getRestaurantSearchCoordinates handles sessionStorage errors gracefully',

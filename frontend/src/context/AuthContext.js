@@ -1,4 +1,5 @@
 // src/context/AuthContext.js
+import { saveLoginInfo } from './authUtils.js';
 import { ApolloClient, InMemoryCache, ApolloProvider, useApolloClient } from '@apollo/client'; // Import Apollo client related hooks/utils
 import { gql } from 'graphql-tag';
 import jwt from 'jsonwebtoken';
@@ -98,15 +99,11 @@ export const AuthProvider = ({ children }) => {
 
     // Login function
     const login = useCallback((newToken, userData) => {
-        localStorage.setItem('authToken', newToken);
-        // Store only essential, non-sensitive user data
-        const basicUserInfo = { id: userData.id, name: userData.name, email: userData.email, role: userData.role };
-        localStorage.setItem('userInfo', JSON.stringify(basicUserInfo));
+        const basicUserInfo = saveLoginInfo(newToken, userData);
         setToken(newToken);
         setUser(basicUserInfo);
         // No need to redirect here, LoginForm already does it
-    }, []); // Removed router dependency as LoginForm handles redirect
-
+    }, []);
     // Logout function
     const logout = useCallback(async () => {
         localStorage.removeItem('authToken');

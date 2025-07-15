@@ -102,16 +102,20 @@ describe('Geolocation Integration Tests', () => {
     });
 
     it('should handle geolocation errors gracefully', async () => {
-    // Mock navigator with geolocation error
-        global.navigator = {
-            geolocation: {
-                getCurrentPosition(success, error, options) {
-                    setTimeout(() => {
-                        error(new Error('Geolocation permission denied'));
-                    }, 0);
+        // Mock navigator with geolocation error
+        const originalNavigator = global.navigator;
+        Object.defineProperty(global, 'navigator', {
+            value: {
+                geolocation: {
+                    getCurrentPosition(success, error) {
+                        setTimeout(() => {
+                            error(new Error('Geolocation permission denied'));
+                        }, 0);
+                    },
                 },
             },
-        };
+            configurable: true,
+        });
 
         const coordinates = await getRestaurantSearchCoordinates();
 
@@ -119,41 +123,45 @@ describe('Geolocation Integration Tests', () => {
         assert.strictEqual(coordinates.latitude, 35.968);
         assert.strictEqual(coordinates.longitude, -83.187);
         assert.strictEqual(coordinates.source, 'fallback');
+
+        // Restore
+        Object.defineProperty(global, 'navigator', { value: originalNavigator, configurable: true });
     });
 
     it('should handle sessionStorage errors gracefully', async () => {
-    // Mock sessionStorage that throws errors
-        global.sessionStorage = {
-            getItem() {
-                throw new Error('Storage quota exceeded');
+        // Mock sessionStorage that throws errors
+        const originalSession = global.sessionStorage;
+        const originalNavigator2 = global.navigator;
+        Object.defineProperty(global, 'sessionStorage', {
+            value: {
+                getItem() { throw new Error('Storage quota exceeded'); },
+                setItem() { throw new Error('Storage quota exceeded'); },
+                removeItem() { throw new Error('Storage quota exceeded'); },
             },
-            setItem() {
-                throw new Error('Storage quota exceeded');
-            },
-            removeItem() {
-                throw new Error('Storage quota exceeded');
-            },
-        };
+            configurable: true,
+        });
 
         // Mock navigator with successful geolocation
-        global.navigator = {
-            geolocation: {
-                getCurrentPosition(success, error, options) {
-                    setTimeout(() => {
-                        success({
-                            coords: {
-                                latitude: 40.7128,
-                                longitude: -74.0060,
-                            },
-                        });
-                    }, 0);
+        Object.defineProperty(global, 'navigator', {
+            value: {
+                geolocation: {
+                    getCurrentPosition(success) {
+                        setTimeout(() => {
+                            success({ coords: { latitude: 40.7128, longitude: -74.0060 } });
+                        }, 0);
+                    },
                 },
             },
-        };
+            configurable: true,
+        });
 
         // Should still work despite storage errors
         const coordinates = await getRestaurantSearchCoordinates();
         assert.strictEqual(coordinates.latitude, 40.7128);
         assert.strictEqual(coordinates.longitude, -74.0060);
+
+        // Restore
+        Object.defineProperty(global, 'sessionStorage', { value: originalSession, configurable: true });
+        Object.defineProperty(global, 'navigator', { value: originalNavigator2, configurable: true });
     });
 });

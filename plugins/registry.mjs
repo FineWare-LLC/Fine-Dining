@@ -39,3 +39,11 @@ export function applyPlugins(solver) {
 export function listPlugins() {
   return Array.from(registry.keys());
 }
+
+/**
+ * Remove all registered plugins.
+ * Useful for tests to ensure isolation.
+ */
+export function clearPlugins() {
+  registry.clear();
+}

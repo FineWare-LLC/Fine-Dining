@@ -34,8 +34,18 @@ export function multiplyCPU(A, B, n) {
  * @returns {Promise<Float32Array>}
  */
 export async function multiply(A, B, n) {
-    if (!process.env.USE_GPU || process.env.DISABLE_GPU) {
+    const mode = process.env.GPU_MODE || (process.env.USE_GPU ? 'auto' : 'off');
+    if (mode === 'off') {
         return multiplyCPU(A, B, n);
+    }
+
+    function clStep(description, fn) {
+        try {
+            return fn();
+        } catch (err) {
+            console.error(`OpenCL ${description} failed: ${err.message}`);
+            throw err;
+        }
     }
 
     let cl;
@@ -43,36 +53,38 @@ export async function multiply(A, B, n) {
         cl = await import('opencl');
     } catch (err) {
         console.warn('OpenCL module not found, falling back to CPU:', err.message);
+        if (mode === 'force') throw err;
         return multiplyCPU(A, B, n);
     }
 
     let context, device, queue, program, kernel, bufferA, bufferB, bufferC;
     try {
-        context = cl.createContextFromType([cl.DEVICE_TYPE_GPU]);
+        context = clStep('create context', () => cl.createContextFromType([cl.DEVICE_TYPE_GPU]));
     } catch (err) {
-        console.error('Failed to create OpenCL context:', err.message);
+        if (mode === 'force') throw err;
         return multiplyCPU(A, B, n);
     }
 
     try {
-        device = cl.getContextInfo(context, cl.CONTEXT_DEVICES)[0];
-        const vendor = cl.getDeviceInfo(device, cl.DEVICE_VENDOR);
+        device = clStep('get device', () => cl.getContextInfo(context, cl.CONTEXT_DEVICES)[0]);
+        const vendor = clStep('get device vendor', () => cl.getDeviceInfo(device, cl.DEVICE_VENDOR));
         if (!/(NVIDIA|AMD|Intel)/i.test(vendor)) {
             console.warn(`Unsupported GPU device: ${vendor}. Falling back to CPU.`);
             cl.releaseContext(context);
+            if (mode === 'force') throw new Error('Unsupported GPU device');
             return multiplyCPU(A, B, n);
         }
     } catch (err) {
-        console.error('Failed to obtain GPU device:', err.message);
         cl.releaseContext(context);
+        if (mode === 'force') throw err;
         return multiplyCPU(A, B, n);
     }
 
     try {
-        queue = cl.createCommandQueue(context, device, 0);
+        queue = clStep('create command queue', () => cl.createCommandQueue(context, device, 0));
     } catch (err) {
-        console.error('Failed to create command queue:', err.message);
         cl.releaseContext(context);
+        if (mode === 'force') throw err;
         return multiplyCPU(A, B, n);
     }
 
@@ -92,53 +104,52 @@ export async function multiply(A, B, n) {
     }`;
 
         try {
-            program = cl.createProgramWithSource(context, kernelSource);
+            program = clStep('create program', () => cl.createProgramWithSource(context, kernelSource));
         } catch (err) {
-            console.error('Failed to create OpenCL program:', err.message);
             cl.releaseCommandQueue(queue);
             cl.releaseContext(context);
+            if (mode === 'force') throw err;
             return multiplyCPU(A, B, n);
         }
 
         try {
-            cl.buildProgram(program);
+            clStep('build program', () => cl.buildProgram(program));
         } catch (err) {
-            console.error('Failed to build OpenCL program:', err.message);
             cl.releaseProgram(program);
             cl.releaseCommandQueue(queue);
             cl.releaseContext(context);
+            if (mode === 'force') throw err;
             return multiplyCPU(A, B, n);
         }
 
         try {
-            kernel = cl.createKernel(program, 'matMul');
+            kernel = clStep('create kernel', () => cl.createKernel(program, 'matMul'));
         } catch (err) {
-            console.error('Failed to create kernel:', err.message);
             cl.releaseProgram(program);
             cl.releaseCommandQueue(queue);
             cl.releaseContext(context);
+            if (mode === 'force') throw err;
             return multiplyCPU(A, B, n);
         }
 
         const byteSize = n * n * 4;
         try {
-            bufferA = cl.createBuffer(context, cl.MEM_READ_ONLY, byteSize);
-            bufferB = cl.createBuffer(context, cl.MEM_READ_ONLY, byteSize);
-            bufferC = cl.createBuffer(context, cl.MEM_WRITE_ONLY, byteSize);
+            bufferA = clStep('create bufferA', () => cl.createBuffer(context, cl.MEM_READ_ONLY, byteSize));
+            bufferB = clStep('create bufferB', () => cl.createBuffer(context, cl.MEM_READ_ONLY, byteSize));
+            bufferC = clStep('create bufferC', () => cl.createBuffer(context, cl.MEM_WRITE_ONLY, byteSize));
         } catch (err) {
-            console.error('Failed to create buffers:', err.message);
             if (kernel) cl.releaseKernel(kernel);
             if (program) cl.releaseProgram(program);
             cl.releaseCommandQueue(queue);
             cl.releaseContext(context);
+            if (mode === 'force') throw err;
             return multiplyCPU(A, B, n);
         }
 
         try {
-            cl.enqueueWriteBuffer(queue, bufferA, true, 0, byteSize, A);
-            cl.enqueueWriteBuffer(queue, bufferB, true, 0, byteSize, B);
+            clStep('write bufferA', () => cl.enqueueWriteBuffer(queue, bufferA, true, 0, byteSize, A));
+            clStep('write bufferB', () => cl.enqueueWriteBuffer(queue, bufferB, true, 0, byteSize, B));
         } catch (err) {
-            console.error('Failed to write buffers:', err.message);
             if (bufferA) cl.releaseMemObject(bufferA);
             if (bufferB) cl.releaseMemObject(bufferB);
             if (bufferC) cl.releaseMemObject(bufferC);
@@ -146,16 +157,16 @@ export async function multiply(A, B, n) {
             if (program) cl.releaseProgram(program);
             cl.releaseCommandQueue(queue);
             cl.releaseContext(context);
+            if (mode === 'force') throw err;
             return multiplyCPU(A, B, n);
         }
 
         try {
-            cl.setKernelArg(kernel, 0, 'pointer', bufferA);
-            cl.setKernelArg(kernel, 1, 'pointer', bufferB);
-            cl.setKernelArg(kernel, 2, 'pointer', bufferC);
-            cl.setKernelArg(kernel, 3, 'uint', n);
+            clStep('set kernel arg 0', () => cl.setKernelArg(kernel, 0, 'pointer', bufferA));
+            clStep('set kernel arg 1', () => cl.setKernelArg(kernel, 1, 'pointer', bufferB));
+            clStep('set kernel arg 2', () => cl.setKernelArg(kernel, 2, 'pointer', bufferC));
+            clStep('set kernel arg 3', () => cl.setKernelArg(kernel, 3, 'uint', n));
         } catch (err) {
-            console.error('Failed to set kernel arguments:', err.message);
             if (bufferA) cl.releaseMemObject(bufferA);
             if (bufferB) cl.releaseMemObject(bufferB);
             if (bufferC) cl.releaseMemObject(bufferC);
@@ -163,15 +174,17 @@ export async function multiply(A, B, n) {
             if (program) cl.releaseProgram(program);
             cl.releaseCommandQueue(queue);
             cl.releaseContext(context);
+            if (mode === 'force') throw err;
             return multiplyCPU(A, B, n);
         }
 
         const globalWorkSize = [n, n];
         try {
-            cl.enqueueNDRangeKernel(queue, kernel, 2, null, globalWorkSize);
-            cl.finish(queue);
+            clStep('execute kernel', () => {
+                cl.enqueueNDRangeKernel(queue, kernel, 2, null, globalWorkSize);
+                cl.finish(queue);
+            });
         } catch (err) {
-            console.error('Failed to execute kernel:', err.message);
             if (bufferA) cl.releaseMemObject(bufferA);
             if (bufferB) cl.releaseMemObject(bufferB);
             if (bufferC) cl.releaseMemObject(bufferC);
@@ -179,14 +192,14 @@ export async function multiply(A, B, n) {
             if (program) cl.releaseProgram(program);
             cl.releaseCommandQueue(queue);
             cl.releaseContext(context);
+            if (mode === 'force') throw err;
             return multiplyCPU(A, B, n);
         }
 
         const result = new Float32Array(n * n);
         try {
-            cl.enqueueReadBuffer(queue, bufferC, true, 0, byteSize, result);
+            clStep('read result buffer', () => cl.enqueueReadBuffer(queue, bufferC, true, 0, byteSize, result));
         } catch (err) {
-            console.error('Failed to read result buffer:', err.message);
             if (bufferA) cl.releaseMemObject(bufferA);
             if (bufferB) cl.releaseMemObject(bufferB);
             if (bufferC) cl.releaseMemObject(bufferC);
@@ -194,6 +207,7 @@ export async function multiply(A, B, n) {
             if (program) cl.releaseProgram(program);
             cl.releaseCommandQueue(queue);
             cl.releaseContext(context);
+            if (mode === 'force') throw err;
             return multiplyCPU(A, B, n);
         }
 
@@ -215,6 +229,7 @@ export async function multiply(A, B, n) {
         if (program) cl.releaseProgram(program);
         if (queue) cl.releaseCommandQueue(queue);
         if (context) cl.releaseContext(context);
+        if (mode === 'force') throw err;
         return multiplyCPU(A, B, n);
     }
 }

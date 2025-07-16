@@ -107,7 +107,7 @@ export default function Dashboard() {
         handleTabChange,
         handleGenerateOptimizedPlan,
         handleAddMeals,
-    } = useMealOptimization();
+    } = useMealOptimization({ defaultMealType: 'DINNER' });
 
     return (
         <>

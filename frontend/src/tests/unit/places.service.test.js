@@ -5,6 +5,7 @@ import { OverpassProvider } from '../../services/providers/OverpassProvider.js';
 
 // Import the service after setting up environment variables
 process.env.GOOGLE_PLACES_API_KEY = 'valid-key';
+process.env.PLACES_CACHE_TTL_MS = '0';
 const { findNearbyRestaurants } = await import('../../services/places.service.js');
 
 function restoreMocks(...mocks) {
@@ -41,4 +42,29 @@ test('findNearbyRestaurants falls back to Overpass when Google fails', async () 
     assert.equal(overpassMock.mock.callCount(), 1);
 
     restoreMocks(isValid, googleMock, overpassMock);
+});
+
+test('findNearbyRestaurants caches results within TTL', async () => {
+    process.env.PLACES_CACHE_TTL_MS = '1000';
+    const { findNearbyRestaurants: cachedSearch, clearPlacesCache } = await import('../../services/places.service.js?cache-test');
+
+    const isValid = mock.method(GooglePlacesProvider.prototype, 'isValidKey', () => true);
+    const googleMock = mock.method(GooglePlacesProvider.prototype, 'findNearby', async () => [{ name: 'G' }]);
+    const overpassMock = mock.method(OverpassProvider.prototype, 'findNearby', async () => [{ name: 'O' }]);
+    let now = 0;
+    const nowMock = mock.method(Date, 'now', () => now);
+
+    const res1 = await cachedSearch(1, 2, 1000, 'pizza');
+    assert.deepEqual(res1, { restaurants: [{ name: 'G' }], source: 'google' });
+
+    now += 500; // within TTL
+    const res2 = await cachedSearch(1, 2, 1000, 'pizza');
+    assert.deepEqual(res2, { restaurants: [{ name: 'G' }], source: 'google' });
+
+    assert.equal(googleMock.mock.callCount(), 1);
+    assert.equal(overpassMock.mock.callCount(), 0);
+
+    restoreMocks(isValid, googleMock, overpassMock, nowMock);
+    clearPlacesCache();
+    delete process.env.PLACES_CACHE_TTL_MS;
 });

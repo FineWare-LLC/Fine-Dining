@@ -6,6 +6,7 @@
 import { useMutation, gql } from '@apollo/client';
 import { useState, useCallback } from 'react';
 import { CreateMealDocument } from '@/gql/graphql';
+import { addMeals } from './addMealsHelper.js';
 
 const GENERATE_OPTIMIZED_MEAL_PLAN = gql`
   mutation GenerateOptimizedMealPlan($selectedMealIds: [ID], $customNutritionTargets: CustomNutritionTargetsInput) {
@@ -123,30 +124,19 @@ export const useMealOptimization = (options = {}) => {
     }, [generateOptimizedMealPlan, selectedMeals, customNutritionTargets]);
 
     // Add selected meals to meal plan
-    const handleAddMeals = useCallback(async (meals, mealPlanId = defaultMealPlanId) => {
-        try {
-            const addPromises = meals.map(meal =>
-                createMeal({
-                    variables: {
-                        mealPlanId,
-                        date: new Date().toISOString(),
-                        mealType: 'DINNER', // TODO: Make this configurable
-                        mealName: meal.mealName,
-                        price: meal.price,
-                        nutrition: meal.nutrition,
-                        allergens: meal.allergens,
-                    },
-                }),
-            );
-
-            await Promise.all(addPromises);
-            setSelectedMeals([]);
-            return { success: true };
-        } catch (err) {
-            console.error('Error adding meals:', err);
-            return { success: false, error: err };
-        }
-    }, [createMeal, defaultMealPlanId]);
+    const handleAddMeals = useCallback(
+        async (meals, mealType = 'DINNER', mealPlanId = defaultMealPlanId) => {
+            try {
+                await addMeals(createMeal, meals, mealPlanId, mealType);
+                setSelectedMeals([]);
+                return { success: true };
+            } catch (err) {
+                console.error('Error adding meals:', err);
+                return { success: false, error: err };
+            }
+        },
+        [createMeal, defaultMealPlanId],
+    );
 
     // Reset all optimization state
     const resetOptimization = useCallback(() => {
@@ -203,3 +193,4 @@ export const useMealOptimization = (options = {}) => {
 };
 
 export default useMealOptimization;
+export { addMeals } from './addMealsHelper.js';

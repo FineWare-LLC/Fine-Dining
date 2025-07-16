@@ -167,7 +167,7 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals, restaurantI
     const handleAddSelected = () => {
         if (onAddMeals) {
             const mealsToAdd = filteredMeals.filter(m => selectedMeals.includes(m.id));
-            onAddMeals(mealsToAdd);
+            onAddMeals(mealsToAdd, 'DINNER');
         }
     };
 

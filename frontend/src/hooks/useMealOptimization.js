@@ -38,10 +38,14 @@ const GENERATE_OPTIMIZED_MEAL_PLAN = gql`
  * Custom hook for meal optimization management
  * @param {Object} options - Configuration options
  * @param {string} options.defaultMealPlanId - Default meal plan ID for adding meals
+ * @param {string} options.defaultMealType - Meal type to use when adding meals
  * @returns {Object} Meal optimization data and control functions
  */
 export const useMealOptimization = (options = {}) => {
-    const { defaultMealPlanId = 'default-meal-plan' } = options;
+    const {
+        defaultMealPlanId = 'default-meal-plan',
+        defaultMealType = 'DINNER',
+    } = options;
 
     // State management
     const [selectedMeals, setSelectedMeals] = useState([]);
@@ -130,7 +134,7 @@ export const useMealOptimization = (options = {}) => {
                     variables: {
                         mealPlanId,
                         date: new Date().toISOString(),
-                        mealType: 'DINNER', // TODO: Make this configurable
+                        mealType: defaultMealType,
                         mealName: meal.mealName,
                         price: meal.price,
                         nutrition: meal.nutrition,
@@ -146,7 +150,7 @@ export const useMealOptimization = (options = {}) => {
             console.error('Error adding meals:', err);
             return { success: false, error: err };
         }
-    }, [createMeal, defaultMealPlanId]);
+    }, [createMeal, defaultMealPlanId, defaultMealType]);
 
     // Reset all optimization state
     const resetOptimization = useCallback(() => {

@@ -15,7 +15,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { parse } from 'csv-parse';
 import highsDefault from 'highs-addon';
-import { interpretStatus } from '../../../../io/solverOutput.js';
+import { interpretStatus } from '../../../frontend/src/io/solverOutput.js';
 import { autoTune, loadConfig } from '../tuner/index.mjs';
 
 const { Solver, solverVersion } = highsDefault;

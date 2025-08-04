@@ -19,6 +19,14 @@ import React, {useEffect, useState} from 'react';
 import {useDashStore} from './store';
 import {useAuth} from '@/context/AuthContext.js';
 import {generateInitialsAvatar} from '@/utils/avatar';
+import { useQuery, gql } from '@apollo/client';
+
+// GraphQL query to get unread notification count
+const GET_UNREAD_NOTIFICATION_COUNT = gql`
+    query GetUnreadNotificationCount($recipientId: ID!) {
+        getUnreadNotificationCount(recipientId: $recipientId)
+    }
+`;
 
 export default function NewHeader({user}) {
     const { user: contextUser } = useAuth();
@@ -34,6 +42,19 @@ export default function NewHeader({user}) {
 
     const currentUser = user || (isClient ? authUser : null);
     const router = useRouter();
+
+    // Fetch unread notification count
+    const { data: notificationData, loading: notificationLoading } = useQuery(
+        GET_UNREAD_NOTIFICATION_COUNT,
+        {
+            variables: { recipientId: currentUser?.id },
+            skip: !currentUser?.id, // Skip query if no user ID
+            pollInterval: 30000, // Poll every 30 seconds for real-time updates
+            errorPolicy: 'ignore' // Don't show errors in UI for notifications
+        }
+    );
+
+    const unreadCount = notificationData?.getUnreadNotificationCount || 0;
 
     return (
         <AppBar
@@ -111,6 +132,10 @@ export default function NewHeader({user}) {
                     {/* Notifications */}
                     <IconButton
                         color="inherit"
+                        onClick={() => {
+                            // TODO: Open notification panel/dropdown
+                            console.log('Notifications clicked - unread count:', unreadCount);
+                        }}
                         sx={{
                             borderRadius: 2,
                             p: 1.5,
@@ -122,7 +147,7 @@ export default function NewHeader({user}) {
                         }}
                     >
                         <Badge
-                            badgeContent={3}
+                            badgeContent={unreadCount > 0 ? unreadCount : null}
                             color="secondary"
                             sx={{
                                 '& .MuiBadge-badge': {

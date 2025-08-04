@@ -31,8 +31,7 @@ import {
 } from '@mui/material';
 import React, { useState } from 'react';
 
-// Local JSON data of scraped menu items
-import menuItems from '@highs/data/raw/scraped_data_test.json';
+// Removed fake scraped data import to fix selection bug
 
 // GraphQL query to fetch all available meals
 const GET_ALL_MEALS = gql`
@@ -115,31 +114,8 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals, restaurantI
     });
     const restaurants = restaurantData?.getRestaurants || [];
 
-    // Prepare meals data based on source
-    let mealsToDisplay = [];
-
-    if (restaurantId) {
-    // If we're showing a specific restaurant's menu
-        mealsToDisplay = allItems || [];
-    } else {
-    // Combine API meals with scraped menu items when showing all meals
-        const apiMeals = data?.getAllMeals || [];
-        const scrapedMeals = menuItems.map((item, idx) => ({
-            id: `scraped-${idx}`,
-            mealName: item.meal_name,
-            price: item.price || 0,
-            restaurant: { restaurantName: item.chain },
-            nutrition: {
-                carbohydrates: item.carbohydrates,
-                protein: item.protein,
-                fat: item.fat,
-                sodium: item.sodium,
-            },
-            isScraped: true,
-        }));
-
-        mealsToDisplay = [...apiMeals, ...scrapedMeals];
-    }
+    // Use only real API data - no fake scraped data mixing
+    const mealsToDisplay = allItems || [];
 
     // Filter meals based on search term and restaurant filter
     const filteredMeals = mealsToDisplay.filter(meal => {
@@ -273,14 +249,13 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals, restaurantI
                                         <TableRow
                                             key={meal.id}
                                             hover
-                                            onClick={() => !meal.isScraped && handleMealSelection(meal.id)}
-                                            selected={!meal.isScraped && isMealSelected(meal.id)}
+                                            onClick={() => handleMealSelection(meal.id)}
+                                            selected={isMealSelected(meal.id)}
                                         >
                                             <TableCell padding="checkbox">
                                                 <Checkbox
-                                                    checked={!meal.isScraped && isMealSelected(meal.id)}
-                                                    onChange={() => !meal.isScraped && handleMealSelection(meal.id)}
-                                                    disabled={meal.isScraped}
+                                                    checked={isMealSelected(meal.id)}
+                                                    onChange={() => handleMealSelection(meal.id)}
                                                 />
                                             </TableCell>
                                             <TableCell component="th" scope="row">

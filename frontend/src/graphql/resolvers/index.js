@@ -4,9 +4,9 @@
  * a single export for a GraphQL schema.
  ****************************************************************/
 
-import { Mutation } from './mutations';
-import { Query } from './queries';
-import { MealPlan, Meal, Stats, Review, MenuItem, DateScalar } from './resolversFields';
+import { Mutation } from './mutations/index.js';
+import { Query } from './queries/index.js';
+import { MealPlan, Meal, Stats, Review, MenuItem, DateScalar } from './resolversFields.js';
 
 /**
  * @file index.js

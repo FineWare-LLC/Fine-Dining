@@ -2,6 +2,7 @@ import * as authMutations from './authMutations.js';
 import * as mealMutations from './mealMutations.js';
 import * as mealPlanMutations from './mealPlanMutations.js';
 import * as menuItemMutations from './menuItemMutations.js';
+import * as notificationMutations from './notificationMutations.js';
 import * as optimizationMutations from './optimizationMutations.js';
 import * as recipeMutations from './recipeMutations.js';
 import * as restaurantMutations from './restaurantMutations.js';
@@ -18,6 +19,7 @@ export const Mutation = {
     ...mealMutations,
     ...statsMutations,
     ...reviewMutations,
+    ...notificationMutations,
     ...optimizationMutations,
     ...menuItemMutations,
 };

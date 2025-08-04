@@ -107,6 +107,29 @@ export const typeDefs = gql`
     }
 
     """
+    Notification type enumeration.
+    Defines the type of notification for styling and priority.
+    """
+    enum NotificationType {
+        INFO
+        SUCCESS
+        WARNING
+        ERROR
+        SYSTEM
+    }
+
+    """
+    Notification priority enumeration.
+    Defines the priority level of notifications.
+    """
+    enum NotificationPriority {
+        LOW
+        MEDIUM
+        HIGH
+        URGENT
+    }
+
+    """
     Represents a User with robust fields.
     Note: Passwords are handled separately for security.
     """
@@ -395,6 +418,43 @@ export const typeDefs = gql`
     }
 
     """
+    Represents an image attached to a notification.
+    """
+    type NotificationImage {
+        url: String!
+        alt: String
+        caption: String
+    }
+
+    """
+    Represents a notification sent to a user.
+    Supports unlimited categories, rich content, and image attachments.
+    """
+    type Notification {
+        id: ID!
+        title: String!
+        body: String!
+        category: String!
+        type: NotificationType!
+        priority: NotificationPriority!
+        recipient: User!
+        sender: User
+        images: [NotificationImage]
+        metadata: String # JSON string for flexible metadata
+        actionUrl: String
+        actionText: String
+        isRead: Boolean!
+        readAt: Date
+        isArchived: Boolean!
+        archivedAt: Date
+        expiresAt: Date
+        scheduledFor: Date
+        tags: [String]
+        createdAt: Date!
+        updatedAt: Date!
+    }
+
+    """
     Simple LatLng coordinate type.
     """
     type LatLng {
@@ -464,6 +524,17 @@ export const typeDefs = gql`
             radius: Int,
             keyword: String
         ): NearbyRestaurantsResult
+        getNotification(id: ID!): Notification
+        getNotifications(
+            recipientId: ID,
+            category: String,
+            isRead: Boolean,
+            isArchived: Boolean,
+            page: Int,
+            limit: Int
+        ): [Notification]
+        getUnreadNotificationCount(recipientId: ID!): Int
+        getNotificationsByCategory(recipientId: ID!, category: String!): [Notification]
     }
 
     """
@@ -523,6 +594,55 @@ export const typeDefs = gql`
         fatMax: Float
         sodiumMin: Float
         sodiumMax: Float
+    }
+
+    """
+    Input type for notification image attachments.
+    """
+    input NotificationImageInput {
+        url: String!
+        alt: String
+        caption: String
+    }
+
+    """
+    Input type for creating a new notification.
+    """
+    input CreateNotificationInput {
+        title: String!
+        body: String!
+        category: String!
+        type: NotificationType
+        priority: NotificationPriority
+        recipientId: ID!
+        senderId: ID
+        images: [NotificationImageInput]
+        metadata: String
+        actionUrl: String
+        actionText: String
+        expiresAt: Date
+        scheduledFor: Date
+        tags: [String]
+    }
+
+    """
+    Input type for updating a notification.
+    """
+    input UpdateNotificationInput {
+        title: String
+        body: String
+        category: String
+        type: NotificationType
+        priority: NotificationPriority
+        images: [NotificationImageInput]
+        metadata: String
+        actionUrl: String
+        actionText: String
+        isRead: Boolean
+        isArchived: Boolean
+        expiresAt: Date
+        scheduledFor: Date
+        tags: [String]
     }
 
     """
@@ -665,5 +785,14 @@ export const typeDefs = gql`
             comment: String
         ): Review!
         deleteReview(id: ID!): Boolean
+        createNotification(input: CreateNotificationInput!): Notification!
+        updateNotification(id: ID!, input: UpdateNotificationInput!): Notification
+        deleteNotification(id: ID!): Boolean
+        markNotificationAsRead(id: ID!): Notification
+        markNotificationAsUnread(id: ID!): Notification
+        archiveNotification(id: ID!): Notification
+        unarchiveNotification(id: ID!): Notification
+        markAllNotificationsAsRead(recipientId: ID!): Boolean
+        deleteAllNotifications(recipientId: ID!): Boolean
     }
 `;

@@ -6,6 +6,7 @@ import {
     Button,
     Card,
     CardContent,
+    Chip,
     CircularProgress,
     Container,
     Fade,
@@ -142,31 +143,180 @@ export default function ProfilePage() {
                 </Typography>
                 {error && <Alert severity="error">Failed to load profile.</Alert>}
                 {data && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <AvatarUpload
-                            user={{ name: data.name, avatarUrl }}
-                            onUpload={handleUpload}
-                        />
-                        <ProfileDetails user={{ ...data, avatarUrl }} />
-                    </Box>
+                    <>
+                        {/* Profile Information Section */}
+                        <Box className={styles.profileSection}>
+                            <Typography variant="h6" className={styles.sectionTitle} 
+                                sx={{ borderBottomColor: 'primary.main', color: 'text.primary' }}>
+                                Profile Information
+                            </Typography>
+                            <Box className={styles.infoGrid}>
+                                {/* Avatar and Basic Info Card */}
+                                <Card className={styles.profileCard} 
+                                    sx={{ 
+                                        bgcolor: 'background.paper',
+                                        border: '1px solid',
+                                        borderColor: 'divider',
+                                        boxShadow: 3
+                                    }}>
+                                    <CardContent>
+                                        <Box className={styles.avatarSection}>
+                                            <AvatarUpload
+                                                user={{ name: data.name, avatarUrl }}
+                                                onUpload={handleUpload}
+                                            />
+                                            <Box className={styles.userInfo}>
+                                                <Typography className={styles.userName} 
+                                                    sx={{ color: 'text.primary' }}>
+                                                    {data.name}
+                                                </Typography>
+                                                <Typography className={styles.userEmail} 
+                                                    sx={{ color: 'text.secondary' }}>
+                                                    {data.email}
+                                                </Typography>
+                                                <Box className={styles.statusChips}>
+                                                    <Chip
+                                                        label={data.role}
+                                                        size="small"
+                                                        sx={{
+                                                            bgcolor: `role.${data.role.toLowerCase()}`,
+                                                            color: 'common.white',
+                                                            fontWeight: 600,
+                                                        }}
+                                                    />
+                                                    <Chip
+                                                        label={data.accountStatus}
+                                                        size="small"
+                                                        sx={{
+                                                            bgcolor: `state.${data.accountStatus.toLowerCase()}`,
+                                                            color: 'common.white',
+                                                            fontWeight: 600,
+                                                        }}
+                                                    />
+                                                </Box>
+                                            </Box>
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Health & Preferences Card */}
+                                <Card className={styles.profileCard} 
+                                    sx={{ 
+                                        bgcolor: 'background.paper',
+                                        border: '1px solid',
+                                        borderColor: 'divider',
+                                        boxShadow: 3
+                                    }}>
+                                    <CardContent>
+                                        <Typography variant="h6" sx={{ mb: 2, color: 'text.primary', fontWeight: 600 }}>
+                                            Health Information
+                                        </Typography>
+                                        <Grid container spacing={2}>
+                                            <Grid item xs={6}>
+                                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                                                    Weight
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 500 }}>
+                                                    {data.weight ? `${data.weight} ${data.measurementSystem === 'IMPERIAL' ? 'lbs' : 'kg'}` : 'N/A'}
+                                                </Typography>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                                                    Height
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 500 }}>
+                                                    {data.height ? `${data.height} ${data.measurementSystem === 'IMPERIAL' ? 'in' : 'cm'}` : 'N/A'}
+                                                </Typography>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                                                    Gender
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 500 }}>
+                                                    {data.gender || 'N/A'}
+                                                </Typography>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                                                    Daily Calories
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 500 }}>
+                                                    {data.dailyCalories || 'N/A'}
+                                                </Typography>
+                                            </Grid>
+                                            <Grid item xs={12}>
+                                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>
+                                                    Member Since
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 500 }}>
+                                                    {new Date(data.createdAt).toLocaleDateString('en-US', {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric'
+                                                    })}
+                                                </Typography>
+                                            </Grid>
+                                        </Grid>
+                                    </CardContent>
+                                </Card>
+                            </Box>
+                        </Box>
+
+                        {/* Settings Section */}
+                        <Box className={styles.profileSection}>
+                            <Typography variant="h6" className={styles.sectionTitle} 
+                                sx={{ borderBottomColor: 'primary.main', color: 'text.primary' }}>
+                                Preferences & Settings
+                            </Typography>
+                            <Card sx={{ 
+                                bgcolor: 'background.paper',
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                borderRadius: 3,
+                                p: 2,
+                                mb: 3
+                            }}>
+                                <CardContent>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                                        <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 500 }}>
+                                            Theme Preference
+                                        </Typography>
+                                        <ThemeToggle />
+                                    </Box>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                        Choose between light and dark mode for better readability
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                            
+                            <Typography variant="body1" className={styles.description} sx={{ color: 'text.primary' }}>
+                                Update your dietary preferences and health information below.
+                            </Typography>
+                            <Box>
+                                <QuestionnaireWizard/>
+                            </Box>
+                        </Box>
+
+                        {/* Actions Section */}
+                        <Box className={styles.actionSection}>
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                onClick={logout}
+                                size="large"
+                                sx={{ 
+                                    borderRadius: 2,
+                                    px: 4,
+                                    py: 1.5,
+                                    fontWeight: 600,
+                                    textTransform: 'none'
+                                }}
+                            >
+                                Sign Out
+                            </Button>
+                        </Box>
+                    </>
                 )}
-                <Box sx={{ my: 2 }}>
-                    <ThemeToggle />
-                </Box>
-                <Typography variant="body1" className={styles.description} sx={{mt: 3}}>
-                        Update your preferences below.
-                </Typography>
-                <Box>
-                    <QuestionnaireWizard/>
-                </Box>
-                <Button
-                    variant="outlined"
-                    color="secondary"
-                    onClick={logout}
-                    sx={{mt: 3}}
-                >
-                        Log Out
-                </Button>
             </Box>
         </Fade>
     </Container>);

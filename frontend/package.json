@@ -64,6 +64,7 @@
     "graphql": "^16.11.0",
     "graphql-tag": "^2.12.6",
     "highs-addon": "^0.9.4",
+    "immer": "^10.1.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.14.2",
     "mongoose-encryption": "^2.1.2",
@@ -73,6 +74,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3",
+    "react-window": "^1.8.11",
+    "react-window-infinite-loader": "^1.0.10",
     "winston": "^3.10.0",
     "winston-cloudwatch": "^2.5.0",
     "zustand": "^5.0.3"

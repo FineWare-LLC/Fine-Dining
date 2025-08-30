@@ -24,6 +24,11 @@ import Head from 'next/head';
 import React, { useEffect, useState } from 'react';
 import NewHeader from '@/components/Dashboard/NewHeader';
 import NewNavigationDrawer from '@/components/Dashboard/NewNavigationDrawer';
+import GreetingSegment from '@/components/Dashboard/GreetingSegment';
+import DayOverview from '@/components/Dashboard/DayOverview';
+import HourlyMealPlanner from '@/components/Dashboard/HourlyMealPlanner';
+import DailySummary from '@/components/Dashboard/DailySummary';
+import DiscoveryHeader from '@/components/Dashboard/DiscoveryHeader';
 import PlannerCanvas from '@/components/PlannerCanvas/PlannerCanvas';
 import { useAuth } from '@/context/AuthContext';
 
@@ -125,59 +130,53 @@ export default function Dashboard() {
                 sx={{
                     pt:`calc(${theme.mixins.toolbar.minHeight}px + 8px)`,
                     pb:'90px',
-                    px:2,
+                    px: { xs: 2, sm: 3, md: 4 },
+                    maxWidth: '1200px',
+                    mx: 'auto',
                     display:'flex',
                     flexDirection:'column',
+                    gap: { xs: 2, sm: 3 }
                 }}
             >
-                {/* <GreetingSegment userName={(isClient && currentUser?.name) || 'Guest'} /> */}
+                {/* Greeting Section */}
+                <GreetingSegment userName={(isClient && currentUser?.name) || 'Guest'} />
 
-                {/* Meal Loading Error */}
-                {/* {mealError && (
-                    <Box sx={{ my: 2, textAlign: 'center' }}>
-                        <Alert severity="error" sx={{ mb: 2 }}>
-              Error loading meals: {mealError.message || 'Internal server error.'}
-                        </Alert>
-                    </Box>
-                )} */}
+                {/* Featured Meal Overview */}
+                <DayOverview 
+                    meal={{
+                        title: "Grilled Salmon with Quinoa",
+                        description: "A nutritious and delicious meal packed with omega-3 fatty acids and complete proteins.",
+                        imageUrl: "https://source.unsplash.com/800x600/?salmon,quinoa,healthy"
+                    }}
+                />
 
-                {/* Meal Loading Indicator */}
-                {/* {mealLoading && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-                        <CircularProgress />
-                        <Typography variant="body2" sx={{ ml: 2, alignSelf: 'center' }}>
-              Loading meals...
-                        </Typography>
-                    </Box>
-                )} */}
+                {/* Daily Summary */}
+                <DailySummary />
 
-                {/* Hourly Meal Planner - replaces Daily Summary */}
-                {/* <HourlyMealPlanner 
+                {/* Hourly Meal Planner */}
+                <HourlyMealPlanner 
                     meals={hourlyMeals}
                     onAddMeal={handleAddMealToHour}
                     onRemoveMeal={handleRemoveMealFromHour}
-                /> */}
+                />
 
-                {/* Meal Plan Optimization */}
-                {/* <MealPlanOptimizer
-                    selectedMeals={selectedMeals}
-                    optimizedMealPlan={optimizedMealPlan}
-                    tabValue={tabValue}
-                    optimizationLoading={optimizationLoading}
-                    optimizationError={optimizationError}
-                    onMealSelection={handleMealSelection}
-                    onNutritionTargetsChange={handleNutritionTargetsChange}
-                    onTabChange={handleTabChange}
-                    onGenerateOptimizedPlan={handleGenerateOptimizedPlan}
-                    onAddMeals={handleAddMeals}
-                /> */}
+                {/* Discovery Section */}
+                <DiscoveryHeader />
 
-                {/* Meal Card - only show if meal is loaded and no error */}
-                {/* {!mealLoading && !mealError && meal && (
-                    <MealCard meal={meal} />
-                )} */}
-
-                {/* <DiscoveryHeader /> */}
+                {/* Placeholder for restaurant cards or additional content */}
+                <Box sx={{ 
+                    textAlign: 'center', 
+                    py: 4, 
+                    color: 'text.secondary',
+                    borderRadius: 2,
+                    bgcolor: 'background.paper',
+                    border: '1px dashed',
+                    borderColor: 'divider'
+                }}>
+                    <Typography variant="body2">
+                        Restaurant discovery and additional features coming soon...
+                    </Typography>
+                </Box>
 
                 {/* {source === 'overpass' && (
                     <Alert severity="warning" sx={{ my: 2 }}>

@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+// Use global fetch (works with both browser and Node.js with global.fetch set)
 
 export class OverpassProvider {
     constructor(baseUrl) {
@@ -16,7 +16,7 @@ export class OverpassProvider {
 out center;`;
 
         const body = `data=${encodeURIComponent(query)}`;
-        const res = await fetch(this.baseUrl, {
+        const res = await global.fetch(this.baseUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body,

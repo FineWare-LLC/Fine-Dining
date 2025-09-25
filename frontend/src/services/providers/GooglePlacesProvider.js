@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+// Use global fetch dynamically in methods
 
 export class GooglePlacesProvider {
     constructor(apiKey) {
@@ -6,7 +6,7 @@ export class GooglePlacesProvider {
     }
 
     isValidKey() {
-        return (
+        return !!(
             this.apiKey &&
       this.apiKey !== 'YOUR_GOOGLE_PLACES_API_KEY' &&
       !this.apiKey.includes('YOUR_') &&
@@ -24,7 +24,7 @@ export class GooglePlacesProvider {
         if (keyword) params.set('keyword', keyword);
 
         const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?${params.toString()}`;
-        const res = await fetch(url);
+        const res = await global.fetch(url);
         if (!res.ok) {
             throw new Error(`Google Places API error: ${res.status}`);
         }

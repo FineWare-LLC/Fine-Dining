@@ -13,19 +13,19 @@ try {
 }
 
 if (scraper) {
-    const scrape = scraper.parseMenu || scraper.scrapeAllChains || scraper.run;
+    const scrape = scraper.scrapeMenu || scraper.parseMenu || scraper.scrapeAllChains || scraper.run;
     if (typeof scrape !== 'function') {
         test('menuScraper has no parsable function', { skip: true }, () => {});
     } else {
         test('parses example menu pages with mocked fetch', async () => {
-            const html = '<html></html>';
+            const html = '<div class="menu-item">Burger $10.99 500 cal 25g protein</div>';
             const mockFetch = async () => ({ ok: true, text: async () => html });
 
             const originalFetch = global.fetch;
             global.fetch = mockFetch;
 
             try {
-                const result = await scrape();
+                const result = await scrape('https://example.com');
                 assert.ok(Array.isArray(result));
                 assert.ok(result.length >= 0);
             } finally {

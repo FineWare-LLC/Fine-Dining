@@ -29,6 +29,7 @@ import DayOverview from '@/components/Dashboard/DayOverview';
 import HourlyMealPlanner from '@/components/Dashboard/HourlyMealPlanner';
 import DailySummary from '@/components/Dashboard/DailySummary';
 import DiscoveryHeader from '@/components/Dashboard/DiscoveryHeader';
+import NearbyRestaurants from '@/components/Dashboard/NearbyRestaurants';
 import PlannerCanvas from '@/components/PlannerCanvas/PlannerCanvas';
 import { useAuth } from '@/context/AuthContext';
 
@@ -163,57 +164,8 @@ export default function Dashboard() {
                 {/* Discovery Section */}
                 <DiscoveryHeader />
 
-                {/* Placeholder for restaurant cards or additional content */}
-                <Box sx={{ 
-                    textAlign: 'center', 
-                    py: 4, 
-                    color: 'text.secondary',
-                    borderRadius: 2,
-                    bgcolor: 'background.paper',
-                    border: '1px dashed',
-                    borderColor: 'divider'
-                }}>
-                    <Typography variant="body2">
-                        Restaurant discovery and additional features coming soon...
-                    </Typography>
-                </Box>
-
-                {/* {source === 'overpass' && (
-                    <Alert severity="warning" sx={{ my: 2 }}>
-            Live results retrieved from OpenStreetMap; ratings unavailable.
-                    </Alert>
-                )} */}
-
-                {/* {restaurantsLoading && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-                        <CircularProgress />
-                    </Box>
-                )} */}
-
-                {/* {restaurantsError && (
-                    <Box sx={{ my: 2, textAlign: 'center' }}>
-                        <Typography color="error" gutterBottom>
-              Failed to load nearby restaurants.
-                        </Typography>
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={retryRestaurants}
-                        >
-              Retry
-                        </Button>
-                    </Box>
-                )} */}
-
-                {/* {restaurantsEmpty && (
-                    <Typography variant="body2" color="text.secondary" align="center" sx={{ my: 2 }}>
-            No nearby restaurants found.
-                    </Typography>
-                )} */}
-
-                {/* {restaurants.map(r => (
-                    <RestaurantCard key={r.placeId} restaurant={r} source={source} />
-                ))} */}
+                {/* Nearby Restaurants Feature */}
+                <NearbyRestaurants />
             </Box>
             {/* <BottomSearchRail /> */}
             <NewNavigationDrawer />

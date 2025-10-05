@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import fetch from 'node-fetch';
+import nodeFetch from 'node-fetch';
 
 /**
  * Scrape menu items and basic nutrition info from a restaurant website.
@@ -10,7 +10,8 @@ import fetch from 'node-fetch';
  * @returns {Promise<Array>} Array of menu item objects.
  */
 export async function scrapeMenu(url) {
-    const res = await fetch(url);
+    const fetchImplementation = typeof globalThis.fetch === 'function' ? globalThis.fetch.bind(globalThis) : nodeFetch;
+    const res = await fetchImplementation(url);
     if (!res.ok) {
         throw new Error(`Failed to fetch ${url}: ${res.statusText}`);
     }

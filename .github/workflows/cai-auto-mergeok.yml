@@ -1,0 +1,54 @@
+name: CAI Auto-Label merge-ok
+
+on:
+  pull_request:
+    branches: [staging]
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  pull-requests: write
+  checks: read
+  statuses: read
+
+concurrency:
+  group: cai-mergeok-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    if: |
+      (startsWith(github.event.pull_request.title, 'CAI') || contains(join(github.event.pull_request.labels.*.name, ','), 'CAI'))
+      && github.event.pull_request.draft == false
+
+    steps:
+      - name: Wait briefly for checks to start
+        run: sleep 10
+
+      - name: Add CAI:merge-ok when all checks green
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const { owner, repo } = context.repo;
+            const sha = pr.head.sha;
+
+            const checks = await github.rest.checks.listForRef({ owner, repo, ref: sha });
+            const statuses = await github.rest.repos.getCombinedStatusForRef({ owner, repo, ref: sha });
+
+            const combined = statuses.data.state; // success|pending|failure
+            const pending = checks.data.check_runs.filter(r => !r.conclusion);
+            const failing = checks.data.check_runs.filter(r => r.conclusion && !['success','neutral','skipped'].includes(r.conclusion));
+
+            if (combined !== 'success' || pending.length > 0 || failing.length > 0) {
+              core.info(`Not labeling merge-ok yet. combined=${combined} pending=${pending.length} failing=${failing.length}`);
+              return;
+            }
+
+            const labels = (pr.labels || []).map(l => l.name);
+            if (!labels.includes('CAI:merge-ok')) {
+              await github.rest.issues.addLabels({ owner, repo, issue_number: pr.number, labels: ['CAI:merge-ok'] });
+              core.info('Added CAI:merge-ok');
+            } else {
+              core.info('CAI:merge-ok already present');
+            }

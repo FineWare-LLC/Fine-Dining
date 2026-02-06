@@ -130,6 +130,124 @@ export const typeDefs = gql`
     }
 
     """
+    Q&A question difficulty enumeration.
+    Defines the difficulty level of nutrition questions.
+    """
+    enum QuestionDifficulty {
+        BEGINNER
+        INTERMEDIATE
+        ADVANCED
+        EXPERT
+    }
+
+    """
+    Q&A answer type enumeration.
+    Categorizes answer options for educational purposes.
+    """
+    enum AnswerType {
+        CORRECT
+        WRONG
+        MIGHT_BE
+        ALMOST_RIGHT
+    }
+
+    """
+    Represents a Question Category for the Q&A system.
+    """
+    type QuestionCategory {
+        id: ID!
+        name: String!
+        description: String!
+        totalSubsets: Int!
+        completionReward: Int!
+        iconUrl: String
+        isActive: Boolean!
+        createdAt: Date!
+        updatedAt: Date!
+    }
+
+    """
+    Represents a Question Subset within a category.
+    """
+    type QuestionSubset {
+        id: ID!
+        categoryId: ID!
+        category: QuestionCategory!
+        subsetNumber: Int!
+        subsetName: String!
+        description: String
+        totalQuestions: Int!
+        difficulty: QuestionDifficulty!
+        isUnlocked: Boolean!
+        createdAt: Date!
+        updatedAt: Date!
+    }
+
+    """
+    Represents a single Q&A question with all answer options.
+    """
+    type Question {
+        id: ID!
+        subsetId: ID!
+        subset: QuestionSubset!
+        questionNumber: Int!
+        questionText: String!
+        explanation: String!
+        correctAnswers: [String!]!
+        wrongAnswers: [String!]!
+        mightBeAnswers: [String!]!
+        almostRightAnswers: [String!]!
+        nutritionFocus: [String!]!
+        difficulty: QuestionDifficulty!
+        createdAt: Date!
+        updatedAt: Date!
+    }
+
+    """
+    Represents a user's progress on individual questions.
+    """
+    type UserQuestionProgress {
+        id: ID!
+        userId: ID!
+        user: User!
+        questionId: ID!
+        question: Question!
+        isCompleted: Boolean!
+        isCorrect: Boolean
+        selectedAnswer: String
+        selectedAnswerType: AnswerType
+        attemptsCount: Int!
+        pointsEarned: Int!
+        completedAt: Date
+        createdAt: Date!
+        updatedAt: Date!
+    }
+
+    """
+    Represents a user's overall progress within a category.
+    """
+    type UserCategoryProgress {
+        id: ID!
+        userId: ID!
+        user: User!
+        categoryId: ID!
+        category: QuestionCategory!
+        completedQuestions: Int!
+        totalQuestions: Int!
+        correctAnswers: Int!
+        wrongAnswers: Int!
+        currentStreak: Int!
+        bestStreak: Int!
+        pointsEarned: Int!
+        badgesEarned: [String!]!
+        completionPercentage: Float!
+        averageScore: Float!
+        lastActivityAt: Date
+        createdAt: Date!
+        updatedAt: Date!
+    }
+
+    """
     Represents a User with robust fields.
     Note: Passwords are handled separately for security.
     """
@@ -153,6 +271,30 @@ export const typeDefs = gql`
         lastLogin: Date
         createdAt: Date!
         updatedAt: Date!
+        # Q&A System integration
+        qaPoints: Int
+        qaBadges: [String]
+        qaCurrentStreak: Int
+        qaBestStreak: Int
+        categoryProgress: [UserCategoryProgress]
+        savedRecipes: [Recipe]
+    }
+
+    """
+    Represents overall Q&A statistics for a user.
+    """
+    type UserQAStats {
+        totalPoints: Int!
+        totalCorrectAnswers: Int!
+        totalQuestionsAttempted: Int!
+        averageAccuracy: Float!
+        currentGlobalStreak: Int!
+        bestGlobalStreak: Int!
+        totalBadges: Int!
+        categoriesCompleted: Int!
+        totalTimeSpent: Int!
+        lastActivityAt: Date
+        categoryStats: [UserCategoryProgress!]!
     }
 
     """
@@ -168,6 +310,7 @@ export const typeDefs = gql`
         nutritionFacts: String
         tags: [String]
         images: [String]
+        videoUrl: String
         estimatedCost: Float
         author: User
         averageRating: Float
@@ -463,6 +606,80 @@ export const typeDefs = gql`
     }
 
     """
+    Represents nutrition information with additional fields for meal catalog.
+    """
+    type MealNutrition {
+        calories: Int
+        protein: Float
+        carbohydrates: Float
+        fat: Float
+        sodium: Float
+        fiber: Float
+        sugar: Float
+    }
+
+    """
+    Represents a recipe ingredient with quantity and unit.
+    """
+    type Ingredient {
+        name: String!
+        quantity: Float
+        unit: String
+    }
+
+    """
+    Represents a recipe with images, ingredients, and cooking instructions for meal catalog.
+    """
+    type MealRecipe {
+        images: [String]
+        ingredients: [Ingredient]
+        instructions: String
+    }
+
+    """
+    Represents a meal optimized for the meal catalog with enhanced fields.
+    """
+    type CatalogMeal {
+        id: ID!
+        mealName: String!
+        mealType: MealType
+        prepTime: Int
+        activeTime: Int
+        difficulty: Difficulty
+        cuisine: String
+        price: Float
+        rating: Float
+        nutrition: MealNutrition
+        recipe: MealRecipe
+        allergens: [String]
+        dietaryTags: [String]
+        restaurant: Restaurant
+        source: String
+        verified: Boolean
+        createdAt: Date!
+        updatedAt: Date!
+    }
+
+    """
+    Result type for getMealsWithFilters query with pagination support.
+    """
+    type MealsWithFiltersResult {
+        meals: [CatalogMeal!]!
+        totalCount: Int!
+        hasNextPage: Boolean!
+    }
+
+    """
+    Search suggestions result type for autocomplete functionality.
+    """
+    type SearchSuggestions {
+        meals: [String!]!
+        ingredients: [String!]!
+        cuisines: [String!]!
+        tags: [String!]!
+    }
+
+    """
     Represents restaurant data fetched from an external API (e.g., Google Places).
     """
     type ExternalRestaurant {
@@ -477,6 +694,42 @@ export const typeDefs = gql`
     type NearbyRestaurantsResult {
         source: String
         restaurants: [ExternalRestaurant]
+    }
+
+    """
+    Enhanced restaurant result type for local restaurant filtering.
+    Includes filtering metadata and restaurant scoring information.
+    """
+    type LocalRestaurantsResult {
+        source: String
+        restaurants: [LocalExternalRestaurant]
+        filteredCount: Int          # Total restaurants found before filtering
+        localCount: Int             # Number of local restaurants after filtering
+        filterCriteria: FilterCriteria
+    }
+
+    """
+    Enhanced external restaurant type with local scoring information.
+    """
+    type LocalExternalRestaurant {
+        placeId: String!
+        name: String
+        vicinity: String
+        rating: Float
+        userRatingsTotal: Int
+        location: LatLng
+        localScore: Int             # Local restaurant score (0-100)
+        isChain: Boolean            # Whether this is identified as a chain restaurant
+        website: String             # Restaurant website (if available)
+    }
+
+    """
+    Filter criteria used for local restaurant filtering.
+    """
+    type FilterCriteria {
+        minLocalScore: Int
+        excludeChains: Boolean
+        maxResults: Int
     }
 
     """
@@ -524,6 +777,15 @@ export const typeDefs = gql`
             radius: Int,
             keyword: String
         ): NearbyRestaurantsResult
+        findNearbyLocalRestaurants(
+            latitude: Float!,
+            longitude: Float!,
+            radius: Int,
+            keyword: String,
+            excludeChains: Boolean,
+            minLocalScore: Int,
+            maxResults: Int
+        ): LocalRestaurantsResult
         getNotification(id: ID!): Notification
         getNotifications(
             recipientId: ID,
@@ -535,6 +797,32 @@ export const typeDefs = gql`
         ): [Notification]
         getUnreadNotificationCount(recipientId: ID!): Int
         getNotificationsByCategory(recipientId: ID!, category: String!): [Notification]
+        getMealsWithFilters(
+            page: Int!
+            limit: Int!
+            search: String
+            diets: [String]
+            caloriesMin: Int
+            caloriesMax: Int
+            proteinMin: Int
+            proteinMax: Int
+            prepTimeMax: Int
+            cuisines: [String]
+            allergenExclusions: [String]
+        ): MealsWithFiltersResult!
+        getSearchSuggestions(query: String!): SearchSuggestions!
+        # Q&A System Queries
+        getQuestionCategories: [QuestionCategory!]!
+        getQuestionCategory(id: ID!): QuestionCategory
+        getQuestionSubsets(categoryId: ID!): [QuestionSubset!]!
+        getQuestionSubset(id: ID!): QuestionSubset
+        getQuestions(subsetId: ID!): [Question!]!
+        getQuestion(id: ID!): Question
+        getRandomQuestion(categoryId: ID, difficulty: QuestionDifficulty): Question
+        getUserCategoryProgress(userId: ID!, categoryId: ID): UserCategoryProgress
+        getUserQuestionProgress(userId: ID!, questionId: ID!): UserQuestionProgress
+        getQALeaderboard(categoryId: ID, limit: Int): [UserCategoryProgress!]!
+        getUserQAStats(userId: ID!): UserQAStats
     }
 
     """
@@ -646,6 +934,70 @@ export const typeDefs = gql`
     }
 
     """
+    Input type for submitting an answer to a Q&A question.
+    """
+    input SubmitAnswerInput {
+        questionId: ID!
+        selectedAnswer: String!
+        timeSpent: Int
+    }
+
+    """
+    Input type for creating or updating question categories.
+    """
+    input QuestionCategoryInput {
+        name: String!
+        description: String!
+        totalSubsets: Int!
+        completionReward: Int!
+        iconUrl: String
+        isActive: Boolean
+    }
+
+    """
+    Input type for creating or updating question subsets.
+    """
+    input QuestionSubsetInput {
+        categoryId: ID!
+        subsetNumber: Int!
+        subsetName: String!
+        description: String
+        totalQuestions: Int!
+        difficulty: QuestionDifficulty!
+        isUnlocked: Boolean
+    }
+
+    """
+    Input type for creating or updating questions.
+    """
+    input QuestionInput {
+        subsetId: ID!
+        questionNumber: Int!
+        questionText: String!
+        explanation: String!
+        correctAnswers: [String!]!
+        wrongAnswers: [String!]!
+        mightBeAnswers: [String!]!
+        almostRightAnswers: [String!]!
+        nutritionFocus: [String!]!
+        difficulty: QuestionDifficulty!
+    }
+
+    """
+    Payload returned after submitting an answer.
+    """
+    type SubmitAnswerPayload {
+        isCorrect: Boolean!
+        answerType: AnswerType!
+        pointsEarned: Int!
+        explanation: String!
+        streakCount: Int!
+        newBadges: [String!]!
+        userQuestionProgress: UserQuestionProgress!
+        userCategoryProgress: UserCategoryProgress!
+    }
+
+    """
     Mutation definitions for Fine Dining.
     Each mutation should implement robust security, input validations, and logging.
     """
@@ -721,6 +1073,8 @@ export const typeDefs = gql`
             nutritionFacts: String
         ): MenuItem
         deleteMenuItem(id: ID!): Boolean
+        saveRecipe(recipeId: ID!): Recipe
+        rejectRecipe(recipeId: ID!): Boolean
         createMealPlan(
             userId: ID!
             startDate: Date!
@@ -794,5 +1148,20 @@ export const typeDefs = gql`
         unarchiveNotification(id: ID!): Notification
         markAllNotificationsAsRead(recipientId: ID!): Boolean
         deleteAllNotifications(recipientId: ID!): Boolean
+        # Q&A System Mutations
+        submitAnswer(userId: ID!, input: SubmitAnswerInput!): SubmitAnswerPayload!
+        createQuestionCategory(input: QuestionCategoryInput!): QuestionCategory!
+        updateQuestionCategory(id: ID!, input: QuestionCategoryInput!): QuestionCategory
+        deleteQuestionCategory(id: ID!): Boolean
+        createQuestionSubset(input: QuestionSubsetInput!): QuestionSubset!
+        updateQuestionSubset(id: ID!, input: QuestionSubsetInput!): QuestionSubset
+        deleteQuestionSubset(id: ID!): Boolean
+        createQuestion(input: QuestionInput!): Question!
+        updateQuestion(id: ID!, input: QuestionInput!): Question
+        deleteQuestion(id: ID!): Boolean
+        unlockNextSubset(userId: ID!, categoryId: ID!): QuestionSubset
+        resetUserProgress(userId: ID!, categoryId: ID): Boolean
+        awardBadge(userId: ID!, badgeName: String!): Boolean
+        claimReward(userId: ID!, categoryId: ID!): Boolean
     }
 `;

@@ -345,6 +345,8 @@ const NutritionRequirementsModule = () => {
         dietaryProfile,
         strictnessGauge,
         getDailyTotals,
+        interestQuery,
+        setInterestQuery,
     } = usePlannerStore();
     
     const [activePreset, setActivePreset] = useState('Custom');
@@ -411,6 +413,23 @@ const NutritionRequirementsModule = () => {
     
     return (
         <Box sx={{ height: '100%', overflow: 'auto' }}>
+            {/* Food Interests */}
+            <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                    Food Interests
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                     What are you craving? (e.g. Italian, Spicy, Chicken)
+                </Typography>
+                <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Enter keywords..."
+                    value={interestQuery}
+                    onChange={(e) => setInterestQuery(e.target.value)}
+                />
+            </Box>
+
             <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" gutterBottom>
                     Nutrition Presets

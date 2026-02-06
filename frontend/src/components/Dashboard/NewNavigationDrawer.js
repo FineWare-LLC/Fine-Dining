@@ -12,6 +12,11 @@ export default function NewNavigationDrawer() {
     const router = useRouter();
     const { logout } = useAuth();
     const links = [
+        { label: 'Feed', path: '/dashboard' },
+        { label: 'Meal Book', path: '/meal-book' },
+        { label: 'Recipe Discovery', path: '/recipe-discovery' },
+        { label: 'Add Recipe', path: '/add-recipe' },
+        { label: 'Optimizer', path: '/optimizer' },
         { label: 'Profile', path: '/profile' },
         { label: 'Settings', path: '/settings' },
         { label: 'Sign\u00a0Out', action: logout },

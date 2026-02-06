@@ -1,10 +1,10 @@
 /**
  * Enhanced restaurant card with modern design and interactive elements
  */
-import DirectionsIcon from '@mui/icons-material/Directions';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import RestaurantIcon from '@mui/icons-material/Restaurant';
-import StarIcon from '@mui/icons-material/Star';
+import DirectionsIconModule from '@mui/icons-material/Directions';
+import LocationOnIconModule from '@mui/icons-material/LocationOn';
+import RestaurantIconModule from '@mui/icons-material/Restaurant';
+import StarIconModule from '@mui/icons-material/Star';
 import {
     Card,
     CardContent,
@@ -17,6 +17,12 @@ import {
     useTheme,
 } from '@mui/material';
 import React from 'react';
+import { resolveMuiIcon } from '@/utils/muiIcon';
+
+const DirectionsIcon = resolveMuiIcon(DirectionsIconModule);
+const LocationOnIcon = resolveMuiIcon(LocationOnIconModule);
+const RestaurantIcon = resolveMuiIcon(RestaurantIconModule);
+const StarIcon = resolveMuiIcon(StarIconModule);
 
 export default function RestaurantCard({ restaurant, source }) {
     const theme = useTheme();

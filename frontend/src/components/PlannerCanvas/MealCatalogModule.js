@@ -10,7 +10,8 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useQuery, gql } from '@apollo/client';
+import { useQuery } from '@apollo/client/react';
+import { gql } from '@apollo/client';
 import {
     Box,
     Card,
@@ -49,6 +50,8 @@ import {
     KeyboardArrowUp as ArrowUpIcon,
     Close as CloseIcon,
     Verified as VerifiedIcon,
+    Restaurant as RestaurantIcon,
+    Home as HomeIcon,
 } from '@mui/icons-material';
 import { FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
@@ -110,6 +113,7 @@ const GET_MEALS_WITH_FILTERS = gql`
                         quantity
                         unit
                     }
+                    instructions
                 }
                 allergens
                 dietaryTags
@@ -293,6 +297,23 @@ const MealCard = ({ meal, onQuickView, onAddMeal }) => {
                             variant="outlined"
                         />
                     )}
+                    <Chip
+                        icon={meal.restaurant ? <RestaurantIcon /> : <HomeIcon />}
+                        label={meal.restaurant ? 'Restaurant' : 'Home'}
+                        size="small"
+                        variant="filled"
+                        sx={{
+                            backgroundColor: meal.restaurant 
+                                ? alpha(theme.palette.warning.main, 0.2)
+                                : alpha(theme.palette.success.main, 0.2),
+                            color: meal.restaurant 
+                                ? theme.palette.warning.main
+                                : theme.palette.success.main,
+                            '& .MuiChip-icon': {
+                                color: 'inherit',
+                            },
+                        }}
+                    />
                 </Stack>
                 
                 <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
@@ -402,6 +423,15 @@ const QuickViewDialog = ({ meal, open, onClose, onAddMeal }) => {
                                     <Typography variant="h6" gutterBottom>Ingredients</Typography>
                                     <Typography variant="body2" color="text.secondary">
                                         {meal.recipe.ingredients.map(ing => ing.name).join(', ')}
+                                    </Typography>
+                                </Box>
+                            )}
+                            
+                            {meal.recipe?.instructions && !meal.restaurant && (
+                                <Box>
+                                    <Typography variant="h6" gutterBottom>Cooking Instructions</Typography>
+                                    <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-line' }}>
+                                        {meal.recipe.instructions}
                                     </Typography>
                                 </Box>
                             )}

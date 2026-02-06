@@ -180,6 +180,28 @@ node src/main_pipeline.mjs
 On completion you will find `data/processed/restaurant_meals_processed.csv` in
 the same directory.
 
+## Usage
+
+### Meal Optimization API
+
+With the Next.js dev server running on `http://localhost:3000`, submit a request to `/api/v1/optimize` with a JSON payload matching `MealPlanRequest`.
+
+```bash
+curl -X POST http://localhost:3000/api/v1/optimize \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "user_id": "usr_demo",
+    "horizon_days": 1,
+    "meals_per_day": 3,
+    "diet": {"kcal": 2200, "protein_g": 140, "carb_g": 240, "fat_g": 70},
+    "micros": {"fiber_g": {"min": 25}},
+    "allergens": ["peanut"],
+    "preferences": {"cuisine": ["mediterranean"]}
+  }'
+```
+
+Successful responses include daily meal allocations, macro rollups, solver diagnostics, and nutrient shadow prices. Retry the same request with an `Idempotency-Key` header to obtain cached solutions.
+
 ## Testing
 
 The project uses Playwright for both end-to-end and component testing.

@@ -1,5 +1,5 @@
 /**
- * @file login.spec.ts
+ * @file login.spec.js
  * Standalone Playwright tests for the Next.js Sign In page.
  */
 
@@ -26,8 +26,8 @@ test.describe('Sign In Page - Comprehensive Tests', () => {
 
     test('should load sign-in page with correct title & placeholders', async ({ page }) => {
         await expect(page).toHaveTitle(/Fine Dining/i);
-        await expect(page.locator('input[name="email"]')).toHaveAttribute('placeholder', /Email/i);
-        await expect(page.locator('input[name="password"]')).toHaveAttribute('placeholder', /Password/i);
+        await expect(page.locator('input[name="email"]')).toHaveAttribute('placeholder', /Enter your email address/i);
+        await expect(page.locator('input[name="password"]')).toHaveAttribute('placeholder', /Enter your password/i);
     });
 
     test('should display Forgot Password link', async ({ page }) => {
@@ -56,8 +56,27 @@ test.describe('Sign In Page - Comprehensive Tests', () => {
         await expect(page.locator('p[role="alert"]')).toContainText(/invalid credentials/i);
     });
 
-    test('should mask password input', async ({ page }) => {
+    test('should mask password input by default', async ({ page }) => {
         const passwordField = page.locator('input[name="password"]');
+        await expect(passwordField).toHaveAttribute('type', 'password');
+    });
+
+    test('should toggle password visibility when eye icon is clicked', async ({ page }) => {
+        const passwordField = page.locator('input[name="password"]');
+        const toggleButton = page.locator('button[aria-label*="password"]');
+        
+        // Password should be masked by default
+        await expect(passwordField).toHaveAttribute('type', 'password');
+        
+        // Fill password to make toggle more meaningful
+        await passwordField.fill('testPassword123');
+        
+        // Click the toggle button to show password
+        await toggleButton.click();
+        await expect(passwordField).toHaveAttribute('type', 'text');
+        
+        // Click again to hide password
+        await toggleButton.click();
         await expect(passwordField).toHaveAttribute('type', 'password');
     });
 

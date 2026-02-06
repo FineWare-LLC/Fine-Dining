@@ -3,7 +3,8 @@
  * Handles restaurant fetching, caching, and error states
  */
 
-import { useLazyQuery, gql } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useLazyQuery } from '@apollo/client/react';
 import { useState, useEffect, useCallback } from 'react';
 import { useDashStore } from '@/components/Dashboard/store';
 import { getRestaurantSearchCoordinates, clearCoordinatesCache } from '@/utils/geolocation';

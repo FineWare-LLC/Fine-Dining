@@ -1,11 +1,11 @@
 /**
  * Enhanced meal card with modern design and detailed information
  */
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import FitnessIcon from '@mui/icons-material/FitnessCenter';
-import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
+import AccessTimeIconModule from '@mui/icons-material/AccessTime';
+import FavoriteIconModule from '@mui/icons-material/Favorite';
+import FavoriteBorderIconModule from '@mui/icons-material/FavoriteBorder';
+import FitnessIconModule from '@mui/icons-material/FitnessCenter';
+import LocalFireDepartmentIconModule from '@mui/icons-material/LocalFireDepartment';
 import {
     Card,
     CardMedia,
@@ -18,6 +18,13 @@ import {
     LinearProgress,
 } from '@mui/material';
 import React from 'react';
+import { resolveMuiIcon } from '@/utils/muiIcon';
+
+const AccessTimeIcon = resolveMuiIcon(AccessTimeIconModule);
+const FavoriteIcon = resolveMuiIcon(FavoriteIconModule);
+const FavoriteBorderIcon = resolveMuiIcon(FavoriteBorderIconModule);
+const FitnessIcon = resolveMuiIcon(FitnessIconModule);
+const LocalFireDepartmentIcon = resolveMuiIcon(LocalFireDepartmentIconModule);
 
 export default function MealCard({ meal }) {
     const theme = useTheme();

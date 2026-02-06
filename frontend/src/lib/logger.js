@@ -1,5 +1,5 @@
 import winston from 'winston';
-import WinstonCloudWatch from 'winston-cloudwatch';
+// import WinstonCloudWatch from 'winston-cloudwatch';
 
 const {
     LOG_LEVEL = 'info',
@@ -12,6 +12,7 @@ const transports = [
     new winston.transports.Console({ level: LOG_LEVEL }),
 ];
 
+/*
 if (AWS_REGION && CLOUDWATCH_LOG_GROUP && CLOUDWATCH_LOG_STREAM) {
     transports.push(
         new WinstonCloudWatch({
@@ -22,6 +23,7 @@ if (AWS_REGION && CLOUDWATCH_LOG_GROUP && CLOUDWATCH_LOG_STREAM) {
         }),
     );
 }
+*/
 
 const logger = winston.createLogger({
     level: LOG_LEVEL,

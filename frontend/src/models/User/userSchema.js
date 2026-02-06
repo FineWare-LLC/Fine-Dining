@@ -262,6 +262,7 @@ const userSchema = new mongoose.Schema(
          * Favorites.
          */
         favoriteRecipes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Recipe' }],
+        rejectedRecipes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Recipe' }],
         favoriteRestaurants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant' }],
 
         /**

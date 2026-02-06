@@ -5,31 +5,31 @@ export default createTheme({
     palette: {
         mode: 'light',
         primary: {
-            main: '#FF6B35',
-            light: '#FF8A65',
-            dark: '#E64A19',
+            main: '#C65D2B',
+            light: '#E07A44',
+            dark: '#9F4A21',
             contrastText: '#FFFFFF',
         },
         secondary: {
-            main: '#4CAF50',
-            light: '#81C784',
-            dark: '#388E3C',
+            main: '#5E7A5A',
+            light: '#7F9C7A',
+            dark: '#456044',
             contrastText: '#FFFFFF',
         },
         accent: {
-            main: '#FFC107',
-            light: '#FFD54F',
-            dark: '#FFA000',
+            main: '#E7B14B',
+            light: '#F2C974',
+            dark: '#C8922E',
             contrastText: '#000000',
         },
         background: {
-            default: '#FAFAFA',
+            default: '#FBF5EE',
             paper: '#FFFFFF',
         },
         surface: {
-            light: '#F5F5F5',
-            medium: '#EEEEEE',
-            dark: '#E0E0E0',
+            light: '#F7F1E9',
+            medium: '#EFE7DE',
+            dark: '#E6DDD3',
         },
         role: {
             admin: '#E57373',
@@ -45,43 +45,49 @@ export default createTheme({
             archived: '#BDBDBD',
         },
         gradient: {
-            primary: 'linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)',
-            secondary: 'linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%)',
-            accent: 'linear-gradient(135deg, #FFC107 0%, #FF9800 100%)',
-            hero: 'linear-gradient(135deg, #FF6B35 0%, #FFC107 50%, #4CAF50 100%)',
+            primary: 'linear-gradient(135deg, #C65D2B 0%, #E07A44 45%, #E7B14B 100%)',
+            secondary: 'linear-gradient(135deg, #5E7A5A 0%, #7F9C7A 100%)',
+            accent: 'linear-gradient(135deg, #E7B14B 0%, #F2C974 100%)',
+            hero: 'linear-gradient(120deg, #C65D2B 0%, #E7B14B 50%, #5E7A5A 100%)',
         },
     },
     shape: {
-        borderRadius: 16,
+        borderRadius: 18,
     },
     typography: {
-        fontFamily: '"Inter", "Poppins", "Roboto", "Helvetica Neue", "Arial", sans-serif',
+        fontFamily: '"Manrope", "Helvetica Neue", "Arial", sans-serif',
         h1: {
+            fontFamily: '"Fraunces", "Times New Roman", serif',
             fontWeight: 700,
             fontSize: '2.5rem',
             lineHeight: 1.2,
         },
         h2: {
+            fontFamily: '"Fraunces", "Times New Roman", serif',
             fontWeight: 600,
             fontSize: '2rem',
             lineHeight: 1.3,
         },
         h3: {
+            fontFamily: '"Fraunces", "Times New Roman", serif',
             fontWeight: 600,
             fontSize: '1.75rem',
             lineHeight: 1.3,
         },
         h4: {
+            fontFamily: '"Fraunces", "Times New Roman", serif',
             fontWeight: 600,
             fontSize: '1.5rem',
             lineHeight: 1.4,
         },
         h5: {
+            fontFamily: '"Fraunces", "Times New Roman", serif',
             fontWeight: 600,
             fontSize: '1.25rem',
             lineHeight: 1.4,
         },
         h6: {
+            fontFamily: '"Fraunces", "Times New Roman", serif',
             fontWeight: 600,
             fontSize: '1.125rem',
             lineHeight: 1.4,
@@ -106,17 +112,17 @@ export default createTheme({
                 root: {
                     borderRadius: 12,
                     padding: '10px 24px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                    boxShadow: '0 6px 18px rgba(47, 42, 38, 0.12)',
                     transition: 'all 0.3s ease',
                     '&:hover': {
                         transform: 'translateY(-2px)',
-                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+                        boxShadow: '0 14px 32px rgba(47, 42, 38, 0.18)',
                     },
                 },
                 contained: {
-                    background: 'linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)',
+                    background: 'linear-gradient(135deg, #C65D2B 0%, #E07A44 45%, #E7B14B 100%)',
                     '&:hover': {
-                        background: 'linear-gradient(135deg, #E64A19 0%, #F57C00 100%)',
+                        background: 'linear-gradient(135deg, #9F4A21 0%, #C65D2B 60%, #E7B14B 100%)',
                     },
                 },
             },
@@ -124,12 +130,12 @@ export default createTheme({
         MuiCard: {
             styleOverrides: {
                 root: {
-                    borderRadius: 20,
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+                    borderRadius: 22,
+                    boxShadow: '0 10px 30px rgba(47, 42, 38, 0.1)',
                     transition: 'all 0.3s ease',
                     '&:hover': {
                         transform: 'translateY(-4px)',
-                        boxShadow: '0 16px 48px rgba(0, 0, 0, 0.12)',
+                        boxShadow: '0 18px 48px rgba(47, 42, 38, 0.16)',
                     },
                 },
             },
@@ -137,8 +143,8 @@ export default createTheme({
         MuiAppBar: {
             styleOverrides: {
                 root: {
-                    background: 'linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)',
-                    boxShadow: '0 4px 20px rgba(255, 107, 53, 0.3)',
+                    background: 'linear-gradient(135deg, #C65D2B 0%, #E07A44 45%, #E7B14B 100%)',
+                    boxShadow: '0 8px 24px rgba(198, 93, 43, 0.3)',
                 },
             },
         },

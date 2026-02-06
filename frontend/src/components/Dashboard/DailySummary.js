@@ -1,7 +1,7 @@
 /**
  * DailySummary — all components now share the dynamic tint colour.
  */
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import MoreHorizIconModule from '@mui/icons-material/MoreHoriz';
 import {
     Box,
     Card,
@@ -16,6 +16,9 @@ import {
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import React, {useState, useEffect, useMemo} from 'react';
+import { resolveMuiIcon } from '@/utils/muiIcon';
+
+const MoreHorizIcon = resolveMuiIcon(MoreHorizIconModule);
 
 /* ─── ColourStops Atom ────────────────────────────────────────────── */
 const COLOUR_STOPS = [

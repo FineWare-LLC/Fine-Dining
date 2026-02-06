@@ -66,6 +66,10 @@ const recipeSchema = new Schema(
                 type: String,
             },
         ],
+        videoUrl: {
+            type: String,
+            default: '',
+        },
         estimatedCost: {
             type: Number,
             default: 0,

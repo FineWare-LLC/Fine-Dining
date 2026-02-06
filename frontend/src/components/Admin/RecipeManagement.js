@@ -1,4 +1,5 @@
-import { useQuery, useMutation, gql } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client/react';
 import {
     Edit as EditIcon,
     Delete as DeleteIcon,
@@ -230,7 +231,6 @@ export default function RecipeManagement() {
                 <DialogTitle>{editingRecipe ? 'Edit Recipe' : 'Add New Recipe'}</DialogTitle>
                 <DialogContent>
                     <TextField
-                        autoFocus
                         margin="dense"
                         label="Recipe Name"
                         fullWidth

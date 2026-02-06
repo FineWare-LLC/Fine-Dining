@@ -1,8 +1,11 @@
-import EditIcon from '@mui/icons-material/Edit';
+import EditIconModule from '@mui/icons-material/Edit';
 import { Typography, TextField, IconButton } from '@mui/material';
 import { useMutation } from '@tanstack/react-query';
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
+import { resolveMuiIcon } from '@/utils/muiIcon';
+
+const EditIcon = resolveMuiIcon(EditIconModule);
 import { useToast } from '../../context/ToastContext';
 
 const mutation = `

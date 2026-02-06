@@ -3,36 +3,9 @@
  * Handles meal selection, nutrition targets, and optimization state
  */
 
-import { useMutation, gql } from '@apollo/client';
-import { useState, useCallback } from 'react';
+import { useMutation } from '@apollo/client/react';
+import { useState, useCallback, useMemo } from 'react';
 import { CreateMealDocument } from '@/gql/graphql';
-
-const GENERATE_OPTIMIZED_MEAL_PLAN = gql`
-  mutation GenerateOptimizedMealPlan($selectedMealIds: [ID], $customNutritionTargets: CustomNutritionTargetsInput) {
-    generateOptimizedMealPlan(selectedMealIds: $selectedMealIds, customNutritionTargets: $customNutritionTargets) {
-      meals {
-        mealId
-        mealName
-        servings
-        pricePerServing
-        totalPrice
-        nutrition {
-          carbohydrates
-          protein
-          fat
-          sodium
-        }
-      }
-      totalCost
-      totalNutrition {
-        carbohydrates
-        protein
-        fat
-        sodium
-      }
-    }
-  }
-`;
 
 /**
  * Custom hook for meal optimization management
@@ -45,26 +18,20 @@ export const useMealOptimization = (options = {}) => {
 
     // State management
     const [selectedMeals, setSelectedMeals] = useState([]);
+    const [selectedMealData, setSelectedMealData] = useState({});
     const [customNutritionTargets, setCustomNutritionTargets] = useState(null);
     const [optimizedMealPlan, setOptimizedMealPlan] = useState(null);
     const [tabValue, setTabValue] = useState(0);
-
-    // GraphQL mutations
-    const [generateOptimizedMealPlan, {
-        loading: optimizationLoading,
-        error: optimizationError,
-    }] = useMutation(GENERATE_OPTIMIZED_MEAL_PLAN, {
-        onCompleted: (data) => {
-            setOptimizedMealPlan(data.generateOptimizedMealPlan);
-            // Switch to the results tab
-            setTabValue(2);
-        },
-        onError: (error) => {
-            console.error('Error generating optimized meal plan:', error);
-        },
-    });
+    const [optimizationLoading, setOptimizationLoading] = useState(false);
+    const [optimizationError, setOptimizationError] = useState(null);
 
     const [createMeal] = useMutation(CreateMealDocument);
+
+    const selectedMealsCount = selectedMeals.length;
+    const selectedMealsList = useMemo(
+        () => selectedMeals.map(id => selectedMealData[id]).filter(Boolean),
+        [selectedMeals, selectedMealData],
+    );
 
     // Meal selection management
     const handleMealSelection = useCallback((mealId) => {
@@ -74,6 +41,21 @@ export const useMealOptimization = (options = {}) => {
             } else {
                 return [...prev, mealId];
             }
+        });
+    }, []);
+
+    const handleMealSelectionData = useCallback((meal, isSelected) => {
+        if (!meal?.id) return;
+        setSelectedMealData(prev => {
+            if (!isSelected) {
+                const next = { ...prev };
+                delete next[meal.id];
+                return next;
+            }
+            return {
+                ...prev,
+                [meal.id]: meal,
+            };
         });
     }, []);
 
@@ -89,6 +71,7 @@ export const useMealOptimization = (options = {}) => {
     // Clear all selected meals
     const clearSelectedMeals = useCallback(() => {
         setSelectedMeals([]);
+        setSelectedMealData({});
     }, []);
 
     // Check if a meal is selected
@@ -111,16 +94,119 @@ export const useMealOptimization = (options = {}) => {
         setTabValue(newValue);
     }, []);
 
-    // Generate optimized meal plan
-    const handleGenerateOptimizedPlan = useCallback(() => {
-        setOptimizedMealPlan(null); // Clear any previous results
-        generateOptimizedMealPlan({
-            variables: {
-                selectedMealIds: selectedMeals.length > 0 ? selectedMeals : undefined,
-                customNutritionTargets,
-            },
+    const buildConstraints = useCallback(() => {
+        const defaults = {
+            caloriesMin: 2200,
+            caloriesMax: 2600,
+            proteinMin: 100,
+            proteinMax: 160,
+            carbohydratesMin: 250,
+            carbohydratesMax: 350,
+            fatMin: 50,
+            fatMax: 90,
+            sodiumMin: 1500,
+            sodiumMax: 2300,
+        };
+        const targets = { ...defaults, ...(customNutritionTargets || {}) };
+        return {
+            calories: { min: targets.caloriesMin, max: targets.caloriesMax },
+            protein: { min: targets.proteinMin, max: targets.proteinMax },
+            carbohydrates: { min: targets.carbohydratesMin, max: targets.carbohydratesMax },
+            fat: { min: targets.fatMin, max: targets.fatMax },
+            sodium: { min: targets.sodiumMin, max: targets.sodiumMax },
+        };
+    }, [customNutritionTargets]);
+
+    const buildOptimizationMeals = useCallback(() => {
+        return selectedMealsList.map(meal => {
+            const carbs = Number(meal.nutrition?.carbohydrates ?? 0);
+            const protein = Number(meal.nutrition?.protein ?? 0);
+            const fat = Number(meal.nutrition?.fat ?? 0);
+            const calories = Number(meal.nutrition?.calories ?? (carbs * 4 + protein * 4 + fat * 9));
+
+            return {
+                id: meal.id,
+                meal_name: meal.mealName,
+                price: Number(meal.price ?? 0),
+                calories,
+                protein,
+                carbohydrates: carbs,
+                fat,
+                sodium: Number(meal.nutrition?.sodium ?? 0),
+            };
         });
-    }, [generateOptimizedMealPlan, selectedMeals, customNutritionTargets]);
+    }, [selectedMealsList]);
+
+    // Generate optimized meal plan
+    const handleGenerateOptimizedPlan = useCallback(async () => {
+        setOptimizedMealPlan(null); // Clear any previous results
+        setOptimizationError(null);
+
+        const mealsPayload = buildOptimizationMeals();
+        if (mealsPayload.length === 0) {
+            setOptimizationError(new Error('Select at least one meal with nutrition data.'));
+            return;
+        }
+
+        setOptimizationLoading(true);
+        try {
+            const response = await fetch('/api/optimize-meals', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    meals: mealsPayload,
+                    constraints: buildConstraints(),
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Optimization failed (${response.status})`);
+            }
+
+            const result = await response.json();
+            if (result.status !== 'optimal') {
+                throw new Error(result.message || 'No optimal meal plan found');
+            }
+
+            const meals = (result.mealPlan || []).map(item => {
+                const mealId = item.mealId || item.mealName;
+                const pricePerServing = item.servings > 0 ? item.totalCost / item.servings : 0;
+                return {
+                    mealId,
+                    mealName: item.mealName,
+                    servings: item.servings,
+                    pricePerServing,
+                    totalPrice: item.totalCost,
+                    nutrition: {
+                        carbohydrates: item.totalCarbs / Math.max(item.servings, 1) || 0,
+                        protein: item.totalProtein / Math.max(item.servings, 1) || 0,
+                        fat: item.totalFat / Math.max(item.servings, 1) || 0,
+                        sodium: item.totalSodium / Math.max(item.servings, 1) || 0,
+                    },
+                };
+            });
+
+            const totals = result.totalNutrition || {};
+            const mapped = {
+                meals,
+                totalCost: totals.cost ?? 0,
+                totalNutrition: {
+                    carbohydrates: totals.carbohydrates ?? 0,
+                    protein: totals.protein ?? 0,
+                    fat: totals.fat ?? 0,
+                    sodium: totals.sodium ?? 0,
+                },
+            };
+
+            setOptimizedMealPlan(mapped);
+            setTabValue(2);
+        } catch (error) {
+            console.error('Error generating optimized meal plan:', error);
+            setOptimizationError(error);
+        } finally {
+            setOptimizationLoading(false);
+        }
+    }, [buildConstraints, buildOptimizationMeals]);
 
     // Add selected meals to meal plan
     const handleAddMeals = useCallback(async (meals, mealPlanId = defaultMealPlanId) => {
@@ -174,6 +260,7 @@ export const useMealOptimization = (options = {}) => {
 
         // Meal selection actions
         handleMealSelection,
+        handleMealSelectionData,
         selectMeals,
         clearSelectedMeals,
         isMealSelected,
@@ -192,11 +279,11 @@ export const useMealOptimization = (options = {}) => {
         clearOptimizationResults,
 
         // Computed values
-        hasSelectedMeals: selectedMeals.length > 0,
-        selectedMealsCount: selectedMeals.length,
+        hasSelectedMeals: selectedMealsCount > 0,
+        selectedMealsCount,
         hasNutritionTargets: !!customNutritionTargets,
         hasOptimizationResults: !!optimizedMealPlan,
-        canGenerate: selectedMeals.length > 0 || customNutritionTargets,
+        canGenerate: selectedMealsCount > 0 || customNutritionTargets,
         isGenerating: optimizationLoading,
         hasOptimizationError: !!optimizationError,
     };

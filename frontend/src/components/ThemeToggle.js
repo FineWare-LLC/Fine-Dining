@@ -1,8 +1,12 @@
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIconModule from '@mui/icons-material/DarkMode';
+import LightModeIconModule from '@mui/icons-material/LightMode';
 import { ToggleButtonGroup, ToggleButton } from '@mui/material';
 import React from 'react';
 import { useThemePreference } from '../context/ThemePreferenceContext';
+import { resolveMuiIcon } from '@/utils/muiIcon';
+
+const DarkModeIcon = resolveMuiIcon(DarkModeIconModule);
+const LightModeIcon = resolveMuiIcon(LightModeIconModule);
 
 export default function ThemeToggle(props) {
     const { mode, setMode } = useThemePreference();

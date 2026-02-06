@@ -1,0 +1,103 @@
+/**
+ * @fileoverview Custom App with ThemeProvider, ApolloProvider, Emotion Cache, and AuthProvider.
+ * The application is bootstrapped here. This file configures the Apollo Client to automatically attach
+ * an Authorization header to every GraphQL request by using Apollo Link's setContext utility.
+ *
+ * Process Overview:
+ * - Create an authLink that retrieves the auth token (from localStorage, for example) and attaches it to the request headers.
+ * - Create an httpLink that targets your GraphQL API endpoint.
+ * - Concatenate the authLink with the httpLink so that each outgoing request is authenticated.
+ * - Wrap the application with providers for Emotion (for style caching), MUI theme, Apollo Client, and authentication.
+ *
+ * Note: For server-side environments, consider alternative token retrieval methods as localStorage is only available client-side.
+ */
+
+import { ApolloClient, InMemoryCache, HttpLink } from '@apollo/client';
+import { ApolloProvider } from '@apollo/client/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { CacheProvider } from '@emotion/react';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import Head from 'next/head';
+import PropTypes from 'prop-types';
+import React from 'react';
+import { AuthProvider } from '../context/AuthContext';
+import { ThemePreferenceProvider } from '../context/ThemePreferenceContext';
+import useCustomTheme from '../theme/useCustomTheme'; // [cite: frontend/src/theme/useCustomTheme.js]
+import createEmotionCache from '../utils/createEmotionCache'; // [cite: frontend/src/utils/createEmotionCache.js]
+
+// Configure Apollo Client with proper URI handling for SSR using HttpLink
+const httpLink = new HttpLink({
+    uri: typeof window === 'undefined' 
+        ? 'http://localhost:3000/api/graphql'  // Server-side
+        : '/api/graphql',  // Client-side
+});
+
+const client = new ApolloClient({
+    link: httpLink,
+    cache: new InMemoryCache(),
+});
+
+const queryClient = new QueryClient();
+
+// Create an Emotion cache instance for client-side rendering.
+const clientSideEmotionCache = createEmotionCache(); // [cite: frontend/src/utils/createEmotionCache.js]
+
+/**
+ * MyApp - The root component of the Next.js application.
+ *
+ * This component wraps the entire application with providers for Emotion (for CSS-in-JS caching),
+ * Material UI theming, Apollo Client (GraphQL), and authentication context.
+ *
+ * @component
+ * @param {Object} props - Component properties.
+ * @param {React.ComponentType} props.Component - The active page component to be rendered.
+ * @param {Object} props.pageProps - Props passed to the active page component.
+ * @param {Object} [props.emotionCache] - Optional custom Emotion cache instance.
+ * @returns {JSX.Element} The fully composed component tree.
+ */
+export default function MyApp(props) {
+    // Destructure props with a default fallback for emotionCache.
+    const { Component, pageProps, emotionCache = clientSideEmotionCache } = props;
+
+    console.log('Component:', Component);
+
+    return (
+        // The CacheProvider makes the Emotion cache available throughout the component tree.
+        <QueryClientProvider client={queryClient}>
+            <CacheProvider value={emotionCache}>
+                <Head>
+                    {/* Set the viewport for responsive design */}
+                    <meta name="viewport" content="initial-scale=1, width=device-width" />
+                    {/* Set a default page title */}
+                    <title>Fine Dining</title> {/* Corrected typo from FineDinning */}
+                </Head>
+                <ThemePreferenceProvider>
+                    <ThemedApp Component={Component} pageProps={pageProps} />
+                </ThemePreferenceProvider>
+            </CacheProvider>
+        </QueryClientProvider>
+    );
+}
+
+function ThemedApp({ Component, pageProps }) {
+    const { theme } = useCustomTheme();
+    return (
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <ApolloProvider client={client}>
+                <AuthProvider>
+                    <Component {...pageProps} />
+                </AuthProvider>
+            </ApolloProvider>
+        </ThemeProvider>
+    );
+}
+
+// Define prop types for runtime validation during development.
+MyApp.propTypes = {
+    Component: PropTypes.elementType.isRequired,
+    pageProps: PropTypes.object.isRequired,
+    // Optional Emotion cache instance; falls back to clientSideEmotionCache if not provided.
+    emotionCache: PropTypes.object,
+};

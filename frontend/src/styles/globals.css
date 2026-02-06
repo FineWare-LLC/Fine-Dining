@@ -1,30 +1,40 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700;800&family=Manrope:wght@300;400;500;600;700&display=swap");
 
 /* Enhanced global styles for Fine Dining application */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary-gradient: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
-  --secondary-gradient: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
-  --hero-gradient: linear-gradient(135deg, #FF6B35 0%, #FFC107 50%, #4CAF50 100%);
-  --shadow-light: 0 4px 20px rgba(0, 0, 0, 0.08);
-  --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --shadow-heavy: 0 16px 48px rgba(0, 0, 0, 0.16);
-  --border-radius: 16px;
+  --font-sans: "Manrope", "Helvetica Neue", "Arial", sans-serif;
+  --font-display: "Fraunces", "Times New Roman", serif;
+  --background: #fbf5ee;
+  --foreground: #2f2a26;
+  --surface: #ffffff;
+  --surface-muted: #f4eee6;
+  --clay: #c65d2b;
+  --saffron: #e7b14b;
+  --sage: #5e7a5a;
+  --primary-gradient: linear-gradient(135deg, #c65d2b 0%, #e07a44 45%, #e7b14b 100%);
+  --secondary-gradient: linear-gradient(135deg, #5e7a5a 0%, #7f9c7a 100%);
+  --hero-gradient: linear-gradient(120deg, #c65d2b 0%, #e7b14b 50%, #5e7a5a 100%);
+  --shadow-light: 0 4px 20px rgba(47, 42, 38, 0.08);
+  --shadow-medium: 0 10px 32px rgba(47, 42, 38, 0.14);
+  --shadow-heavy: 0 24px 64px rgba(47, 42, 38, 0.2);
+  --border-radius: 18px;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --primary-gradient: linear-gradient(135deg, #FF8A65 0%, #FF7043 100%);
-    --secondary-gradient: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
-    --hero-gradient: linear-gradient(135deg, #FF8A65 0%, #FFD54F 50%, #66BB6A 100%);
-    --shadow-light: 0 4px 20px rgba(0, 0, 0, 0.3);
-    --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.4);
-    --shadow-heavy: 0 16px 48px rgba(0, 0, 0, 0.5);
+    --background: #14110f;
+    --foreground: #f4efe9;
+    --surface: #1c1815;
+    --surface-muted: #221e1a;
+    --primary-gradient: linear-gradient(135deg, #f08e5d 0%, #f3c767 100%);
+    --secondary-gradient: linear-gradient(135deg, #7faf7c 0%, #5e7a5a 100%);
+    --hero-gradient: linear-gradient(120deg, #f08e5d 0%, #f3c767 50%, #7faf7c 100%);
+    --shadow-light: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --shadow-medium: 0 10px 32px rgba(0, 0, 0, 0.45);
+    --shadow-heavy: 0 24px 64px rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -37,8 +47,10 @@ html {
 
 body {
   color: var(--foreground);
-  background: var(--background);
-  font-family: 'Inter', 'Poppins', 'Roboto', 'Helvetica Neue', 'Arial', sans-serif;
+  background: radial-gradient(circle at 20% 20%, rgba(230, 183, 127, 0.18), transparent 45%),
+    radial-gradient(circle at 80% 5%, rgba(130, 166, 130, 0.18), transparent 40%),
+    var(--background);
+  font-family: var(--font-sans);
   font-weight: 400;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;

@@ -1,4 +1,5 @@
-import { useMutation } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { keyframes } from '@emotion/react';
 import {
     Email as EmailIcon,
@@ -22,7 +23,6 @@ import {
     useTheme,
     alpha,
 } from '@mui/material';
-import { gql } from 'graphql-tag';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -188,7 +188,15 @@ export default function LoginForm() {
                 },
             }}
         >
-            <CardContent sx={{ p: 4 }}>
+            <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+                <Box sx={{ mb: 3 }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+                        Welcome back
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Sign in to keep your meal plans and nutrition goals on track.
+                    </Typography>
+                </Box>
                 <Box
                     component="form"
                     onSubmit={handleLogin}
@@ -203,7 +211,7 @@ export default function LoginForm() {
                     <TextField
                         id="email"
                         label="Email"
-                        placeholder="Email"
+                        placeholder="Enter your email address"
                         variant="outlined"
                         name="email"
                         type="email"
@@ -214,8 +222,16 @@ export default function LoginForm() {
                         aria-required="true"
                         error={Boolean(errorMessage) && (!email || !emailRegex.test(email.trim().toLowerCase()))}
                         helperText={
-                            (errorMessage && (!email || !emailRegex.test(email.trim().toLowerCase()))) ? errorMessage : ''
+                            (errorMessage && (!email || !emailRegex.test(email.trim().toLowerCase()))) ? 
+                            (email ? 'Please enter a valid email address' : 'Email is required') : ''
                         }
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <EmailIcon color="action" />
+                                </InputAdornment>
+                            ),
+                        }}
                         InputLabelProps={{
                             htmlFor: 'email',
                         }}
@@ -240,17 +256,37 @@ export default function LoginForm() {
                     <TextField
                         id="password"
                         label="Password"
-                        placeholder="Password"
+                        placeholder="Enter your password"
                         variant="outlined"
                         name="password"
-                        type="password"
+                        type={showPassword ? 'text' : 'password'}
                         value={password}
                         onChange={handlePasswordChange}
                         fullWidth
                         required
                         aria-required="true"
                         error={Boolean(errorMessage) && password.trim() === ''}
-                        helperText={(errorMessage && password.trim() === '') ? errorMessage : ''}
+                        helperText={(errorMessage && password.trim() === '') ? 'Password is required' : ''}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <LockIcon color="action" />
+                                </InputAdornment>
+                            ),
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        edge="end"
+                                        size="small"
+                                    >
+                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
                         InputLabelProps={{
                             htmlFor: 'password',
                         }}

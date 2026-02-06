@@ -54,6 +54,9 @@ import {
     Error as ErrorIcon,
 } from '@mui/icons-material';
 
+import { useApolloClient } from '@apollo/client/react';
+import { useAuth } from '../../context/AuthContext';
+import { generatePersonalizedMealPlan } from '../../services/mealPlanGenerator';
 import { usePlannerStore } from './store/plannerStore';
 
 const getMealTypeIcon = (mealType) => {
@@ -565,6 +568,9 @@ const PlanExplanationDrawer = ({ open, onClose, explanation }) => {
 
 const ResultsPanelModule = () => {
     const theme = useTheme();
+    const apolloClient = useApolloClient();
+    const { user } = useAuth();
+
     const {
         mealPlan,
         nutritionTargets,
@@ -575,6 +581,10 @@ const ResultsPanelModule = () => {
         regenerateMealPlan,
         getDailyTotals,
         exportGroceryList,
+        interestQuery,
+        isGenerating,
+        setIsGenerating,
+        setGeneratedPlan,
     } = usePlannerStore();
     
     const [exportDialogOpen, setExportDialogOpen] = useState(false);
@@ -594,9 +604,31 @@ const ResultsPanelModule = () => {
         swapMeal(oldMealId, newMeal, mealType);
     }, [swapMeal]);
     
-    const handleRegenerate = useCallback((mealTypes) => {
-        regenerateMealPlan(mealTypes);
-    }, [regenerateMealPlan]);
+    const handleRegenerate = useCallback(async (mealTypes) => {
+        if (!user) {
+            console.warn("User not authenticated, cannot generate plan.");
+            return;
+        }
+
+        setIsGenerating(true);
+        try {
+            console.log("Generating plan with:", { interestQuery, nutritionTargets });
+            const result = await generatePersonalizedMealPlan(
+                apolloClient, 
+                user.id, 
+                interestQuery, 
+                nutritionTargets
+            );
+            
+            console.log("Generation result:", result);
+            setGeneratedPlan(result);
+        } catch (error) {
+            console.error("Optimization failed:", error);
+            // Could add a toast notification here
+        } finally {
+            setIsGenerating(false);
+        }
+    }, [user, interestQuery, nutritionTargets, apolloClient, setIsGenerating, setGeneratedPlan]);
     
     const handleAddMeal = useCallback((mealType) => {
         console.log('Add meal to', mealType);
@@ -629,11 +661,12 @@ const ResultsPanelModule = () => {
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                         <Button
-                            startIcon={<RefreshIcon />}
+                            startIcon={isGenerating ? <CircularProgress size={20} /> : <RefreshIcon />}
                             onClick={() => handleRegenerate(['breakfast', 'lunch', 'dinner'])}
                             variant="outlined"
+                            disabled={isGenerating}
                         >
-                            Regenerate All
+                            {isGenerating ? 'Optimizing...' : 'Regenerate All'}
                         </Button>
                         <Button
                             startIcon={<ExportIcon />}
@@ -645,7 +678,16 @@ const ResultsPanelModule = () => {
                     </Box>
                 </Box>
                 
-                {totalMeals === 0 && (
+                {isGenerating && (
+                    <Box sx={{ width: '100%', mb: 3 }}>
+                         <LinearProgress />
+                         <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', mt: 1 }}>
+                             Finding the best meals for your diet...
+                         </Typography>
+                    </Box>
+                )}
+
+                {!isGenerating && totalMeals === 0 && (
                     <Card sx={{ p: 4, textAlign: 'center', mb: 3 }}>
                         <RestaurantIcon sx={{ fontSize: 64, color: theme.palette.grey[400], mb: 2 }} />
                         <Typography variant="h6" gutterBottom>

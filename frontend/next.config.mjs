@@ -5,20 +5,22 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  // Fix workspace root detection
+  outputFileTracingRoot: process.cwd(),
+
   // Performance optimizations
   compress: true,
   poweredByHeader: false,
 
   // Bundle optimization
-  experimental: {
-    optimizePackageImports: ['@mui/material', '@mui/icons-material'],
-  },
+  experimental: {},
 
   // Image optimization
   images: {
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
   },
+
 
   // Security headers
   async headers() {

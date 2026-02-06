@@ -1,8 +1,6 @@
 // src/context/AuthContext.js
 import { saveLoginInfo } from './authUtils.js';
-import { ApolloClient, InMemoryCache, ApolloProvider, useApolloClient } from '@apollo/client'; // Import Apollo client related hooks/utils
-import { gql } from 'graphql-tag';
-import jwt from 'jsonwebtoken';
+import { useApolloClient } from '@apollo/client/react'; // Import only the hook we need
 import { useRouter } from 'next/router';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
@@ -19,8 +17,8 @@ export const AuthProvider = ({ children }) => {
 
     // Check localStorage for token on initial load
     useEffect(() => {
-        // Auto-login with fake user in development mode
-        if (process.env.NODE_ENV === 'development') {
+        // Auto-login with fake user in development mode (no Node-only libs on the client)
+        if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
             const fakeUser = {
                 id: 'dev-user-123',
                 name: 'Dev User',
@@ -28,22 +26,17 @@ export const AuthProvider = ({ children }) => {
                 role: 'admin',
             };
 
-            // Create a fake JWT token that won't expire for a long time
-            const fakeTokenPayload = {
+            // Create a pseudo JWT-like token (header.payload.signature) without using jsonwebtoken
+            const header = { alg: 'none', typ: 'JWT' };
+            const payload = {
                 userId: fakeUser.id,
                 email: fakeUser.email,
                 role: fakeUser.role,
                 exp: Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60), // Expires in 1 year
             };
-
-            // Create a properly signed JWT token for development using environment variable
-            const {JWT_SECRET} = process.env;
-            if (!JWT_SECRET) {
-                console.error('FATAL ERROR: JWT_SECRET is not defined in environment variables for development auto-login.');
-                setLoading(false);
-                return;
-            }
-            const fakeToken = jwt.sign(fakeTokenPayload, JWT_SECRET, { algorithm: 'HS256' });
+            const base64url = (obj) =>
+                btoa(JSON.stringify(obj)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+            const fakeToken = `${base64url(header)}.${base64url(payload)}.`; // empty signature
 
             console.log('🚀 Development mode: Auto-logging in with fake user:', fakeUser);
 
@@ -55,12 +48,19 @@ export const AuthProvider = ({ children }) => {
             return;
         }
 
+        if (typeof window === 'undefined') {
+            setLoading(false);
+            return;
+        }
+
         const storedToken = localStorage.getItem('authToken');
         const storedUser = localStorage.getItem('userInfo'); // Basic user info if stored
 
         const isTokenValid = (token) => {
             try {
-                const [, payloadBase64] = token.split('.');
+                const parts = token.split('.');
+                if (parts.length < 2) return false;
+                const payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
                 const payload = JSON.parse(atob(payloadBase64));
                 const now = Math.floor(Date.now() / 1000); // Current time in seconds
                 return payload.exp && payload.exp > now;
@@ -85,7 +85,6 @@ export const AuthProvider = ({ children }) => {
                     setUser(null);
                 }
             }
-
         } else {
             localStorage.removeItem('authToken');
             localStorage.removeItem('userInfo');
@@ -112,7 +111,9 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         try {
             // Reset Apollo Client store on logout to clear cached data
-            await client.resetStore();
+            if (client?.resetStore) {
+                await client.resetStore();
+            }
         } catch (error) {
             console.error('Error resetting Apollo cache on logout:', error);
         }

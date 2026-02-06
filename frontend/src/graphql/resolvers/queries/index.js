@@ -8,6 +8,7 @@ import * as restaurantQueries from './restaurantQueries.js';
 import * as reviewQueries from './reviewQueries.js';
 import * as statsQueries from './statsQueries.js';
 import * as userQueries from './userQueries.js';
+import { qaQueries } from './qaQueries.js';
 
 export const Query = {
     ...generalQueries,
@@ -20,4 +21,5 @@ export const Query = {
     ...reviewQueries,
     ...notificationQueries,
     ...menuItemQueries,
+    ...qaQueries,
 };

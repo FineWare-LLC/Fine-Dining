@@ -4,9 +4,10 @@
  * Component to display the meal catalog and allow users to select meals.
  */
 
-import { useQuery, gql } from '@apollo/client';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import SearchIcon from '@mui/icons-material/Search';
+import { useQuery } from '@apollo/client/react';
+import { gql } from '@apollo/client';
+import FilterListIconModule from '@mui/icons-material/FilterList';
+import SearchIconModule from '@mui/icons-material/Search';
 import {
     Box,
     Card,
@@ -30,6 +31,10 @@ import {
     Button,
 } from '@mui/material';
 import React, { useState } from 'react';
+import { resolveMuiIcon } from '@/utils/muiIcon';
+
+const FilterListIcon = resolveMuiIcon(FilterListIconModule);
+const SearchIcon = resolveMuiIcon(SearchIconModule);
 
 // Removed fake scraped data import to fix selection bug
 
@@ -84,11 +89,12 @@ const GET_RESTAURANTS = gql`
  * @param {Object} props - Component props
  * @param {Array} props.selectedMeals - Array of selected meal IDs
  * @param {Function} props.onSelectMeal - Callback when a meal is selected/deselected
+ * @param {Function} [props.onSelectMealData] - Callback with meal data and selection state
  * @param {Function} [props.onAddMeals] - Handler for the "Add Selected" button
  * @param {string} [props.restaurantId] - Optional ID of restaurant to filter meals by
  * @returns {JSX.Element} The rendered component
  */
-const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals, restaurantId }) => {
+const MealCatalog = ({ selectedMeals = [], onSelectMeal, onSelectMealData, onAddMeals, restaurantId }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showFilters, setShowFilters] = useState(false);
     const [restaurantFilter, setRestaurantFilter] = useState(null);
@@ -128,9 +134,13 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals, restaurantI
     });
 
     // Handle meal selection
-    const handleMealSelection = (mealId) => {
+    const handleMealSelection = (meal) => {
         if (onSelectMeal) {
-            onSelectMeal(mealId);
+            onSelectMeal(meal.id);
+        }
+        if (onSelectMealData) {
+            const isSelected = !isMealSelected(meal.id);
+            onSelectMealData(meal, isSelected);
         }
     };
 
@@ -249,13 +259,13 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal, onAddMeals, restaurantI
                                         <TableRow
                                             key={meal.id}
                                             hover
-                                            onClick={() => handleMealSelection(meal.id)}
+                                            onClick={() => handleMealSelection(meal)}
                                             selected={isMealSelected(meal.id)}
                                         >
                                             <TableCell padding="checkbox">
                                                 <Checkbox
                                                     checked={isMealSelected(meal.id)}
-                                                    onChange={() => handleMealSelection(meal.id)}
+                                                    onChange={() => handleMealSelection(meal)}
                                                 />
                                             </TableCell>
                                             <TableCell component="th" scope="row">

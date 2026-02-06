@@ -1,15 +1,24 @@
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import HeightIcon from '@mui/icons-material/Height';
-import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
-import MonitorWeightIcon from '@mui/icons-material/MonitorWeight';
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import WcIcon from '@mui/icons-material/Wc';
-import WorkIcon from '@mui/icons-material/Work';
+import CalendarTodayIconModule from '@mui/icons-material/CalendarToday';
+import HeightIconModule from '@mui/icons-material/Height';
+import LocalFireDepartmentIconModule from '@mui/icons-material/LocalFireDepartment';
+import MonitorWeightIconModule from '@mui/icons-material/MonitorWeight';
+import VerifiedUserIconModule from '@mui/icons-material/VerifiedUser';
+import WcIconModule from '@mui/icons-material/Wc';
+import WorkIconModule from '@mui/icons-material/Work';
 import {Avatar, Box, Card, CardContent, Chip, Grid, Typography} from '@mui/material';
 import React from 'react';
 import CalorieProgressRing from './CalorieProgressRing';
 import ProfileDetailItem from './ProfileDetailItem';
 import {generateInitialsAvatar} from '@/utils/avatar';
+import { resolveMuiIcon } from '@/utils/muiIcon';
+
+const CalendarTodayIcon = resolveMuiIcon(CalendarTodayIconModule);
+const HeightIcon = resolveMuiIcon(HeightIconModule);
+const LocalFireDepartmentIcon = resolveMuiIcon(LocalFireDepartmentIconModule);
+const MonitorWeightIcon = resolveMuiIcon(MonitorWeightIconModule);
+const VerifiedUserIcon = resolveMuiIcon(VerifiedUserIconModule);
+const WcIcon = resolveMuiIcon(WcIconModule);
+const WorkIcon = resolveMuiIcon(WorkIconModule);
 
 export default function ProfileDetails({user}) {
     if (!user) return null;

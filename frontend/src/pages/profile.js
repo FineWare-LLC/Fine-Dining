@@ -1,5 +1,6 @@
-import {gql, useApolloClient} from '@apollo/client';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { gql } from '@apollo/client';
+import { useApolloClient } from '@apollo/client/react';
+import ArrowBackIconModule from '@mui/icons-material/ArrowBack';
 import {
     Alert,
     Box,
@@ -22,6 +23,9 @@ import ProfileEditor from '../components/Profile/ProfileEditor';
 import QuestionnaireWizard from '../components/Questionnaire/QuestionnaireWizard';
 import {useAuth} from '../context/AuthContext';
 import styles from '@/styles/ProfilePage.module.css';
+import { resolveMuiIcon } from '@/utils/muiIcon';
+
+const ArrowBackIcon = resolveMuiIcon(ArrowBackIconModule);
 
 const ThemeToggle = dynamic(() => import('../components/ThemeToggle'), {ssr: false});
 const AvatarUpload = dynamic(() => import('../components/Profile/AvatarUpload'), {ssr: false});

@@ -4,8 +4,8 @@
  *              with both client and server renders.
  */
 
-import CloseIcon from '@mui/icons-material/Close';
-import SearchIcon from '@mui/icons-material/Search';
+import CloseIconModule from '@mui/icons-material/Close';
+import SearchIconModule from '@mui/icons-material/Search';
 import {
     Box,
     IconButton,
@@ -22,6 +22,10 @@ import React, {
     useId,
     memo,
 } from 'react';
+import { resolveMuiIcon } from '@/utils/muiIcon';
+
+const CloseIcon = resolveMuiIcon(CloseIconModule);
+const SearchIcon = resolveMuiIcon(SearchIconModule);
 
 
 /* ---- Zustand store (default) ------------------------------------------ */

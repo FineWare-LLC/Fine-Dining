@@ -1,5 +1,6 @@
-import { gql, useQuery, useMutation } from '@apollo/client';
-import { Container, Typography, List, ListItem, ListItemText, Button, CircularProgress, Alert } from '@mui/material';
+import { gql } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client/react';
+import { Container, Typography, List, ListItem, ListItemText, ListItemButton, Button, CircularProgress, Alert } from '@mui/material';
 import Link from 'next/link';
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -56,10 +57,14 @@ export default function MealPlansPage() {
             {error && <Alert severity="error">Failed to load meal plans.</Alert>}
             <List>
                 {data?.getMealPlans?.map((plan) => (
-                    <ListItem button component={Link} href={`/meal-plans/${plan.id}`} key={plan.id}>
-                        <ListItemText
-                            primary={plan.title || `${plan.startDate} - ${plan.endDate}`}
-                        />
+                    <ListItem key={plan.id} disablePadding>
+                        <Link href={`/meal-plans/${plan.id}`} passHref legacyBehavior>
+                            <ListItemButton component="a">
+                                <ListItemText
+                                    primary={plan.title || `${plan.startDate} - ${plan.endDate}`}
+                                />
+                            </ListItemButton>
+                        </Link>
                     </ListItem>
                 ))}
             </List>

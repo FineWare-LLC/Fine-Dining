@@ -1,45 +1,31 @@
-// pages/index.js
 /**
- * @fileoverview FineDinning Landing Page using Next.js & Material UI
+ * Sign In Page - User login
+ * Uses dynamic import to avoid SSR issues
  */
+import dynamic from 'next/dynamic';
+import React from 'react';
+import Head from 'next/head';
 
-import { Container, Box } from '@mui/material';
-import { useRouter } from 'next/router';
-import React, { useEffect } from 'react';
-import HeroSection from '../components/HeroSection';
-import LoginForm from '../components/LoginForm';
-import { useAuth } from '../context/AuthContext';
+// Dynamically import the login content with SSR disabled
+const SignInContent = dynamic(
+    () => import('@/components/SignInContent'),
+    { 
+        ssr: false,
+        loading: () => (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                Loading...
+            </div>
+        )
+    }
+);
 
-/**
- * FineDinningLandingPage - Renders the full landing page layout
- * @returns {JSX.Element} The landing page component
- */
-export default function FineDinningLandingPage() {
-    const router = useRouter();
-    const { isAuthenticated } = useAuth();
-
-    useEffect(() => {
-        if (isAuthenticated) {
-            router.replace('/dashboard');
-        }
-    }, [isAuthenticated, router]);
-
+export default function SignInPage() {
     return (
-        <Container
-            maxWidth="xs"
-            sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100vh',
-                padding: '1rem',
-            }}
-        >
-            <HeroSection />
-            <Box sx={{ marginTop: '1rem', width: '100%' }}>
-                <LoginForm />
-            </Box>
-        </Container>
+        <>
+            <Head>
+                <title>Sign In - Fine Dining</title>
+            </Head>
+            <SignInContent />
+        </>
     );
 }

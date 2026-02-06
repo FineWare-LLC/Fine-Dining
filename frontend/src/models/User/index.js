@@ -15,7 +15,8 @@ import userSchema from './userSchema.js';
  * @property {Function} ...
  */
 
-const User =
+const UserModel =
     mongoose.models.User || mongoose.model('User', userSchema);
 
-export default User;
+export { UserModel };
+export default UserModel;

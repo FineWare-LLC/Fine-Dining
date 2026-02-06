@@ -8,15 +8,18 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 
 // Import web scraper
-import { MealModel } from '../../models/Meal/index.js';
-import { MealPlanModel } from '../../models/MealPlan/index.js';
+import { MealModel } from '../frontend/src/models/Meal/index.js';
+import { MealPlanModel } from '../frontend/src/models/MealPlan/index.js';
 import { scrapeAllChains } from './src/fetcher/scraper.mjs';
+
+// Import database repair module
+import databaseRepair from './database-repair.mjs';
 
 // Load environment variables
 dotenv.config();
 
 // Import models
-import User from '../../models/User/index.js';
+import User from '../frontend/src/models/User/index.js';
 
 const execPromise = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
@@ -258,15 +261,28 @@ async function seedDatabase() {
         console.log('Database seeding completed successfully!');
     } catch (error) {
         console.error('Error seeding database:', error);
+        
+        // Log repair statistics in case of errors
+        const repairStats = databaseRepair.getRepairStats();
+        console.log('Database repair statistics:', repairStats);
+        
     } finally {
-    // Disconnect from MongoDB
+        // Stop automatic monitoring and save repair logs
+        databaseRepair.stopAutoMonitoring();
+        await databaseRepair.saveRepairLog();
+        
+        // Show final repair statistics
+        const finalStats = databaseRepair.getRepairStats();
+        console.log('Final database repair statistics:', finalStats);
+        
+        // Disconnect from MongoDB
         await mongoose.disconnect();
         console.log('Disconnected from MongoDB');
     }
 }
 
 /**
- * Connect to MongoDB
+ * Connect to MongoDB with self-repair functionality
  */
 async function connectToDatabase() {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/fineDiningApp';
@@ -274,11 +290,41 @@ async function connectToDatabase() {
     console.log(`Connecting to MongoDB at ${mongoURI}...`);
 
     try {
-        await mongoose.connect(mongoURI);
+        // Enhanced connection options for better reliability
+        await mongoose.connect(mongoURI, {
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+            maxPoolSize: 10,
+            retryWrites: true,
+            w: 'majority'
+        });
         console.log('Connected to MongoDB');
+
+        // Perform database health check and repair immediately after connection
+        console.log('Performing database health check and repair...');
+        const repairSuccess = await databaseRepair.performHealthCheckAndRepair();
+        
+        if (repairSuccess) {
+            console.log('Database health check and repair completed successfully');
+            
+            // Start automatic monitoring (check every 30 minutes)
+            databaseRepair.startAutoMonitoring(30);
+        } else {
+            console.warn('Database repair encountered issues, but continuing with operation');
+        }
+
     } catch (error) {
         console.error('Error connecting to MongoDB:', error);
-        throw error;
+        
+        // If connection fails, try the repair module's reconnection logic
+        console.log('Attempting repair-based reconnection...');
+        const reconnected = await databaseRepair.reconnectWithRetry();
+        
+        if (!reconnected) {
+            throw new Error('Failed to connect to MongoDB even after repair attempts');
+        }
+        
+        console.log('Successfully connected via repair module');
     }
 }
 

@@ -28,6 +28,8 @@ import React, { useState, useEffect } from 'react';
  */
 const NutritionRequirementsForm = ({ defaultValues = {}, onChange }) => {
     const [values, setValues] = useState({
+        caloriesMin: defaultValues.caloriesMin || 1800,
+        caloriesMax: defaultValues.caloriesMax || 2200,
         proteinMin: defaultValues.proteinMin || 50,
         proteinMax: defaultValues.proteinMax || 150,
         carbohydratesMin: defaultValues.carbohydratesMin || 100,
@@ -64,6 +66,8 @@ const NutritionRequirementsForm = ({ defaultValues = {}, onChange }) => {
     // Reset to default values
     const handleReset = () => {
         setValues({
+            caloriesMin: defaultValues.caloriesMin || 1800,
+            caloriesMax: defaultValues.caloriesMax || 2200,
             proteinMin: defaultValues.proteinMin || 50,
             proteinMax: defaultValues.proteinMax || 150,
             carbohydratesMin: defaultValues.carbohydratesMin || 100,
@@ -87,6 +91,54 @@ const NutritionRequirementsForm = ({ defaultValues = {}, onChange }) => {
                 </Typography>
 
                 <Box sx={{ mt: 3 }}>
+                    {/* Calories */}
+                    <Typography id="calories-slider" gutterBottom>
+            Calories
+                    </Typography>
+                    <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={2}>
+                            <TextField
+                                value={values.caloriesMin}
+                                onChange={(e) => handleInputChange('caloriesMin', Number(e.target.value))}
+                                inputProps={{
+                                    step: 50,
+                                    min: 0,
+                                    max: values.caloriesMax,
+                                    type: 'number',
+                                    'aria-labelledby': 'calories-slider',
+                                }}
+                                size="small"
+                            />
+                        </Grid>
+                        <Grid item xs={8}>
+                            <Slider
+                                value={[values.caloriesMin, values.caloriesMax]}
+                                onChange={(e, newValue) => {
+                                    handleSliderChange('caloriesMin', newValue[0]);
+                                    handleSliderChange('caloriesMax', newValue[1]);
+                                }}
+                                valueLabelDisplay="auto"
+                                min={0}
+                                max={4000}
+                                aria-labelledby="calories-slider"
+                            />
+                        </Grid>
+                        <Grid item xs={2}>
+                            <TextField
+                                value={values.caloriesMax}
+                                onChange={(e) => handleInputChange('caloriesMax', Number(e.target.value))}
+                                inputProps={{
+                                    step: 50,
+                                    min: values.caloriesMin,
+                                    max: 4000,
+                                    type: 'number',
+                                    'aria-labelledby': 'calories-slider',
+                                }}
+                                size="small"
+                            />
+                        </Grid>
+                    </Grid>
+
                     {/* Protein */}
                     <Typography id="protein-slider" gutterBottom>
             Protein (g)

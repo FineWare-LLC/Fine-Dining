@@ -25,37 +25,14 @@ import {
     Restaurant as RestaurantIcon,
     AccessTime as TimeIcon,
     Delete as DeleteIcon,
+    Psychology as OptimizeIcon,
+    TrendingUp as SmartIcon,
+    MonetizationOn as CostIcon,
+    FitnessCenter as ProteinIcon,
 } from '@mui/icons-material';
 import PropTypes from 'prop-types';
-import React, { useState, useEffect, useMemo } from 'react';
-
-/* ─── Color System ────────────────────────────────────────────── */
-const HOUR_COLORS = [
-    { hour: 0, color: '#2C1810' },   // Midnight - Dark brown
-    { hour: 1, color: '#1A1A2E' },   // 1 AM - Dark blue
-    { hour: 2, color: '#16213E' },   // 2 AM - Navy
-    { hour: 3, color: '#0F3460' },   // 3 AM - Deep blue
-    { hour: 4, color: '#533A71' },   // 4 AM - Purple
-    { hour: 5, color: '#6A4C93' },   // 5 AM - Light purple
-    { hour: 6, color: '#FF6B35' },   // 6 AM - Orange (sunrise)
-    { hour: 7, color: '#F7931E' },   // 7 AM - Golden orange
-    { hour: 8, color: '#FFD23F' },   // 8 AM - Yellow
-    { hour: 9, color: '#06FFA5' },   // 9 AM - Mint green
-    { hour: 10, color: '#4ECDC4' },  // 10 AM - Teal
-    { hour: 11, color: '#45B7D1' },  // 11 AM - Sky blue
-    { hour: 12, color: '#96CEB4' },  // 12 PM - Light green
-    { hour: 13, color: '#FFEAA7' },  // 1 PM - Light yellow
-    { hour: 14, color: '#DDA0DD' },  // 2 PM - Plum
-    { hour: 15, color: '#98D8C8' },  // 3 PM - Mint
-    { hour: 16, color: '#F7DC6F' },  // 4 PM - Light gold
-    { hour: 17, color: '#BB8FCE' },  // 5 PM - Lavender
-    { hour: 18, color: '#F8C471' },  // 6 PM - Peach
-    { hour: 19, color: '#F1948A' },  // 7 PM - Salmon
-    { hour: 20, color: '#85C1E9' },  // 8 PM - Light blue
-    { hour: 21, color: '#82E0AA' },  // 9 PM - Light green
-    { hour: 22, color: '#D7BDE2' },  // 10 PM - Light purple
-    { hour: 23, color: '#A9CCE3' },  // 11 PM - Pale blue
-];
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { HOUR_COLORS, OPTIMIZATION_COLORS, API_ENDPOINTS } from '@/constants/app.js';
 
 const getColorForHour = (hour) => {
     const colorData = HOUR_COLORS.find(c => c.hour === hour);
@@ -228,11 +205,130 @@ const MealSlot = ({ hour, meal, onAddMeal, onRemoveMeal }) => {
     );
 };
 
+/* ─── Optimization Functions ──────────────────────────────────── */
+const callOptimizationAPI = async (requirements, restrictions = [], objective = 'minimize_cost') => {
+    try {
+        const response = await fetch(`${API_ENDPOINTS.OPTIMIZATION_BACKEND}${API_ENDPOINTS.OPTIMIZE_BASIC}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                requirements,
+                restrictions,
+                objective,
+            }),
+        });
+        
+        if (!response.ok) {
+            throw new Error(`API call failed: ${response.statusText}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Optimization API call failed:', error);
+        return null;
+    }
+};
+
+const OptimizationControls = ({ onOptimize, isOptimizing }) => {
+    const theme = useTheme();
+    
+    return (
+        <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" fontWeight={600} gutterBottom sx={{ color: theme.palette.text.secondary }}>
+                🤖 Smart Meal Planning
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<CostIcon />}
+                    onClick={() => onOptimize('minimize_cost')}
+                    disabled={isOptimizing}
+                    sx={{
+                        borderColor: OPTIMIZATION_COLORS.COST,
+                        color: OPTIMIZATION_COLORS.COST,
+                        '&:hover': { backgroundColor: `${OPTIMIZATION_COLORS.COST}10`, borderColor: OPTIMIZATION_COLORS.COST },
+                    }}
+                >
+                    Minimize Cost
+                </Button>
+                <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<ProteinIcon />}
+                    onClick={() => onOptimize('high_protein')}
+                    disabled={isOptimizing}
+                    sx={{
+                        borderColor: OPTIMIZATION_COLORS.PROTEIN,
+                        color: OPTIMIZATION_COLORS.PROTEIN,
+                        '&:hover': { backgroundColor: `${OPTIMIZATION_COLORS.PROTEIN}10`, borderColor: OPTIMIZATION_COLORS.PROTEIN },
+                    }}
+                >
+                    High Protein
+                </Button>
+                <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<SmartIcon />}
+                    onClick={() => onOptimize('balanced')}
+                    disabled={isOptimizing}
+                    sx={{
+                        borderColor: OPTIMIZATION_COLORS.BALANCED,
+                        color: OPTIMIZATION_COLORS.BALANCED,
+                        '&:hover': { backgroundColor: `${OPTIMIZATION_COLORS.BALANCED}10`, borderColor: OPTIMIZATION_COLORS.BALANCED },
+                    }}
+                >
+                    Balanced
+                </Button>
+                <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<OptimizeIcon />}
+                    onClick={() => onOptimize('custom')}
+                    disabled={isOptimizing}
+                    sx={{
+                        borderColor: '#9C27B0',
+                        color: '#9C27B0',
+                        '&:hover': { backgroundColor: '#9C27B010', borderColor: '#9C27B0' },
+                    }}
+                >
+                    Custom
+                </Button>
+            </Box>
+            {isOptimizing && (
+                <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                        sx={{
+                            width: 16,
+                            height: 16,
+                            borderRadius: '50%',
+                            border: '2px solid #f3f3f3',
+                            borderTop: '2px solid #3498db',
+                            animation: 'spin 2s linear infinite',
+                            '@keyframes spin': {
+                                '0%': { transform: 'rotate(0deg)' },
+                                '100%': { transform: 'rotate(360deg)' },
+                            },
+                        }}
+                    />
+                    <Typography variant="caption" color="text.secondary">
+                        Optimizing your meal plan...
+                    </Typography>
+                </Box>
+            )}
+        </Box>
+    );
+};
+
 /* ─── Main Component ────────────────────────────────────────── */
-export default function HourlyMealPlanner({ meals = {}, onAddMeal, onRemoveMeal }) {
+export default function HourlyMealPlanner({ meals = {}, onAddMeal, onRemoveMeal, onUpdateMeals }) {
     const theme = useTheme();
     const [currentHour, setCurrentHour] = useState(new Date().getHours());
     const [selectedHour, setSelectedHour] = useState(new Date().getHours());
+    const [isOptimizing, setIsOptimizing] = useState(false);
+    const [optimizationResult, setOptimizationResult] = useState(null);
 
     // Update current hour every minute
     useEffect(() => {
@@ -281,6 +377,108 @@ export default function HourlyMealPlanner({ meals = {}, onAddMeal, onRemoveMeal 
         setSelectedHour(hour);
     };
 
+    // Handle optimization requests
+    const handleOptimization = async (optimizationType) => {
+        setIsOptimizing(true);
+        
+        // Define optimization parameters based on type
+        let requirements = {
+            min_calories: 1800,
+            max_calories: 2200,
+            min_protein: 50,
+            min_fiber: 25,
+            max_fat: 78
+        };
+        
+        let objective = 'minimize_cost';
+        let restrictions = [];
+        
+        switch (optimizationType) {
+            case 'minimize_cost':
+                // Default settings for cost minimization
+                break;
+            case 'high_protein':
+                requirements.min_protein = 100;
+                requirements.min_calories = 2200;
+                requirements.max_calories = 2800;
+                objective = 'minimize_cost';
+                break;
+            case 'balanced':
+                requirements.min_fiber = 30;
+                objective = 'multi_objective';
+                break;
+            case 'custom':
+                // Could open a dialog for custom parameters
+                requirements.min_calories = 2000;
+                requirements.min_protein = 80;
+                break;
+        }
+        
+        try {
+            const result = await callOptimizationAPI(requirements, restrictions, objective);
+            
+            if (result && result.feasible && onUpdateMeals) {
+                // Convert optimization result to meal plan format
+                const optimizedMeals = {};
+                
+                if (result.meals && Array.isArray(result.meals)) {
+                    const mealTimeSlots = [8, 12, 18]; // Breakfast, Lunch, Dinner
+                    let snackHour = 15; // Start snacks at 3 PM
+                    
+                    result.meals.forEach((mealSolution, index) => {
+                        if (!mealSolution || typeof mealSolution.servings !== 'number') {
+                            return; // Skip invalid meal solutions
+                        }
+                        
+                        const servings = Math.ceil(mealSolution.servings);
+                        
+                        // Distribute servings across appropriate hours
+                        for (let i = 0; i < servings && i < 3; i++) {
+                            let assignedHour;
+                            
+                            // Assign main meals to fixed time slots
+                            if (index < mealTimeSlots.length) {
+                                assignedHour = mealTimeSlots[index] + (i * 2); // Space multiple servings 2 hours apart
+                            } else {
+                                // Assign snacks to later hours
+                                assignedHour = snackHour + (i * 2);
+                            }
+                            
+                            // Ensure hour is within valid range
+                            if (assignedHour < 24 && !optimizedMeals[assignedHour]) {
+                                optimizedMeals[assignedHour] = {
+                                    title: mealSolution.meal || 'Unknown Meal',
+                                    calories: Math.round((mealSolution.calories || 0) / mealSolution.servings),
+                                    protein: Math.round((mealSolution.protein || 0) / mealSolution.servings),
+                                    cost: (mealSolution.cost || 0) / mealSolution.servings,
+                                    imageUrl: '', // Would be populated from meal database
+                                    optimized: true
+                                };
+                            }
+                        }
+                    });
+                }
+                
+                // Update the meal plan with optimized results
+                onUpdateMeals(optimizedMeals);
+                setOptimizationResult(result);
+                
+                // Show success notification (would integrate with snackbar)
+                console.log('✅ Meal plan optimized successfully!', {
+                    totalCost: result.objective_value,
+                    nutrition: result.total_nutrition
+                });
+            } else {
+                console.warn('⚠️ Optimization failed or not feasible');
+            }
+            
+        } catch (error) {
+            console.error('❌ Optimization error:', error);
+        }
+        
+        setIsOptimizing(false);
+    };
+
     return (
         <Box sx={{ mt: 2 }}>
             {/* Header */}
@@ -302,6 +500,53 @@ export default function HourlyMealPlanner({ meals = {}, onAddMeal, onRemoveMeal 
                 </Typography>
             </Box>
 
+            {/* Optimization Controls */}
+            <OptimizationControls 
+                onOptimize={handleOptimization}
+                isOptimizing={isOptimizing}
+            />
+
+            {/* Optimization Results Summary */}
+            {optimizationResult && (
+                <Fade in timeout={500}>
+                    <Card
+                        elevation={2}
+                        sx={{
+                            mb: 2,
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            color: 'white'
+                        }}
+                    >
+                        <CardContent sx={{ py: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <OptimizeIcon sx={{ fontSize: 32 }} />
+                                    <Box>
+                                        <Typography variant="subtitle1" fontWeight={600}>
+                                            Optimized Meal Plan
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                                            Total Cost: ${optimizationResult?.objective_value?.toFixed(2) || 'N/A'} • 
+                                            {optimizationResult?.total_nutrition?.calories?.toFixed(0) || 0} cal • 
+                                            {optimizationResult?.total_nutrition?.protein?.toFixed(1) || 0}g protein
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                                <Chip 
+                                    label="AI Optimized" 
+                                    size="small"
+                                    sx={{ 
+                                        backgroundColor: 'rgba(255,255,255,0.2)',
+                                        color: 'white',
+                                        fontWeight: 600
+                                    }}
+                                />
+                            </Box>
+                        </CardContent>
+                    </Card>
+                </Fade>
+            )}
+
             {/* Current/Next Meal Display */}
             {(currentMeal || nextMeal) && (
                 <Box sx={{ mb: 3 }}>
@@ -311,16 +556,16 @@ export default function HourlyMealPlanner({ meals = {}, onAddMeal, onRemoveMeal 
                                 elevation={2}
                                 sx={{
                                     mb: 1,
-                                    border: `2px solid ${getColorForHour(currentMeal.hour)}`,
-                                    backgroundColor: `${getColorForHour(currentMeal.hour)}10`,
+                                    border: `2px solid ${getColorForHour(currentMeal?.hour || 0)}`,
+                                    backgroundColor: `${getColorForHour(currentMeal?.hour || 0)}10`,
                                 }}
                             >
                                 <CardContent sx={{ p: 2 }}>
                                     <Typography variant="subtitle2" color="primary" gutterBottom>
-                                        🍽️ Current Meal ({currentMeal.hour}:00)
+                                        🍽️ Current Meal ({currentMeal?.hour || 0}:00)
                                     </Typography>
                                     <Typography variant="h6" fontWeight={600}>
-                                        {currentMeal.meal.title}
+                                        {currentMeal?.meal?.title || 'Unknown Meal'}
                                     </Typography>
                                 </CardContent>
                             </Card>
@@ -332,16 +577,16 @@ export default function HourlyMealPlanner({ meals = {}, onAddMeal, onRemoveMeal 
                             <Card
                                 elevation={1}
                                 sx={{
-                                    border: `1px solid ${getColorForHour(nextMeal.hour)}`,
-                                    backgroundColor: `${getColorForHour(nextMeal.hour)}05`,
+                                    border: `1px solid ${getColorForHour(nextMeal?.hour || 0)}`,
+                                    backgroundColor: `${getColorForHour(nextMeal?.hour || 0)}05`,
                                 }}
                             >
                                 <CardContent sx={{ p: 2 }}>
                                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                                        ⏰ Next Meal ({nextMeal.hour}:00)
+                                        ⏰ Next Meal ({nextMeal?.hour || 0}:00)
                                     </Typography>
                                     <Typography variant="body1" fontWeight={500}>
-                                        {nextMeal.meal.title}
+                                        {nextMeal?.meal?.title || 'Unknown Meal'}
                                     </Typography>
                                 </CardContent>
                             </Card>

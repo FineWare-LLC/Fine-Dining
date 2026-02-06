@@ -166,6 +166,8 @@ export const usePlannerStore = create(
             },
             nutritionTargets: DEFAULT_NUTRITION_TARGETS,
             strictnessGauge: 'Moderate',
+            interestQuery: '',
+            isGenerating: false,
 
             selectedMeals: [],
             mealPlan: {
@@ -182,6 +184,43 @@ export const usePlannerStore = create(
             historyIndex: -1,
             canUndo: false,
             canRedo: false,
+
+            setInterestQuery: (query) => set((state) => {
+                state.interestQuery = query;
+            }),
+
+            setIsGenerating: (isGenerating) => set((state) => {
+                state.isGenerating = isGenerating;
+            }),
+
+            setGeneratedPlan: (planDetails) => set((state) => {
+                // Clear existing plan
+                state.mealPlan = { breakfast: [], lunch: [], dinner: [], snacks: [] };
+                state.selectedMeals = [];
+                
+                // Populate new plan
+                if (planDetails && planDetails.mealPlan) {
+                    planDetails.mealPlan.forEach(item => {
+                        const mealType = item.mealType ? item.mealType.toLowerCase() : 'lunch';
+                        // Ensure mealType is valid
+                        const validTypes = ['breakfast', 'lunch', 'dinner', 'snacks'];
+                        const targetType = validTypes.includes(mealType) ? mealType : 'lunch';
+                        
+                        const mealWithServings = { 
+                            ...item.meal, 
+                            servings: item.servings, 
+                            mealType: targetType,
+                            // Ensure ID is unique if same meal used multiple times (though solver usually aggregates)
+                            uniqueId: `${item.meal.id}-${Date.now()}-${Math.random()}`
+                        };
+                        
+                        state.mealPlan[targetType].push(mealWithServings);
+                        state.selectedMeals.push(mealWithServings);
+                    });
+                }
+                
+                state.complianceScore = calculateComplianceScore(state.selectedMeals, state.nutritionTargets);
+            }),
 
             setNutritionTargets: (targets) => set((state) => {
                 state.nutritionTargets = { ...state.nutritionTargets, ...targets };

@@ -1,4 +1,5 @@
-import { gql, useMutation } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { Box, TextField, Button } from '@mui/material';
 import React, { useState } from 'react';
 import { useToastStore } from '../../store/toastStore';

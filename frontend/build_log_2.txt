@@ -1,0 +1,29 @@
+
+> frontend@0.1.0 build
+> next build --no-lint
+
+ ⚠ Linting is disabled.
+   ▲ Next.js 15.3.5
+   - Environments: .env.local
+
+   Checking validity of types ...
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 1000ms
+   Collecting page data ...
+   Generating static pages (0/18) ...
+Component: [Function: h]
+[Error: Minified React error #130; visit https://reactjs.org/docs/error-decoder.html?invariant=130&args[]=object&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.]
+Error occurred prerendering page "/meal-plans/[id]". Read more: https://nextjs.org/docs/messages/prerender-error
+Error: Minified React error #130; visit https://reactjs.org/docs/error-decoder.html?invariant=130&args[]=object&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at Zc (/Users/tt/IdeaProjects/Fine-Dining/frontend/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:493)
+    at Z (/Users/tt/IdeaProjects/Fine-Dining/frontend/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at $c (/Users/tt/IdeaProjects/Fine-Dining/frontend/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
+    at bd (/Users/tt/IdeaProjects/Fine-Dining/frontend/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
+    at Z (/Users/tt/IdeaProjects/Fine-Dining/frontend/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
+    at $c (/Users/tt/IdeaProjects/Fine-Dining/frontend/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
+    at bd (/Users/tt/IdeaProjects/Fine-Dining/frontend/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
+    at Z (/Users/tt/IdeaProjects/Fine-Dining/frontend/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
+    at Zc (/Users/tt/IdeaProjects/Fine-Dining/frontend/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/Users/tt/IdeaProjects/Fine-Dining/frontend/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+Export encountered an error on /meal-plans/[id], exiting the build.
+ ⨯ Next.js build worker exited with code: 1 and signal: null

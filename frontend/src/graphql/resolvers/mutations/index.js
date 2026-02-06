@@ -9,6 +9,7 @@ import * as restaurantMutations from './restaurantMutations.js';
 import * as reviewMutations from './reviewMutations.js';
 import * as statsMutations from './statsMutations.js';
 import * as userMutations from './userMutations.js';
+import { qaMutations } from './qaMutations.js';
 
 export const Mutation = {
     ...userMutations,
@@ -22,4 +23,5 @@ export const Mutation = {
     ...notificationMutations,
     ...optimizationMutations,
     ...menuItemMutations,
+    ...qaMutations,
 };

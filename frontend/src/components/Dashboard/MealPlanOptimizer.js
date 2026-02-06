@@ -15,6 +15,7 @@ const MealPlanOptimizer = ({
     optimizationLoading,
     optimizationError,
     onMealSelection,
+    onMealSelectionData,
     onNutritionTargetsChange,
     onTabChange,
     onGenerateOptimizedPlan,
@@ -40,6 +41,7 @@ const MealPlanOptimizer = ({
                 <MealCatalog
                     selectedMeals={selectedMeals}
                     onSelectMeal={onMealSelection}
+                    onSelectMealData={onMealSelectionData}
                     onAddMeals={onAddMeals}
                 />
             )}
@@ -72,7 +74,7 @@ const MealPlanOptimizer = ({
                     variant="contained"
                     color="primary"
                     onClick={onGenerateOptimizedPlan}
-                    disabled={optimizationLoading}
+                    disabled={optimizationLoading || selectedMeals.length === 0}
                     startIcon={optimizationLoading ? <CircularProgress size={20} color="inherit" /> : null}
                 >
                     {optimizationLoading ? 'Generating...' : 'Generate Optimized Meal Plan'}

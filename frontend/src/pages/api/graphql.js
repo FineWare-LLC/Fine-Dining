@@ -15,7 +15,8 @@
  * - Apollo Server Config: Uses a landing page plugin in development.
  */
 
-import { ApolloServer, ApolloServerErrorCode } from '@apollo/server';
+import { ApolloServer } from '@apollo/server';
+import { ApolloServerErrorCode } from '@apollo/server/errors';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { startServerAndCreateNextHandler } from '@as-integrations/next';
 import jwt from 'jsonwebtoken';

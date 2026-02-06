@@ -1,3 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: './.env.local' });
+
+console.log('MONGODB_URI:', process.env.MONGODB_URI);
+
 import { dbConnect } from './src/lib/dbConnect.js';
 import User from './src/models/User/index.js';
 import { MealModel } from './src/models/Meal/index.js';

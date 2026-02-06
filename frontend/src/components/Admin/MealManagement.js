@@ -1,4 +1,5 @@
-import { useQuery, useMutation, gql } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client/react';
 import {
     Edit as EditIcon,
     Delete as DeleteIcon,
@@ -231,7 +232,6 @@ export default function MealManagement() {
                 <DialogTitle>{editingMeal ? 'Edit Meal' : 'Add New Meal'}</DialogTitle>
                 <DialogContent>
                     <TextField
-                        autoFocus
                         margin="dense"
                         label="Meal Name"
                         fullWidth

@@ -60,3 +60,30 @@ export const findNearbyRestaurants = withErrorHandling(async (
     const service = await import('@/services/places.service.js');
     return service.findNearbyRestaurants(latitude, longitude, radius, keyword);
 });
+
+/**
+ * Finds nearby LOCAL restaurants with filtering to exclude chains and prioritize 
+ * truly local establishments.
+ *
+ * @function findNearbyLocalRestaurants
+ * @param {object} _parent
+ * @param {object} args - { latitude, longitude, radius, keyword, excludeChains, minLocalScore, maxResults }
+ * @param {object} context - GraphQL context
+ * @returns {Promise<{restaurants: Object[], source: string | null, filteredCount: number, localCount: number}>}
+ *   Object containing filtered local restaurant list and filtering metadata
+ */
+export const findNearbyLocalRestaurants = withErrorHandling(async (
+    _parent,
+    { latitude, longitude, radius, keyword, excludeChains, minLocalScore, maxResults },
+    context,
+) => {
+    const service = await import('@/services/localRestaurantFilter.service.js');
+    
+    const filterOptions = {
+        excludeChains: excludeChains !== false, // Default to true
+        minLocalScore: minLocalScore || 30,
+        maxResults: maxResults || 20
+    };
+    
+    return service.findNearbyLocalRestaurants(latitude, longitude, radius, keyword, filterOptions);
+});

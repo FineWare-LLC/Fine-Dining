@@ -1,4 +1,5 @@
-import { useQuery, useMutation, gql } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client/react';
 import {
     Edit as EditIcon,
     Delete as DeleteIcon,
@@ -222,7 +223,6 @@ export default function UserManagement() {
                 <DialogTitle>{editingUser ? 'Edit User' : 'Add New User'}</DialogTitle>
                 <DialogContent>
                     <TextField
-                        autoFocus
                         margin="dense"
                         label="Name"
                         fullWidth

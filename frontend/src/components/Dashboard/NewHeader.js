@@ -1,9 +1,9 @@
 /**
  * Enhanced brand header with modern design and animations
  */
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import RestaurantIcon from '@mui/icons-material/Restaurant';
+import MenuRoundedIconModule from '@mui/icons-material/MenuRounded';
+import NotificationsIconModule from '@mui/icons-material/Notifications';
+import RestaurantIconModule from '@mui/icons-material/Restaurant';
 import {
     AppBar,
     Avatar,
@@ -19,7 +19,9 @@ import React, {useEffect, useState} from 'react';
 import {useDashStore} from './store';
 import {useAuth} from '@/context/AuthContext.js';
 import {generateInitialsAvatar} from '@/utils/avatar';
-import { useQuery, gql } from '@apollo/client';
+import { resolveMuiIcon } from '@/utils/muiIcon';
+import { useQuery } from '@apollo/client/react';
+import { gql } from '@apollo/client';
 
 // GraphQL query to get unread notification count
 const GET_UNREAD_NOTIFICATION_COUNT = gql`
@@ -28,7 +30,13 @@ const GET_UNREAD_NOTIFICATION_COUNT = gql`
     }
 `;
 
-export default function NewHeader({user}) {
+const MenuRoundedIcon = resolveMuiIcon(MenuRoundedIconModule);
+const NotificationsIcon = resolveMuiIcon(NotificationsIconModule);
+const RestaurantIcon = resolveMuiIcon(RestaurantIconModule);
+
+const isMongoId = (value) => typeof value === 'string' && /^[a-f\\d]{24}$/i.test(value);
+
+export default function NewHeader({ user, appearance = 'gradient' }) {
     const { user: contextUser } = useAuth();
     const toggleDrawer = useDashStore(s => s.toggleDrawer);
     const [authUser, setAuthUser] = useState(null);
@@ -43,27 +51,39 @@ export default function NewHeader({user}) {
     const currentUser = user || (isClient ? authUser : null);
     const router = useRouter();
 
+    const canQueryNotifications = Boolean(currentUser?.id && isMongoId(currentUser.id));
+
     // Fetch unread notification count
-    const { data: notificationData, loading: notificationLoading } = useQuery(
+    const { data: notificationData } = useQuery(
         GET_UNREAD_NOTIFICATION_COUNT,
         {
             variables: { recipientId: currentUser?.id },
-            skip: !currentUser?.id, // Skip query if no user ID
-            pollInterval: 30000, // Poll every 30 seconds for real-time updates
+            skip: !canQueryNotifications, // Skip query if no valid user ID
+            pollInterval: canQueryNotifications ? 30000 : 0, // Poll every 30 seconds for real-time updates
             errorPolicy: 'ignore' // Don't show errors in UI for notifications
         }
     );
 
     const unreadCount = notificationData?.getUnreadNotificationCount || 0;
 
+    const appBarSx = appearance === 'glass'
+        ? {
+            background: 'rgba(255, 255, 255, 0.2)',
+            color: '#1C1C1F',
+            backdropFilter: 'blur(22px)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: '0 12px 30px rgba(16, 18, 30, 0.12)',
+        }
+        : {
+            background: theme.palette.gradient?.primary || 'linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)',
+            backdropFilter: 'blur(10px)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        };
+
     return (
         <AppBar
             elevation={0}
-            sx={{
-                background: theme.palette.gradient?.primary || 'linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)',
-                backdropFilter: 'blur(10px)',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-            }}
+            sx={appBarSx}
         >
             <Toolbar
                 disableGutters

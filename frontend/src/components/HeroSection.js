@@ -41,15 +41,16 @@ const shimmer = keyframes`
  * HeroSection - Enhanced hero section with modern design and animations
  * @returns {JSX.Element} The enhanced hero/branding portion of the page
  */
-export default function HeroSection() {
+export default function HeroSection({ align = 'center', compact = false }) {
     const theme = useTheme();
+    const isLeft = align === 'left';
 
     return (
-        <Container maxWidth="md">
+        <Container maxWidth="md" disableGutters={compact}>
             <Box
                 sx={{
-                    textAlign: 'center',
-                    py: 8,
+                    textAlign: align,
+                    py: compact ? { xs: 4, md: 6 } : 8,
                     position: 'relative',
                     overflow: 'hidden',
                     '&::before': {
@@ -70,16 +71,16 @@ export default function HeroSection() {
                 <Box
                     sx={{
                         display: 'flex',
-                        justifyContent: 'center',
+                        justifyContent: isLeft ? 'flex-start' : 'center',
                         mb: 4,
                         animation: `${float} 3s ease-in-out infinite`,
                     }}
                 >
                     <Box
-                        sx={{
-                            width: 120,
-                            height: 120,
-                            borderRadius: '50%',
+                            sx={{
+                                width: 120,
+                                height: 120,
+                                borderRadius: '50%',
                             background: theme.palette.gradient.primary,
                             display: 'flex',
                             alignItems: 'center',
@@ -140,7 +141,7 @@ export default function HeroSection() {
                         fontWeight: 400,
                         animation: `${fadeInUp} 1s ease-out 0.2s both`,
                         maxWidth: '600px',
-                        mx: 'auto',
+                        mx: isLeft ? 0 : 'auto',
                         lineHeight: 1.6,
                     }}
                 >
@@ -153,7 +154,7 @@ export default function HeroSection() {
                         display: 'flex',
                         flexWrap: 'wrap',
                         gap: 1,
-                        justifyContent: 'center',
+                        justifyContent: isLeft ? 'flex-start' : 'center',
                         mb: 4,
                         animation: `${fadeInUp} 1s ease-out 0.4s both`,
                     }}
@@ -194,7 +195,7 @@ export default function HeroSection() {
                     sx={{
                         position: 'absolute',
                         top: '20%',
-                        left: '10%',
+                        left: isLeft ? '6%' : '10%',
                         width: 60,
                         height: 60,
                         borderRadius: '50%',
@@ -207,7 +208,7 @@ export default function HeroSection() {
                     sx={{
                         position: 'absolute',
                         bottom: '20%',
-                        right: '15%',
+                        right: isLeft ? '12%' : '15%',
                         width: 40,
                         height: 40,
                         borderRadius: '50%',

@@ -1,0 +1,79 @@
+name: CAI Step A - UX Scout (event-driven)
+
+on:
+  push:
+    branches: [staging]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: cai-step-a-scout
+  cancel-in-progress: false
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # NOTE:
+      # True "looks bad to the human eye" needs an AI vision step.
+      # This workflow currently enforces: (1) no duplicate CAI:A issues, (2) justification required, (3) event-driven A only after a CAI merge into staging.
+      # You can later add a vision model call if you provide an AI API key as a repo secret.
+
+      - name: Determine whether to run A (only after last CAI merge)
+        id: gate
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+
+            // Find the most recent merged PR into staging.
+            const prs = await github.rest.pulls.list({ owner, repo, state: 'closed', base: 'staging', per_page: 20, sort: 'updated', direction: 'desc' });
+            const merged = prs.data.find(p => p.merged_at);
+            if (!merged) {
+              core.setOutput('run', 'false');
+              core.info('No merged PRs into staging found; skipping Step A.');
+              return;
+            }
+
+            const labels = (merged.labels || []).map(l => l.name);
+            const isCAI = merged.title?.startsWith('CAI') || labels.includes('CAI');
+            core.setOutput('run', isCAI ? 'true' : 'false');
+            core.info(`Latest merged PR into staging: #${merged.number} isCAI=${isCAI}`);
+
+      - name: Skip if gate closed
+        if: steps.gate.outputs.run != 'true'
+        run: echo "Gate closed; not running Step A."
+
+      - name: Create CAI:A issue if none open
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+
+            // If there is already an open Step A issue, do nothing.
+            const existing = await github.rest.issues.listForRepo({ owner, repo, state: 'open', labels: 'CAI,CAI:A', per_page: 100 });
+            if (existing.data.length > 0) {
+              core.info(`Open CAI:A issue exists (#${existing.data[0].number}); not creating another.`);
+              return;
+            }
+
+            // Minimal initial scout issue (acts as the "A story" container).
+            // In later iterations, this job can attach Playwright screenshots + heuristics and/or call a vision model.
+            const title = 'CAI: UX Scout - new findings needed';
+            const body = `## Summary\nRun UX scouting on the app UI and create *justified* CAI issues.\n\n## Requirements (must follow)\n- No duplicate/overlapping stories (dedupe against existing open CAI issues).\n- Every new story must include Justification mapped to docs/CAI_END_GOAL.md outcomes.\n- Prioritize by severity/importance (human-eye issues first).\n\n## End goal reference\nSee: docs/CAI_END_GOAL.md\n\n## Output\nCreate 1–3 new Issues titled \\\"CAI: ...\\\" with labels: CAI + CAI:ready + (CAI:A or type labels) + severity labels as needed.\n`;
+
+            const created = await github.rest.issues.create({
+              owner,
+              repo,
+              title,
+              body,
+              labels: ['CAI','CAI:A','CAI:ready']
+            });
+
+            core.info(`Created Step A container issue: #${created.data.number}`);

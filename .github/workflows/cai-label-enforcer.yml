@@ -1,0 +1,40 @@
+name: CAI Label + Title Enforcer
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+  pull_request:
+    types: [opened, edited, labeled]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  enforce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const isIssue = !!context.payload.issue;
+            const item = isIssue ? context.payload.issue : context.payload.pull_request;
+            const { owner, repo } = context.repo;
+
+            const title = item.title || '';
+            const labels = (item.labels || []).map(l => (typeof l === 'string' ? l : l.name));
+
+            // If it looks like CAI (title prefix), ensure CAI label exists.
+            const looksCAI = title.startsWith('CAI');
+            if (!looksCAI) return;
+
+            const needs = [];
+            if (!labels.includes('CAI')) needs.push('CAI');
+
+            if (needs.length) {
+              if (isIssue) {
+                await github.rest.issues.addLabels({ owner, repo, issue_number: item.number, labels: needs });
+              } else {
+                await github.rest.issues.addLabels({ owner, repo, issue_number: item.number, labels: needs });
+              }
+            }

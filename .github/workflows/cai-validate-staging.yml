@@ -1,0 +1,44 @@
+name: CAI Validate (staging)
+
+on:
+  pull_request:
+    branches: [staging]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cai-validate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate PR for staging
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.pull_request.title, 'CAI') || contains(join(github.event.pull_request.labels.*.name, ','), 'CAI')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node (from frontend/.nvmrc if present)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run -s lint:check
+
+      - name: Unit tests
+        working-directory: frontend
+        run: npm run -s test:unit
+
+      - name: Build (preprod)
+        working-directory: frontend
+        run: npm run -s build

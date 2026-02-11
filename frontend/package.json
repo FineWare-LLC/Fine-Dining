@@ -35,7 +35,7 @@
     "test:all": "npm run test && npm run test:playwright",
     "test:report": "playwright show-report",
     "test:report:components": "playwright show-report playwright-report/component-tests",
-    "seed": "node src/lib/HiGHS/seed_database.mjs",
+    "seed": "node ../highs-pipeline/seed_database.mjs",
     "dev:memory": "node scripts/dev-memory.mjs",
     "codegen": "graphql-codegen --config codegen.yml",
     "benchmark:gpu": "node src/gpu/benchmark.mjs 1024"

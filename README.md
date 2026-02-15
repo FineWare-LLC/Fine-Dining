@@ -150,6 +150,15 @@ file is present, printing the resulting restaurant list as JSON.
 * `npm run codegen`: Generates GraphQL types from your schema (`codegen.yml`).
 * `npm run benchmark:gpu`: Runs a matrix multiplication benchmark using the GPU module.
 
+
+## Docker Setup
+Build the Docker images and start the services with:
+```bash
+docker-compose build
+docker-compose up
+```
+The frontend runs on http://localhost:3000 and MongoDB on mongodb://localhost:27017.
+
 ## License
 This project is currently not licensed under an open-source license.
 © 2025 FineWare LLC. All rights reserved.

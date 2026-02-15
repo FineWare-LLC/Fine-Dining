@@ -83,6 +83,23 @@ export async function measureExecutionTime(fn, ...args) {
 }
 
 /**
+ * Creates a mock repository with common CRUD operations
+ * @param {Object} mockData - Data to return from repository methods
+ * @returns {Object} Mock repository object
+ */
+export function createMockRepository(mockData = {}) {
+    return {
+        find: async () => mockData.find || [],
+        findById: async (id) => mockData.findById || { _id: id },
+        create: async (data) => ({ _id: 'new-id', ...data }),
+        update: async (id, data) => ({ _id: id, ...data }),
+        delete: async (id) => ({ _id: id, deleted: true }),
+        count: async () => mockData.count || 0,
+        ...mockData.customMethods,
+    };
+}
+
+/**
  * Safely mocks a method and handles redefinition errors
  * @param {Object} testContext - Node.js test context
  * @param {Object} target - Object to mock
@@ -101,6 +118,33 @@ export function safeMock(testContext, target, methodName, implementation) {
         }
         throw err;
     }
+}
+
+/**
+ * Creates a test suite with common setup and teardown
+ * @param {string} suiteName - Name of the test suite
+ * @param {Function} setupFn - Setup function to run before tests
+ * @param {Function} teardownFn - Teardown function to run after tests
+ * @returns {Object} Test suite utilities
+ */
+export function createTestSuite(suiteName, setupFn = () => {}, teardownFn = () => {}) {
+    let suiteData = {};
+
+    return {
+        async setup() {
+            console.log(`Setting up test suite: ${suiteName}`);
+            suiteData = await setupFn();
+            return suiteData;
+        },
+        async teardown() {
+            console.log(`Tearing down test suite: ${suiteName}`);
+            await teardownFn(suiteData);
+            suiteData = {};
+        },
+        getData() {
+            return suiteData;
+        },
+    };
 }
 
 /**

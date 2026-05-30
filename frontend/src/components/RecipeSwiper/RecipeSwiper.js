@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { useQuery, useMutation } from '@apollo/client/react';
 import { Loader2, Settings, RefreshCw } from 'lucide-react';
 import SwipeCard from './SwipeCard';
+import { getAvailableRecipes, getRecipeProgress, getVisibleRecipeCards } from './recipeSwiperState';
 import { GET_MEALS_WITH_FILTERS } from '@/graphql/queries';
 import { SAVE_RECIPE_MUTATION, REJECT_RECIPE_MUTATION } from '@/graphql/mutations';
 
@@ -49,17 +50,16 @@ const RecipeSwiper = ({
 
   // Get available recipes from meals
   const availableRecipes = useMemo(() => {
-    if (!data?.getMealsWithFilters?.meals) return [];
-    
-    return data.getMealsWithFilters.meals
-      .filter(meal => meal.recipe && !swipedRecipes.has(meal.recipe.id))
-      .map(meal => meal.recipe);
+    return getAvailableRecipes(data?.getMealsWithFilters?.meals, swipedRecipes);
   }, [data?.getMealsWithFilters?.meals, swipedRecipes]);
+
+  const totalRecipes = currentIndex + availableRecipes.length;
+  const progress = getRecipeProgress(currentIndex, totalRecipes);
 
   // Get current stack of cards to display (current + next 2)
   const visibleCards = useMemo(() => {
-    return availableRecipes.slice(currentIndex, currentIndex + 3);
-  }, [availableRecipes, currentIndex]);
+    return getVisibleRecipeCards(availableRecipes);
+  }, [availableRecipes]);
 
   // Handle swipe actions
   const handleSwipe = useCallback(async (recipeId, action) => {
@@ -96,7 +96,7 @@ const RecipeSwiper = ({
 
   // Load more recipes when running low
   useEffect(() => {
-    const remainingCards = availableRecipes.length - currentIndex;
+    const remainingCards = availableRecipes.length;
     const shouldLoadMore = remainingCards <= 3 && data?.getMealsWithFilters?.hasNextPage;
 
     if (shouldLoadMore && !loading) {
@@ -122,7 +122,7 @@ const RecipeSwiper = ({
 
       setFilters(prev => ({ ...prev, page: prev.page + 1 }));
     }
-  }, [currentIndex, availableRecipes.length, data?.getMealsWithFilters?.hasNextPage, loading, fetchMore, filters]);
+  }, [availableRecipes.length, data?.getMealsWithFilters?.hasNextPage, loading, fetchMore, filters]);
 
   // Handle refresh
   const handleRefresh = useCallback(() => {
@@ -220,7 +220,7 @@ const RecipeSwiper = ({
       {/* Stats */}
       <div className="absolute top-4 left-4 bg-white rounded-lg px-3 py-2 shadow-lg">
         <p className="text-sm text-gray-600">
-          {currentIndex + 1} of {availableRecipes.length}
+          {progress.current} of {progress.total}
         </p>
       </div>
 

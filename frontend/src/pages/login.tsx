@@ -20,8 +20,10 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
     buildAuthFeedbackContainerStyles,
-    buildAuthFeedbackState,
+    buildSignedInRedirectMessage,
+    buildSessionRefreshFeedbackState,
     getLoginErrorMessage,
+    resolveAuthDestination,
     validateLoginInput,
 } from '@/context/authUtils';
 
@@ -62,7 +64,7 @@ export default function LoginPage() {
                 return;
             }
             setError('');
-            setSuccessMessage(`Signed in. Redirecting to your ${user.role === 'ADMIN' ? 'admin' : 'dashboard'}...`);
+            setSuccessMessage(buildSignedInRedirectMessage(sessionResult.user.role));
         },
         onError: (err) => {
             setError(getLoginErrorMessage(err?.message));
@@ -70,7 +72,7 @@ export default function LoginPage() {
         }
     });
 
-    const feedback = buildAuthFeedbackState({
+    const feedback = buildSessionRefreshFeedbackState({
         isLoading: authLoading,
         errorMessage: error,
         sessionNotice,
@@ -81,11 +83,7 @@ export default function LoginPage() {
 
     useEffect(() => {
         if (isAuthenticated && user) {
-            if (user.role === 'ADMIN') {
-                router.push('/admin').catch(() => {});
-            } else {
-                router.push('/dashboard').catch(() => {});
-            }
+            router.push(resolveAuthDestination(user.role).path).catch(() => {});
         }
     }, [isAuthenticated, user, router]);
 
@@ -125,7 +123,7 @@ export default function LoginPage() {
                 setError(sessionResult?.error?.message || 'Unable to save your session. Please try again.');
                 return;
             }
-            setSuccessMessage(`Signed in. Redirecting to your ${data.user.role === 'ADMIN' ? 'admin' : 'dashboard'}...`);
+            setSuccessMessage(buildSignedInRedirectMessage(sessionResult.user.role));
         } catch (err) {
             setError('Dev login request failed.');
         } finally {

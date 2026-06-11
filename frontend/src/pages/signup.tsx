@@ -4,10 +4,10 @@ import { useMutation } from '@apollo/client/react';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import RestaurantMenuRoundedIcon from '@mui/icons-material/RestaurantMenuRounded';
 import {
-    Alert,
     Box,
     Button,
     Container,
+    CircularProgress,
     Grid,
     Link,
     MenuItem,
@@ -18,9 +18,9 @@ import {
 import Head from 'next/head';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { completeSignupSession, validateSignupInput } from '@/context/authUtils';
+import { buildAuthFeedbackState, completeSignupSession, validateSignupInput } from '@/context/authUtils';
 
 const REGISTER_USER = gql`
     mutation RegisterUser($input: CreateUserInput!) {
@@ -51,12 +51,13 @@ export default function SignupPage() {
         dailyCalories: 2200,
     });
     const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     const [registerUser, { loading }] = useMutation(REGISTER_USER, {
         onCompleted: (data) => {
             const sessionResult = login(data.registerUser.token, data.registerUser.user);
             const sessionCommitted = completeSignupSession(sessionResult, {
                 onSuccess: () => {
-                    router.push('/onboarding').catch(() => {});
+                    setSuccessMessage('Account created. Redirecting to onboarding...');
                 },
                 onError: setError,
             });
@@ -68,6 +69,18 @@ export default function SignupPage() {
         onError: (err) => setError(err.message),
     });
 
+    useEffect(() => {
+        if (!successMessage) {
+            return;
+        }
+
+        const redirectTimer = setTimeout(() => {
+            router.push('/onboarding').catch(() => {});
+        }, 0);
+
+        return () => clearTimeout(redirectTimer);
+    }, [router, successMessage]);
+
     const update = (key) => (event) => {
         const value = key === 'dailyCalories' ? Number(event.target.value) : event.target.value;
         setForm((current) => ({ ...current, [key]: value }));
@@ -76,6 +89,7 @@ export default function SignupPage() {
     const submit = async (event) => {
         event.preventDefault();
         setError('');
+        setSuccessMessage('');
         const validation = validateSignupInput(form);
         if (!validation.valid) {
             setError(validation.error.message);
@@ -84,6 +98,14 @@ export default function SignupPage() {
 
         await registerUser({ variables: { input: validation.input } });
     };
+
+    const feedback = buildAuthFeedbackState({
+        isLoading: loading,
+        errorMessage: error,
+        successMessage,
+        emptyMessage: 'Complete your account details to continue.',
+        loadingMessage: 'Creating your account...',
+    });
 
     return (
         <>
@@ -118,38 +140,74 @@ export default function SignupPage() {
                             <Paper sx={{ p: { xs: 3, md: 4 }, bgcolor: '#1C1815', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 3 }}>
                                 <Typography variant="h4" sx={{ color: '#fff', fontWeight: 800, mb: 1 }}>Create account</Typography>
                                 <Typography sx={{ color: 'rgba(255,255,255,0.72)', mb: 3 }}>Free accounts start with basic planning limits.</Typography>
-                                {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-                                <Box component="form" onSubmit={submit}>
-                                    <TextField fullWidth required label="Name" value={form.name} onChange={update('name')} margin="normal" />
-                                    <TextField fullWidth required label="Email" type="email" value={form.email} onChange={update('email')} margin="normal" />
-                                    <TextField fullWidth required label="Password" type="password" value={form.password} onChange={update('password')} margin="normal" helperText="Use 8+ chars with uppercase, lowercase, number, and symbol." />
+                                <Box
+                                    id="signup-feedback"
+                                    role={feedback.role}
+                                    aria-live={feedback.ariaLive}
+                                    aria-atomic="true"
+                                    sx={{
+                                        minHeight: feedback.minHeight,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1.5,
+                                        mb: 2,
+                                        px: 1.5,
+                                        py: 1,
+                                        borderRadius: 1.5,
+                                        bgcolor: feedback.state === 'error' ? 'rgba(244, 67, 54, 0.08)' : feedback.state === 'success' ? 'rgba(76, 175, 80, 0.08)' : 'transparent',
+                                        border: feedback.state === 'error' ? '1px solid rgba(244, 67, 54, 0.2)' : feedback.state === 'success' ? '1px solid rgba(76, 175, 80, 0.2)' : '1px solid transparent',
+                                    }}
+                                >
+                                    {feedback.showSpinner && <CircularProgress size={18} />}
+                                    <Typography
+                                        variant="body2"
+                                        sx={{
+                                            color: feedback.state === 'error' ? 'error.main' : feedback.state === 'success' ? 'success.main' : 'text.secondary',
+                                            fontWeight: feedback.state === 'success' ? 700 : 400,
+                                        }}
+                                    >
+                                        {feedback.message}
+                                    </Typography>
+                                </Box>
+                                <Box component="form" onSubmit={submit} noValidate aria-busy={loading}>
+                                    <TextField fullWidth required label="Name" value={form.name} onChange={update('name')} margin="normal" disabled={loading} />
+                                    <TextField fullWidth required label="Email" type="email" value={form.email} onChange={update('email')} margin="normal" disabled={loading} />
+                                    <TextField fullWidth required label="Password" type="password" value={form.password} onChange={update('password')} margin="normal" helperText="Use 8+ chars with uppercase, lowercase, number, and symbol." disabled={loading} />
                                     <Grid container spacing={2}>
                                         <Grid item xs={12} sm={6}>
-                                            <TextField select fullWidth label="Goal" value={form.weightGoal} onChange={update('weightGoal')} margin="normal">
+                                            <TextField select fullWidth label="Goal" value={form.weightGoal} onChange={update('weightGoal')} margin="normal" disabled={loading}>
                                                 <MenuItem value="LOSE">Lose weight</MenuItem>
                                                 <MenuItem value="MAINTAIN">Maintain</MenuItem>
                                                 <MenuItem value="GAIN">Gain weight</MenuItem>
                                             </TextField>
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
-                                            <TextField fullWidth label="Daily calories" type="number" value={form.dailyCalories} onChange={update('dailyCalories')} margin="normal" />
+                                            <TextField fullWidth label="Daily calories" type="number" value={form.dailyCalories} onChange={update('dailyCalories')} margin="normal" disabled={loading} />
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
-                                            <TextField select fullWidth label="Measurement" value={form.measurementSystem} onChange={update('measurementSystem')} margin="normal">
+                                            <TextField select fullWidth label="Measurement" value={form.measurementSystem} onChange={update('measurementSystem')} margin="normal" disabled={loading}>
                                                 <MenuItem value="IMPERIAL">Imperial</MenuItem>
                                                 <MenuItem value="METRIC">Metric</MenuItem>
                                             </TextField>
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
-                                            <TextField select fullWidth label="Gender" value={form.gender} onChange={update('gender')} margin="normal">
+                                            <TextField select fullWidth label="Gender" value={form.gender} onChange={update('gender')} margin="normal" disabled={loading}>
                                                 <MenuItem value="FEMALE">Female</MenuItem>
                                                 <MenuItem value="MALE">Male</MenuItem>
                                                 <MenuItem value="OTHER">Other</MenuItem>
                                             </TextField>
                                         </Grid>
                                     </Grid>
-                                    <Button type="submit" fullWidth variant="contained" size="large" endIcon={<ArrowForwardRoundedIcon />} disabled={loading} sx={{ mt: 3, py: 1.4 }}>
-                                        Create free account
+                                    <Button
+                                        type="submit"
+                                        fullWidth
+                                        variant="contained"
+                                        size="large"
+                                        endIcon={loading ? undefined : <ArrowForwardRoundedIcon />}
+                                        disabled={loading}
+                                        sx={{ mt: 3, py: 1.4 }}
+                                    >
+                                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Create free account'}
                                     </Button>
                                 </Box>
                                 <Typography sx={{ mt: 3, color: 'rgba(255,255,255,0.72)' }}>

@@ -325,11 +325,12 @@ export function buildAuthFeedbackState({
     sessionNotice = '',
     successMessage = '',
     emptyMessage = 'Ready to sign in.',
+    loadingMessage = 'Checking your session...',
 } = {}) {
     if (isLoading) {
         return {
             state: 'loading',
-            message: 'Checking your session...',
+            message: loadingMessage,
             role: 'status',
             ariaLive: 'polite',
             minHeight: AUTH_FEEDBACK_MIN_HEIGHT,

@@ -44,6 +44,8 @@ const AUTH_SESSION_ERROR_MESSAGES = {
     storageUnavailable: 'Unable to save your session. Please try again.',
 };
 
+const AUTH_STORED_SESSION_ERROR_MESSAGE = 'Your saved session could not be read. Please sign in again.';
+
 const AUTH_LOGIN_ERROR_MESSAGES = {
     invalidPayload: 'Please enter your email address and password.',
     missingEmail: 'Please enter your email address.',
@@ -123,6 +125,25 @@ const createAuthLoginValidationError = (code) => {
     return new AuthLoginValidationError(code, message);
 };
 
+export class AuthRouteGuardError extends Error {
+    constructor(code, message) {
+        super(message);
+        this.name = 'AuthRouteGuardError';
+        this.code = code;
+    }
+}
+
+const AUTH_ROUTE_GUARD_ERROR_MESSAGES = {
+    unauthenticated: 'Please sign in to continue.',
+    sessionUnavailable: 'Your session could not be verified. Please sign in again.',
+    unauthorizedRole: 'You do not have access to this page.',
+};
+
+const createAuthRouteGuardError = (code, customMessage) => {
+    const message = customMessage || AUTH_ROUTE_GUARD_ERROR_MESSAGES[code] || AUTH_ROUTE_GUARD_ERROR_MESSAGES.unauthenticated;
+    return new AuthRouteGuardError(code, message);
+};
+
 export function getLoginErrorMessage(message) {
     if (typeof message !== 'string') {
         return AUTH_LOGIN_RECOVERY_MESSAGE;
@@ -152,6 +173,33 @@ export function getLoginErrorMessage(message) {
 const createAuthSignupValidationError = (code) => {
     const message = AUTH_SIGNUP_ERROR_MESSAGES[code] || AUTH_SIGNUP_ERROR_MESSAGES.invalidPayload;
     return new AuthSignupValidationError(code, message);
+};
+
+// Keep the signed auth identity as the canonical source after refresh.
+const buildCanonicalAuthUserSnapshot = (userData, tokenPayload = {}) => {
+    const canonicalSnapshot = buildStoredAuthUserSnapshot(userData);
+    const tokenUserId =
+        typeof tokenPayload.userId === 'string' && tokenPayload.userId.trim() !== ''
+            ? tokenPayload.userId.trim()
+            : null;
+
+    if (tokenUserId) {
+        canonicalSnapshot.id = tokenUserId;
+    }
+
+    if (typeof tokenPayload.email === 'string' && tokenPayload.email.trim() !== '') {
+        canonicalSnapshot.email = tokenPayload.email.trim().toLowerCase();
+    }
+
+    if (typeof tokenPayload.role === 'string' && tokenPayload.role.trim() !== '') {
+        canonicalSnapshot.role = tokenPayload.role.trim();
+    }
+
+    if (typeof tokenPayload.subscriptionPlan === 'string' && tokenPayload.subscriptionPlan.trim() !== '') {
+        canonicalSnapshot.subscriptionPlan = tokenPayload.subscriptionPlan.trim();
+    }
+
+    return canonicalSnapshot;
 };
 
 const buildStoredAuthUserSnapshot = (userData) => {
@@ -197,6 +245,56 @@ export function parseStoredAuthUserSnapshot(storedUser) {
     } catch (error) {
         return null;
     }
+}
+
+export function resolveStoredAuthSession(storedToken, storedUser, nowSeconds = Math.floor(Date.now() / 1000)) {
+    const tokenValidation = validateStoredAuthToken(storedToken, nowSeconds);
+
+    if (!storedToken) {
+        return {
+            status: 'missing-token',
+            token: null,
+            user: null,
+            sessionNotice: storedUser ? AUTH_STORED_SESSION_ERROR_MESSAGE : '',
+            shouldClearStorage: true,
+            tokenValidation,
+        };
+    }
+
+    if (!tokenValidation.valid) {
+        return {
+            status: 'invalid-token',
+            token: null,
+            user: null,
+            sessionNotice: tokenValidation.error.message,
+            shouldClearStorage: true,
+            tokenValidation,
+        };
+    }
+
+    const storedUserSnapshot = parseStoredAuthUserSnapshot(storedUser);
+
+    if (!storedUserSnapshot) {
+        return {
+            status: 'invalid-user',
+            token: null,
+            user: null,
+            sessionNotice: AUTH_STORED_SESSION_ERROR_MESSAGE,
+            shouldClearStorage: true,
+            tokenValidation,
+        };
+    }
+
+    const canonicalUserSnapshot = buildCanonicalAuthUserSnapshot(storedUserSnapshot, tokenValidation.payload);
+
+    return {
+        status: 'hydrated',
+        token: storedToken,
+        user: canonicalUserSnapshot,
+        sessionNotice: '',
+        shouldClearStorage: false,
+        tokenValidation,
+    };
 }
 
 const decodeBase64Url = (value) => {
@@ -293,9 +391,9 @@ export function persistLoginInfo(token, userData, storageAdapter = storage, nowS
         };
     }
 
-    const basicUserInfo = buildStoredAuthUserSnapshot(userData);
+    const canonicalUserInfo = buildCanonicalAuthUserSnapshot(userData, tokenValidation.payload);
     const tokenStored = storageAdapter.setItem('authToken', token);
-    const userStored = storageAdapter.setItem('userInfo', JSON.stringify(basicUserInfo));
+    const userStored = storageAdapter.setItem('userInfo', JSON.stringify(canonicalUserInfo));
 
     if (!tokenStored || !userStored) {
         storageAdapter.removeItem('authToken');
@@ -309,7 +407,7 @@ export function persistLoginInfo(token, userData, storageAdapter = storage, nowS
 
     return {
         ok: true,
-        user: basicUserInfo,
+        user: canonicalUserInfo,
         error: null,
     };
 }
@@ -551,4 +649,113 @@ export function buildAuthFeedbackContainerStyles(state = 'empty') {
     }
 
     return AUTH_FEEDBACK_SURFACE_STYLES.neutral;
+}
+
+export function buildProtectedRouteFeedbackState({
+    state = 'loading',
+    message = '',
+    loadingMessage = 'Checking your session...',
+    readyMessage = 'Ready to continue.',
+    successMessage = 'Access granted.',
+} = {}) {
+    if (state === 'loading') {
+        return buildAuthFeedbackState({
+            isLoading: true,
+            loadingMessage,
+        });
+    }
+
+    if (state === 'error') {
+        return buildAuthFeedbackState({
+            errorMessage: message || AUTH_ROUTE_GUARD_ERROR_MESSAGES.unauthenticated,
+        });
+    }
+
+    if (state === 'redirect') {
+        return buildAuthFeedbackState({
+            emptyMessage: message || readyMessage,
+        });
+    }
+
+    return buildAuthFeedbackState({
+        successMessage: message || successMessage,
+    });
+}
+
+export function resolveProtectedRouteState({
+    loading = false,
+    isAuthenticated = false,
+    userRole = null,
+    allowedRoles = undefined,
+    sessionNotice = '',
+} = {}) {
+    const hasArrayRoleRestriction = Array.isArray(allowedRoles) && allowedRoles.length > 0;
+    const hasSetRoleRestriction = allowedRoles instanceof Set && allowedRoles.size > 0;
+    const hasRoleRestriction = hasArrayRoleRestriction || hasSetRoleRestriction;
+
+    if (loading) {
+        return {
+            state: 'loading',
+            canRender: false,
+            redirectTo: null,
+            message: 'Checking your session...',
+            error: null,
+        };
+    }
+
+    if (!isAuthenticated) {
+        if (sessionNotice) {
+            return {
+                state: 'error',
+                canRender: false,
+                redirectTo: '/login',
+                message: sessionNotice,
+                error: createAuthRouteGuardError('sessionUnavailable', sessionNotice),
+            };
+        }
+
+        return {
+            state: 'redirect',
+            canRender: false,
+            redirectTo: '/login',
+            message: AUTH_ROUTE_GUARD_ERROR_MESSAGES.unauthenticated,
+            error: createAuthRouteGuardError('unauthenticated'),
+        };
+    }
+
+    if (!userRole || typeof userRole !== 'string') {
+        return {
+            state: 'error',
+            canRender: false,
+            redirectTo: '/login',
+            message: sessionNotice || AUTH_ROUTE_GUARD_ERROR_MESSAGES.sessionUnavailable,
+            error: createAuthRouteGuardError('sessionUnavailable', sessionNotice || AUTH_ROUTE_GUARD_ERROR_MESSAGES.sessionUnavailable),
+        };
+    }
+
+    const isAllowedRole = Array.isArray(allowedRoles)
+        ? allowedRoles.includes(userRole)
+        : allowedRoles instanceof Set
+            ? allowedRoles.has(userRole)
+            : false;
+
+    if (hasRoleRestriction && !isAllowedRole) {
+        return {
+            state: 'redirect',
+            canRender: false,
+            redirectTo: userRole === 'ADMIN' ? '/admin' : '/dashboard',
+            message: userRole === 'ADMIN'
+                ? 'Redirecting to the admin dashboard...'
+                : 'Redirecting to the dashboard...',
+            error: createAuthRouteGuardError('unauthorizedRole'),
+        };
+    }
+
+    return {
+        state: 'allowed',
+        canRender: true,
+        redirectTo: null,
+        message: '',
+        error: null,
+    };
 }

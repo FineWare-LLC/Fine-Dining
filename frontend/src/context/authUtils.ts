@@ -383,6 +383,10 @@ const buildStoredAuthLoginHistorySnapshot = (loginHistory) => {
 };
 
 const buildStoredAuthUserSnapshot = (userData, fallbackRole = null) => {
+    if (!userData || typeof userData !== 'object' || Array.isArray(userData)) {
+        return null;
+    }
+
     const basicUserInfo = {
         id: userData.id,
         name: userData.name,
@@ -446,6 +450,7 @@ const buildStoredAuthUserSnapshot = (userData, fallbackRole = null) => {
         if (normalizedDietaryProfile === null) {
             return null;
         }
+        basicUserInfo.dietaryProfile = normalizedDietaryProfile;
     }
 
     if (Object.prototype.hasOwnProperty.call(userData, 'measurementSystem')) {
@@ -479,14 +484,52 @@ export const buildUpdatedAuthUserSnapshot = (currentUser, updatedUser = {}) => {
         return null;
     }
 
-    const mergedUser = {
-        ...currentUser,
-        ...updatedUser,
-    };
+    const pickCanonicalField = (field) =>
+        Object.prototype.hasOwnProperty.call(updatedUser, field) ? updatedUser[field] : currentUser[field];
 
-    if (Object.prototype.hasOwnProperty.call(updatedUser, 'allergies')) {
-        mergedUser.allergies = updatedUser.allergies;
+    const currentQuestionnaireValue = currentUser.questionnaire;
+    const updatedQuestionnaireValue = updatedUser.questionnaire;
+    const hasCurrentQuestionnaire = Object.prototype.hasOwnProperty.call(currentUser, 'questionnaire');
+    const hasUpdatedQuestionnaire = Object.prototype.hasOwnProperty.call(updatedUser, 'questionnaire');
+    const currentQuestionnaire = hasCurrentQuestionnaire ? normalizeOptionalQuestionnaire(currentQuestionnaireValue) : undefined;
+    if (currentQuestionnaire === null) {
+        return null;
     }
+
+    const updatedQuestionnaire = hasUpdatedQuestionnaire ? normalizeOptionalQuestionnaire(updatedQuestionnaireValue) : undefined;
+    if (updatedQuestionnaire === null) {
+        return null;
+    }
+
+    const mergedQuestionnaire =
+        currentQuestionnaire !== undefined || updatedQuestionnaire !== undefined
+            ? {
+                  ...(currentQuestionnaire || {}),
+                  ...(updatedQuestionnaire || {}),
+              }
+            : undefined;
+
+    const allergies = Object.prototype.hasOwnProperty.call(updatedUser, 'allergies')
+        ? updatedUser.allergies
+        : mergedQuestionnaire && Object.prototype.hasOwnProperty.call(mergedQuestionnaire, 'allergies')
+            ? mergedQuestionnaire.allergies
+            : currentUser.allergies;
+
+    const mergedUser = {
+        id: pickCanonicalField('id'),
+        name: pickCanonicalField('name'),
+        email: pickCanonicalField('email'),
+        role: pickCanonicalField('role'),
+        subscriptionPlan: pickCanonicalField('subscriptionPlan'),
+        subscriptionStatus: pickCanonicalField('subscriptionStatus'),
+        measurementSystem: pickCanonicalField('measurementSystem'),
+        allergies,
+        foodGoals: pickCanonicalField('foodGoals'),
+        questionnaire: mergedQuestionnaire,
+        dietaryProfile: pickCanonicalField('dietaryProfile'),
+        dailyCalories: pickCanonicalField('dailyCalories'),
+        loginHistory: pickCanonicalField('loginHistory'),
+    };
 
     return buildStoredAuthUserSnapshot(mergedUser, mergedUser.role || currentUser.role);
 };
@@ -647,6 +690,7 @@ const normalizeOptionalDietaryProfile = (dietaryProfile) => {
         return null;
     }
 
+    const normalizedDietaryProfile = {};
     const dietaryProfileArrayFields = ['diets', 'excludedIngredients', 'preferredCuisines'];
 
     for (const field of dietaryProfileArrayFields) {
@@ -658,9 +702,78 @@ const normalizeOptionalDietaryProfile = (dietaryProfile) => {
         if (normalizedValues === null) {
             return null;
         }
+
+        if (normalizedValues === undefined) {
+            delete normalizedDietaryProfile[field];
+            continue;
+        }
+
+        normalizedDietaryProfile[field] = normalizedValues;
     }
 
-    return dietaryProfile;
+    if (Object.prototype.hasOwnProperty.call(dietaryProfile, 'mealsPerDay')) {
+        const mealsPerDay = dietaryProfile.mealsPerDay;
+        if (mealsPerDay === undefined || mealsPerDay === null) {
+            delete normalizedDietaryProfile.mealsPerDay;
+        } else if (!Number.isInteger(mealsPerDay) || mealsPerDay < 1 || mealsPerDay > 10) {
+            return null;
+        } else {
+            normalizedDietaryProfile.mealsPerDay = mealsPerDay;
+        }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(dietaryProfile, 'snacksPerDay')) {
+        const snacksPerDay = dietaryProfile.snacksPerDay;
+        if (snacksPerDay === undefined || snacksPerDay === null) {
+            delete normalizedDietaryProfile.snacksPerDay;
+        } else if (!Number.isInteger(snacksPerDay) || snacksPerDay < 0 || snacksPerDay > 5) {
+            return null;
+        } else {
+            normalizedDietaryProfile.snacksPerDay = snacksPerDay;
+        }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(dietaryProfile, 'dailyBudget')) {
+        const dailyBudget = dietaryProfile.dailyBudget;
+        if (dailyBudget === undefined || dailyBudget === null) {
+            delete normalizedDietaryProfile.dailyBudget;
+        } else if (!Number.isFinite(dailyBudget) || dailyBudget < 0) {
+            return null;
+        } else {
+            normalizedDietaryProfile.dailyBudget = dailyBudget;
+        }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(dietaryProfile, 'maxPrepTimePerMeal')) {
+        const maxPrepTimePerMeal = dietaryProfile.maxPrepTimePerMeal;
+        if (maxPrepTimePerMeal === undefined || maxPrepTimePerMeal === null) {
+            delete normalizedDietaryProfile.maxPrepTimePerMeal;
+        } else if (!Number.isFinite(maxPrepTimePerMeal) || maxPrepTimePerMeal < 0) {
+            return null;
+        } else {
+            normalizedDietaryProfile.maxPrepTimePerMeal = maxPrepTimePerMeal;
+        }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(dietaryProfile, 'maxDifficulty')) {
+        const maxDifficulty = dietaryProfile.maxDifficulty;
+        if (maxDifficulty === undefined || maxDifficulty === null) {
+            delete normalizedDietaryProfile.maxDifficulty;
+        } else if (typeof maxDifficulty !== 'string') {
+            return null;
+        } else {
+            const normalizedDifficulty = maxDifficulty.trim().toUpperCase();
+            if (!normalizedDifficulty) {
+                delete normalizedDietaryProfile.maxDifficulty;
+            } else if (!['EASY', 'INTERMEDIATE', 'HARD'].includes(normalizedDifficulty)) {
+                return null;
+            } else {
+                normalizedDietaryProfile.maxDifficulty = normalizedDifficulty;
+            }
+        }
+    }
+
+    return normalizedDietaryProfile;
 };
 
 const normalizeOptionalAllergyArray = (values) => {
@@ -697,7 +810,7 @@ const normalizeOptionalQuestionnaire = (questionnaire) => {
         return null;
     }
 
-    const normalizedQuestionnaire = { ...questionnaire };
+    const normalizedQuestionnaire = {};
     const questionnaireArrayFields = ['allergies', 'disallowedIngredients'];
 
     for (const field of questionnaireArrayFields) {

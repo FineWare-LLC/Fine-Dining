@@ -94,6 +94,7 @@ test('buildUpdatedAuthUserSnapshot keeps a large diet preference ranking update 
             'foodGoals',
             'questionnaire',
             'dietaryProfile',
+            'nutritionTargets',
             'loginHistory',
         ]),
     );

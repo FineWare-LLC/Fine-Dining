@@ -3,6 +3,7 @@ import React from 'react';
 import MealCatalog from './MealCatalog';
 import NutritionRequirementsForm from './NutritionRequirementsForm';
 import OptimizedMealPlanDisplay from './OptimizedMealPlanDisplay';
+import { getMealPlanOptimizerEmptyStateMessage } from '@/utils/mealPlanningEmptyState';
 
 /**
  * MealPlanOptimizer - Extracted component for meal plan optimization functionality
@@ -61,7 +62,7 @@ const MealPlanOptimizer = ({
                     ) : (
                         <Box sx={{ mt: 3, textAlign: 'center' }}>
                             <Typography variant="body1" color="text.secondary" gutterBottom>
-                No optimized meal plan generated yet.
+                                {getMealPlanOptimizerEmptyStateMessage()}
                             </Typography>
                         </Box>
                     )}

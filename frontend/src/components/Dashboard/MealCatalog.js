@@ -31,6 +31,7 @@ import {
     Button,
 } from '@mui/material';
 import React, { useState } from 'react';
+import { getMealCatalogEmptyStateMessage } from '@/utils/mealPlanningEmptyState';
 import { resolveMuiIcon } from '@/utils/muiIcon';
 
 const FilterListIcon = resolveMuiIcon(FilterListIconModule);
@@ -251,7 +252,7 @@ const MealCatalog = ({ selectedMeals = [], onSelectMeal, onSelectMealData, onAdd
                                 {filteredMeals.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={7} align="center">
-                      No meals found
+                                            {getMealCatalogEmptyStateMessage()}
                                         </TableCell>
                                     </TableRow>
                                 ) : (

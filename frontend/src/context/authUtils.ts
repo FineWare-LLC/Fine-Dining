@@ -314,7 +314,59 @@ const buildCanonicalAuthUserSnapshot = (userData, tokenPayload = {}) => {
         canonicalSnapshot.subscriptionPlan = tokenPayload.subscriptionPlan.trim();
     }
 
+    if (typeof tokenPayload.subscriptionStatus === 'string' && tokenPayload.subscriptionStatus.trim() !== '') {
+        canonicalSnapshot.subscriptionStatus = tokenPayload.subscriptionStatus.trim();
+    }
+
     return canonicalSnapshot;
+};
+
+const normalizeAuthLoginHistoryEntry = (entry) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        return null;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(entry, 'ip') && typeof entry.ip !== 'string') {
+        return null;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(entry, 'userAgent') && typeof entry.userAgent !== 'string') {
+        return null;
+    }
+
+    const timestamp = entry.timestamp instanceof Date ? entry.timestamp : new Date(entry.timestamp);
+
+    if (!Number.isFinite(timestamp.getTime())) {
+        return null;
+    }
+
+    return {
+        ip: typeof entry.ip === 'string' ? entry.ip.trim() : '',
+        userAgent: typeof entry.userAgent === 'string' ? entry.userAgent.trim() : '',
+        timestamp: timestamp.toISOString(),
+    };
+};
+
+const buildStoredAuthLoginHistorySnapshot = (loginHistory) => {
+    if (loginHistory === undefined) {
+        return undefined;
+    }
+
+    if (loginHistory === null || !Array.isArray(loginHistory)) {
+        return null;
+    }
+
+    const normalizedLoginHistory = [];
+
+    for (const entry of loginHistory) {
+        const normalizedEntry = normalizeAuthLoginHistoryEntry(entry);
+        if (!normalizedEntry) {
+            return null;
+        }
+        normalizedLoginHistory.push(normalizedEntry);
+    }
+
+    return normalizedLoginHistory;
 };
 
 const buildStoredAuthUserSnapshot = (userData, fallbackRole = null) => {
@@ -334,10 +386,16 @@ const buildStoredAuthUserSnapshot = (userData, fallbackRole = null) => {
     basicUserInfo.subscriptionStatus = userData.subscriptionStatus || 'inactive';
 
     const dailyCalories = userData.dailyCalories;
+    const hasLoginHistory = Object.prototype.hasOwnProperty.call(userData, 'loginHistory');
+    const loginHistory = hasLoginHistory ? buildStoredAuthLoginHistorySnapshot(userData.loginHistory) : undefined;
+    if (loginHistory === null) {
+        return null;
+    }
 
     return {
         ...basicUserInfo,
         ...(dailyCalories === undefined ? {} : { dailyCalories }),
+        ...(loginHistory === undefined ? {} : { loginHistory }),
     };
 };
 
@@ -795,18 +853,53 @@ export function buildSessionRefreshFeedbackState({
 } = {}) {
     const resolvedIsLoading = isLoading || authLoading || mutationLoading || devLoading;
     const useSessionRefreshMessage = authLoading || (!mutationLoading && !devLoading && resolvedIsLoading);
+    const prioritizedErrorMessage = sessionNotice || errorMessage;
 
     return buildAuthFeedbackState({
         isLoading: resolvedIsLoading,
-        errorMessage,
-        sessionNotice,
+        errorMessage: prioritizedErrorMessage,
+        sessionNotice: '',
         successMessage,
         emptyMessage,
         loadingMessage: useSessionRefreshMessage ? loadingMessage : pendingLoadingMessage,
     });
 }
 
+export function buildDevLoginAvailabilityState({
+    isDevelopment = false,
+    isLoading = false,
+    readyMessage = 'Dev quick login is ready.',
+    loadingMessage = 'Signing you in...',
+    blockedMessage = 'Dev quick login is disabled outside development.',
+} = {}) {
+    if (!isDevelopment) {
+        return {
+            state: 'blocked',
+            message: blockedMessage,
+            role: 'status',
+            ariaLive: 'polite',
+            minHeight: AUTH_FEEDBACK_MIN_HEIGHT,
+            showSpinner: false,
+        };
+    }
+
+    if (isLoading) {
+        return buildAuthFeedbackState({
+            isLoading: true,
+            loadingMessage,
+        });
+    }
+
+    return buildAuthFeedbackState({
+        emptyMessage: readyMessage,
+    });
+}
+
 export function buildAuthFeedbackContainerStyles(state = 'empty') {
+    if (state === 'blocked') {
+        return AUTH_FEEDBACK_SURFACE_STYLES.neutral;
+    }
+
     if (state === 'error') {
         return AUTH_FEEDBACK_SURFACE_STYLES.error;
     }

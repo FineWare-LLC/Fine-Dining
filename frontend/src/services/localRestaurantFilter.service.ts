@@ -154,6 +154,18 @@ function calculateLocalScore(restaurant) {
     return Math.max(0, Math.min(100, score));
 }
 
+function normalizeMaxResults(maxResults, fallback = 20) {
+    if (maxResults === undefined || maxResults === null) {
+        return fallback;
+    }
+
+    if (typeof maxResults !== 'number' || !Number.isFinite(maxResults)) {
+        return fallback;
+    }
+
+    return Math.max(0, Math.floor(maxResults));
+}
+
 /**
  * Filters and sorts restaurants to prioritize truly local establishments
  * @param {Array} restaurants - Array of restaurant objects
@@ -167,10 +179,10 @@ export function filterForLocalRestaurants(restaurants, options = {}) {
     const {
         minLocalScore = 30,
         excludeChains = true,
-        maxResults = 20
     } = options;
+    const safeMaxResults = normalizeMaxResults(options.maxResults);
     
-    if (!Array.isArray(restaurants)) {
+    if (!Array.isArray(restaurants) || safeMaxResults === 0) {
         return [];
     }
     
@@ -206,18 +218,35 @@ export function filterForLocalRestaurants(restaurants, options = {}) {
         // Secondary sort: rating (if available)
         const aRating = a.rating || 0;
         const bRating = b.rating || 0;
-        return bRating - aRating;
+        if (bRating !== aRating) {
+            return bRating - aRating;
+        }
+
+        // Final tie-breakers keep large result sets deterministic.
+        const aName = (a.name || '').toLowerCase();
+        const bName = (b.name || '').toLowerCase();
+        if (aName !== bName) {
+            return aName < bName ? -1 : 1;
+        }
+
+        const aVicinity = (a.vicinity || '').toLowerCase();
+        const bVicinity = (b.vicinity || '').toLowerCase();
+        if (aVicinity !== bVicinity) {
+            return aVicinity < bVicinity ? -1 : 1;
+        }
+
+        return 0;
     });
     
     // Return top results
-    return filtered.slice(0, maxResults);
+    return filtered.slice(0, safeMaxResults);
 }
 
 function buildFilterCriteria(filterOptions = {}) {
     return {
         minLocalScore: filterOptions.minLocalScore ?? 30,
         excludeChains: filterOptions.excludeChains !== false,
-        maxResults: filterOptions.maxResults ?? 20,
+        maxResults: normalizeMaxResults(filterOptions.maxResults),
     };
 }
 

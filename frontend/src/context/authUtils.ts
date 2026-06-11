@@ -213,6 +213,22 @@ export function saveLoginInfo(token, userData, nowSeconds = Math.floor(Date.now(
     return result.ok ? result.user : null;
 }
 
+export function completeSignupSession(sessionResult, { onSuccess, onError } = {}) {
+    if (!sessionResult?.ok) {
+        const message = sessionResult?.error?.message || AUTH_SESSION_ERROR_MESSAGES.storageUnavailable;
+        if (typeof onError === 'function') {
+            onError(message);
+        }
+        return false;
+    }
+
+    if (typeof onSuccess === 'function') {
+        onSuccess();
+    }
+
+    return true;
+}
+
 export function validateSignupInput(input) {
     if (!input || typeof input !== 'object' || Array.isArray(input)) {
         return { valid: false, error: createAuthSignupValidationError('invalidPayload') };
@@ -264,12 +280,20 @@ export function validateSignupInput(input) {
         password: input.password,
     };
 
-    if (normalizedInput.weightGoal !== undefined && normalizedInput.weightGoal !== null && normalizedInput.weightGoal !== '') {
-        const normalizedWeightGoal = typeof normalizedInput.weightGoal === 'string' ? normalizedInput.weightGoal.trim().toUpperCase() : '';
-        if (!SIGNUP_ALLOWED_WEIGHT_GOALS.has(normalizedWeightGoal)) {
+    if (normalizedInput.weightGoal === undefined || normalizedInput.weightGoal === null) {
+        delete normalizedInput.weightGoal;
+    } else if (typeof normalizedInput.weightGoal === 'string') {
+        const normalizedWeightGoal = normalizedInput.weightGoal.trim().toUpperCase();
+
+        if (!normalizedWeightGoal) {
+            delete normalizedInput.weightGoal;
+        } else if (!SIGNUP_ALLOWED_WEIGHT_GOALS.has(normalizedWeightGoal)) {
             return { valid: false, error: createAuthSignupValidationError('invalidWeightGoal') };
+        } else {
+            normalizedInput.weightGoal = normalizedWeightGoal;
         }
-        normalizedInput.weightGoal = normalizedWeightGoal;
+    } else {
+        return { valid: false, error: createAuthSignupValidationError('invalidWeightGoal') };
     }
 
     if (normalizedInput.dailyCalories !== undefined && normalizedInput.dailyCalories !== null && normalizedInput.dailyCalories !== '') {

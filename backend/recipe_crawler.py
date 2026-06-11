@@ -196,6 +196,10 @@ class CrawlQueueWriteError(RuntimeError):
     """Raised when crawl queue writes fail and must be reported safely."""
 
 
+class RecipePayloadValidationError(ValueError):
+    """Raised when an extracted recipe payload is malformed or incomplete."""
+
+
 class RecipeStore:
     """Thin wrapper around the recipes collection in MongoDB."""
 
@@ -274,6 +278,7 @@ class RecipeStore:
 
     def save_recipe(self, data: Dict, source_url: str) -> bool:
         """Insert a recipe document. Returns True if inserted, False if duplicate."""
+        self._validate_recipe_payload(data, source_url)
         doc = self._to_mongo_doc(data, source_url)
         try:
             self.recipes.insert_one(doc)
@@ -283,6 +288,59 @@ class RecipeStore:
                 logger.debug('Duplicate recipe skipped: %s', data.get('recipeName'))
                 return False
             raise
+
+    def _validate_recipe_payload(self, data: Dict, source_url: str):
+        """Fail fast on malformed extracted recipes before Mongo persistence."""
+        if not isinstance(data, dict):
+            raise RecipePayloadValidationError('Invalid recipe payload: expected a JSON object.')
+
+        issues = []
+
+        if not isinstance(source_url, str) or not source_url.strip():
+            issues.append('source')
+
+        name = data.get('recipeName')
+        if not isinstance(name, str) or not name.strip():
+            issues.append('recipeName')
+
+        ingredients = data.get('ingredients')
+        if not isinstance(ingredients, list) or not ingredients:
+            issues.append('ingredients')
+        else:
+            for index, ingredient in enumerate(ingredients):
+                if not isinstance(ingredient, dict):
+                    issues.append(f'ingredients[{index}]')
+                    break
+
+                ingredient_name = ingredient.get('name')
+                if not isinstance(ingredient_name, str) or not ingredient_name.strip():
+                    issues.append(f'ingredients[{index}].name')
+                    break
+
+                ingredient_unit = ingredient.get('unit')
+                if not isinstance(ingredient_unit, str) or not ingredient_unit.strip():
+                    issues.append(f'ingredients[{index}].unit')
+                    break
+
+                quantity = ingredient.get('quantity')
+                if not isinstance(quantity, (int, float)) or quantity < 0:
+                    issues.append(f'ingredients[{index}].quantity')
+                    break
+
+        instructions = data.get('instructions')
+        if not isinstance(instructions, str) or not instructions.strip():
+            issues.append('instructions')
+
+        servings = data.get('servings')
+        if not isinstance(servings, (int, float)) or int(servings) < 1:
+            issues.append('servings')
+
+        prep_time = data.get('prepTime')
+        if not isinstance(prep_time, (int, float)) or int(prep_time) < 0:
+            issues.append('prepTime')
+
+        if issues:
+            raise RecipePayloadValidationError(f"Invalid recipe payload: {', '.join(issues)}.")
 
     def _to_mongo_doc(self, data: Dict, source_url: str) -> Dict:
         """Map LLM-extracted dict → Mongo document matching recipe.schema.js."""

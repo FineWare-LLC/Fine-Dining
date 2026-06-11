@@ -1,60 +1,59 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { buildSecurityHeaders } from './src/utils/headers.ts';
+
+const frontendDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(frontendDir, '..');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   reactStrictMode: true,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
 
-  // Fix workspace root detection
-  outputFileTracingRoot: process.cwd(),
+  // The optimizer imports code and native packages from the repo root.
+  outputFileTracingRoot: repoRoot,
 
-  // Performance optimizations
   compress: true,
   poweredByHeader: false,
 
-  // Bundle optimization
-  experimental: {},
+  serverExternalPackages: ['highs-addon', 'bcrypt'],
 
-  // Image optimization
+  webpack(config) {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@highs': path.resolve(repoRoot, 'highs-pipeline'),
+    };
+    return config;
+  },
+
   images: {
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
   },
 
-
-  // Security headers
   async headers() {
+    const securityHeaders = buildSecurityHeaders();
+
     return [
       {
         source: '/(.*)',
-        headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
-          },
-        ],
+        headers: Object.entries(securityHeaders).map(([key, value]) => ({
+          key,
+          value,
+        })),
       },
     ];
   },
 
-  // Environment variables
-  env: {
-    USE_GPU: process.env.USE_GPU || '',
-    DISABLE_GPU: process.env.DISABLE_GPU || '',
-    OVERPASS_URL: process.env.OVERPASS_URL || 'https://overpass-api.de/api/interpreter',
-    GOOGLE_PLACES_API_KEY: process.env.GOOGLE_PLACES_API_KEY || ''
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/admin/crawler',
+          destination: '/admin-crawler',
+        },
+      ],
+    };
   },
 };
 

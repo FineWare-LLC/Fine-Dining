@@ -10,7 +10,12 @@ from pymongo.errors import DuplicateKeyError
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from crawler_api import crawler_start  # noqa: E402
-from recipe_crawler import CrawlQueueWriteError, RecipeCrawler, RecipeStore  # noqa: E402
+from recipe_crawler import (  # noqa: E402
+    CrawlQueueWriteError,
+    RecipeCrawler,
+    RecipePayloadValidationError,
+    RecipeStore,
+)
 
 
 class FailingQueue:
@@ -51,6 +56,90 @@ class DummyThread:
 
 
 class RecipeCrawlerQueueFailureTests(unittest.TestCase):
+    def test_save_recipe_accepts_valid_payload_and_builds_recipe_document(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+        store.recipes.insert_one.return_value = object()
+
+        payload = {
+            'recipeName': 'Valid Bowl',
+            'ingredients': [
+                {
+                    'name': 'Rice',
+                    'quantity': 2,
+                    'unit': 'cup',
+                },
+            ],
+            'instructions': 'Cook and serve.',
+            'servings': 2,
+            'prepTime': 10,
+        }
+
+        inserted = RecipeStore.save_recipe(
+            store,
+            payload,
+            'https://example.test/valid-bowl',
+        )
+
+        self.assertTrue(inserted)
+        store.recipes.insert_one.assert_called_once()
+        doc = store.recipes.insert_one.call_args.args[0]
+        self.assertEqual(doc['recipeName'], 'Valid Bowl')
+        self.assertEqual(doc['source'], 'https://example.test/valid-bowl')
+        self.assertEqual(doc['totalTime'], 10)
+        self.assertEqual(doc['ingredients'][0]['name'], 'Rice')
+        self.assertEqual(doc['ingredients'][0]['quantity'], 2)
+
+    def test_save_recipe_treats_duplicate_recipe_inserts_as_idempotent(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+        store.recipes.insert_one.side_effect = DuplicateKeyError(
+            'duplicate key error collection: recipes',
+        )
+
+        inserted = RecipeStore.save_recipe(
+            store,
+            {
+                'recipeName': 'Valid Bowl',
+                'ingredients': [
+                    {
+                        'name': 'Rice',
+                        'quantity': 2,
+                        'unit': 'cup',
+                    },
+                ],
+                'instructions': 'Cook and serve.',
+                'servings': 2,
+                'prepTime': 10,
+            },
+            'https://example.test/valid-bowl',
+        )
+
+        self.assertFalse(inserted)
+        store.recipes.insert_one.assert_called_once()
+
+    def test_save_recipe_rejects_incomplete_payload_with_typed_error(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+
+        with self.assertRaises(RecipePayloadValidationError) as exc_info:
+            RecipeStore.save_recipe(
+                store,
+                {
+                    'recipeName': 'Broken Bowl',
+                    'ingredients': [],
+                    'instructions': 'Stir and serve.',
+                    'servings': 2,
+                },
+                'https://example.test/broken-bowl',
+            )
+
+        self.assertEqual(
+            str(exc_info.exception),
+            'Invalid recipe payload: ingredients, prepTime.',
+        )
+        store.recipes.insert_one.assert_not_called()
+
     def test_enqueue_urls_rolls_back_partial_writes_on_dependency_failure(self):
         queue = FailingQueue('https://example.test/fail')
         store = RecipeStore.__new__(RecipeStore)

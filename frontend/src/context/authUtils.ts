@@ -433,6 +433,13 @@ const buildStoredAuthUserSnapshot = (userData, fallbackRole = null) => {
         basicUserInfo.foodGoals = normalizedFoodGoals;
     }
 
+    if (hasDietaryProfile && dietaryProfile !== undefined) {
+        const normalizedDietaryProfile = normalizeOptionalDietaryProfile(dietaryProfile);
+        if (normalizedDietaryProfile === null) {
+            return null;
+        }
+    }
+
     if (Object.prototype.hasOwnProperty.call(userData, 'measurementSystem')) {
         const normalizedMeasurementSystem = normalizeAuthMeasurementSystem(userData.measurementSystem);
         if (!normalizedMeasurementSystem) {
@@ -621,6 +628,31 @@ const normalizeOptionalFoodGoalArray = (values) => {
     }
 
     return normalizedFoodGoals;
+};
+
+const normalizeOptionalDietaryProfile = (dietaryProfile) => {
+    if (dietaryProfile === undefined) {
+        return undefined;
+    }
+
+    if (dietaryProfile === null || typeof dietaryProfile !== 'object' || Array.isArray(dietaryProfile)) {
+        return null;
+    }
+
+    const dietaryProfileArrayFields = ['diets', 'excludedIngredients', 'preferredCuisines'];
+
+    for (const field of dietaryProfileArrayFields) {
+        if (!Object.prototype.hasOwnProperty.call(dietaryProfile, field)) {
+            continue;
+        }
+
+        const normalizedValues = normalizeOptionalFoodGoalArray(dietaryProfile[field]);
+        if (normalizedValues === null) {
+            return null;
+        }
+    }
+
+    return dietaryProfile;
 };
 
 const normalizeOptionalAllergyArray = (values) => {
@@ -1012,6 +1044,30 @@ export function buildAllergenCaptureFeedbackState({
         errorMessage,
         sessionNotice,
         successMessage: successMessage || (hasAllergies ? readyMessage : ''),
+        emptyMessage,
+        loadingMessage,
+    });
+}
+
+const AUTH_DIET_PREFERENCE_RANKING_EMPTY_MESSAGE = 'Choose diet goals to shape recommendation order.';
+const AUTH_DIET_PREFERENCE_RANKING_LOADING_MESSAGE = 'Saving your diet preferences...';
+const AUTH_DIET_PREFERENCE_RANKING_READY_MESSAGE = 'Diet preferences are ready to save.';
+
+export function buildDietPreferenceRankingFeedbackState({
+    isLoading = false,
+    errorMessage = '',
+    sessionNotice = '',
+    successMessage = '',
+    hasDietGoals = false,
+    emptyMessage = AUTH_DIET_PREFERENCE_RANKING_EMPTY_MESSAGE,
+    loadingMessage = AUTH_DIET_PREFERENCE_RANKING_LOADING_MESSAGE,
+    readyMessage = AUTH_DIET_PREFERENCE_RANKING_READY_MESSAGE,
+} = {}) {
+    return buildAuthFeedbackState({
+        isLoading,
+        errorMessage,
+        sessionNotice,
+        successMessage: successMessage || (hasDietGoals ? readyMessage : ''),
         emptyMessage,
         loadingMessage,
     });

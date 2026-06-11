@@ -111,6 +111,41 @@ const SIGNUP_ALLOWED_GENDERS = new Set(['MALE', 'FEMALE', 'OTHER']);
 const SIGNUP_ALLOWED_MEASUREMENT_SYSTEMS = new Set(['METRIC', 'IMPERIAL']);
 const SIGNUP_ALLOWED_WEIGHT_GOALS = new Set(['LOSE', 'GAIN', 'MAINTAIN']);
 const AUTH_ALLOWED_ROLES = new Set(['ADMIN', 'USER', 'PREMIUM', 'PRO', 'CREATOR', 'INFLUENCER']);
+const NUTRITION_TARGET_FIELDS = [
+    'caloriesMin',
+    'caloriesMax',
+    'proteinMin',
+    'proteinMax',
+    'carbohydratesMin',
+    'carbohydratesMax',
+    'fatMin',
+    'fatMax',
+    'fiberMin',
+    'fiberMax',
+    'sugarMax',
+    'sodiumMin',
+    'sodiumMax',
+    'cholesterolMax',
+    'saturatedFatMax',
+    'ironMin',
+    'calciumMin',
+    'vitaminCMin',
+    'vitaminDMin',
+    'vitaminB12Min',
+    'potassiumMin',
+    'magnesiumMin',
+    'zincMin',
+    'folateMin',
+    'omega3Min',
+];
+const NUTRITION_TARGET_RANGE_PAIRS = [
+    ['caloriesMin', 'caloriesMax'],
+    ['proteinMin', 'proteinMax'],
+    ['carbohydratesMin', 'carbohydratesMax'],
+    ['fatMin', 'fatMax'],
+    ['fiberMin', 'fiberMax'],
+    ['sodiumMin', 'sodiumMax'],
+];
 
 const AUTH_FEEDBACK_MIN_HEIGHT = 56;
 const AUTH_FEEDBACK_SURFACE_STYLES = {
@@ -404,8 +439,10 @@ const buildStoredAuthUserSnapshot = (userData, fallbackRole = null) => {
 
     const hasQuestionnaire = Object.prototype.hasOwnProperty.call(userData, 'questionnaire');
     const hasDietaryProfile = Object.prototype.hasOwnProperty.call(userData, 'dietaryProfile');
+    const hasNutritionTargets = Object.prototype.hasOwnProperty.call(userData, 'nutritionTargets');
     const questionnaire = hasQuestionnaire ? normalizeOptionalQuestionnaire(userData.questionnaire) : undefined;
     const dietaryProfile = hasDietaryProfile ? userData.dietaryProfile : null;
+    const nutritionTargets = hasNutritionTargets ? userData.nutritionTargets : null;
     const allergySources = [
         Object.prototype.hasOwnProperty.call(userData, 'allergies') ? userData.allergies : undefined,
         questionnaire && Object.prototype.hasOwnProperty.call(questionnaire, 'allergies') ? questionnaire.allergies : undefined,
@@ -453,6 +490,14 @@ const buildStoredAuthUserSnapshot = (userData, fallbackRole = null) => {
         basicUserInfo.dietaryProfile = normalizedDietaryProfile;
     }
 
+    if (hasNutritionTargets && nutritionTargets !== undefined) {
+        const normalizedNutritionTargets = normalizeOptionalNutritionTargets(nutritionTargets);
+        if (normalizedNutritionTargets === null) {
+            return null;
+        }
+        basicUserInfo.nutritionTargets = normalizedNutritionTargets;
+    }
+
     if (Object.prototype.hasOwnProperty.call(userData, 'measurementSystem')) {
         const normalizedMeasurementSystem = normalizeAuthMeasurementSystem(userData.measurementSystem);
         if (!normalizedMeasurementSystem) {
@@ -491,7 +536,10 @@ export const buildUpdatedAuthUserSnapshot = (currentUser, updatedUser = {}) => {
     const updatedQuestionnaireValue = updatedUser.questionnaire;
     const hasCurrentQuestionnaire = Object.prototype.hasOwnProperty.call(currentUser, 'questionnaire');
     const hasUpdatedQuestionnaire = Object.prototype.hasOwnProperty.call(updatedUser, 'questionnaire');
-    const currentQuestionnaire = hasCurrentQuestionnaire ? normalizeOptionalQuestionnaire(currentQuestionnaireValue) : undefined;
+    const currentQuestionnaire =
+        hasCurrentQuestionnaire && currentQuestionnaireValue !== null
+            ? normalizeOptionalQuestionnaire(currentQuestionnaireValue)
+            : undefined;
     if (currentQuestionnaire === null) {
         return null;
     }
@@ -527,6 +575,7 @@ export const buildUpdatedAuthUserSnapshot = (currentUser, updatedUser = {}) => {
         foodGoals: pickCanonicalField('foodGoals'),
         questionnaire: mergedQuestionnaire,
         dietaryProfile: pickCanonicalField('dietaryProfile'),
+        nutritionTargets: pickCanonicalField('nutritionTargets'),
         dailyCalories: pickCanonicalField('dailyCalories'),
         loginHistory: pickCanonicalField('loginHistory'),
     };
@@ -681,6 +730,52 @@ const normalizeOptionalFoodGoalArray = (values) => {
     return normalizedFoodGoals;
 };
 
+const normalizeOptionalNutritionTargets = (nutritionTargets) => {
+    if (nutritionTargets === undefined) {
+        return undefined;
+    }
+
+    if (nutritionTargets === null || typeof nutritionTargets !== 'object' || Array.isArray(nutritionTargets)) {
+        return null;
+    }
+
+    const normalizedNutritionTargets = {};
+
+    for (const field of NUTRITION_TARGET_FIELDS) {
+        if (!Object.prototype.hasOwnProperty.call(nutritionTargets, field)) {
+            continue;
+        }
+
+        const value = nutritionTargets[field];
+
+        if (value === undefined || value === null) {
+            normalizedNutritionTargets[field] = value ?? null;
+            continue;
+        }
+
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+            return null;
+        }
+
+        normalizedNutritionTargets[field] = value;
+    }
+
+    for (const [minField, maxField] of NUTRITION_TARGET_RANGE_PAIRS) {
+        const minValue = normalizedNutritionTargets[minField];
+        const maxValue = normalizedNutritionTargets[maxField];
+
+        if (minValue === undefined || maxValue === undefined || minValue === null || maxValue === null) {
+            continue;
+        }
+
+        if (minValue > maxValue) {
+            return null;
+        }
+    }
+
+    return normalizedNutritionTargets;
+};
+
 const normalizeOptionalDietaryProfile = (dietaryProfile) => {
     if (dietaryProfile === undefined) {
         return undefined;
@@ -691,7 +786,7 @@ const normalizeOptionalDietaryProfile = (dietaryProfile) => {
     }
 
     const normalizedDietaryProfile = {};
-    const dietaryProfileArrayFields = ['diets', 'excludedIngredients', 'preferredCuisines'];
+    const dietaryProfileArrayFields = ['diets', 'allergens', 'excludedIngredients', 'preferredCuisines'];
 
     for (const field of dietaryProfileArrayFields) {
         if (!Object.prototype.hasOwnProperty.call(dietaryProfile, field)) {
@@ -1206,6 +1301,115 @@ export function buildMeasurementSetupFeedbackState({
         emptyMessage,
         loadingMessage,
     });
+}
+
+const PROFILE_COMPLETENESS_TOTAL_STEPS = 5;
+const PROFILE_COMPLETENESS_LOADING_MESSAGE = 'Checking your profile progress...';
+const PROFILE_COMPLETENESS_READY_MESSAGE = 'Your profile is complete. Review or save changes to continue.';
+
+const hasMeaningfulProfileArray = (values) =>
+    Array.isArray(values) && values.some((value) => typeof value === 'string' ? value.trim() !== '' : value !== null && value !== undefined);
+
+const hasMeaningfulNutritionTargets = (nutritionTargets) =>
+    nutritionTargets &&
+    typeof nutritionTargets === 'object' &&
+    !Array.isArray(nutritionTargets) &&
+    NUTRITION_TARGET_FIELDS.some((field) => {
+        if (!Object.prototype.hasOwnProperty.call(nutritionTargets, field)) {
+            return false;
+        }
+
+        const value = nutritionTargets[field];
+        return value !== null && value !== undefined && value !== '' && value !== 0;
+    });
+
+export function resolveProfileCompletenessStep({ dietaryProfile = {}, nutritionTargets = {} } = {}) {
+    if (!dietaryProfile || typeof dietaryProfile !== 'object' || Array.isArray(dietaryProfile)) {
+        return 0;
+    }
+
+    if (!hasMeaningfulProfileArray(dietaryProfile.diets)) {
+        return 0;
+    }
+
+    if (
+        !hasMeaningfulProfileArray(dietaryProfile.allergens) &&
+        !hasMeaningfulProfileArray(dietaryProfile.excludedIngredients)
+    ) {
+        return 1;
+    }
+
+    if (!hasMeaningfulProfileArray(dietaryProfile.preferredCuisines)) {
+        return 2;
+    }
+
+    if (!hasMeaningfulNutritionTargets(nutritionTargets)) {
+        return 3;
+    }
+
+    return 4;
+}
+
+export function buildProfileCompletenessFeedbackState({
+    isLoading = false,
+    errorMessage = '',
+    sessionNotice = '',
+    successMessage = '',
+    resumeStep = 0,
+    totalSteps = PROFILE_COMPLETENESS_TOTAL_STEPS,
+    emptyMessage = '',
+    loadingMessage = PROFILE_COMPLETENESS_LOADING_MESSAGE,
+    readyMessage = PROFILE_COMPLETENESS_READY_MESSAGE,
+} = {}) {
+    const isComplete = resumeStep >= totalSteps - 1;
+    const resolvedEmptyMessage = emptyMessage || `Resume your profile setup at step ${Math.min(resumeStep, totalSteps - 1) + 1} of ${totalSteps}.`;
+
+    return {
+        ...buildAuthFeedbackState({
+            isLoading,
+            errorMessage,
+            sessionNotice,
+            successMessage: successMessage || (isComplete ? readyMessage : ''),
+            emptyMessage: resolvedEmptyMessage,
+            loadingMessage,
+        }),
+        resumeStep,
+        totalSteps,
+        isComplete,
+    };
+}
+
+const HOUSEHOLD_SETUP_TOTAL_STEPS = PROFILE_COMPLETENESS_TOTAL_STEPS;
+const HOUSEHOLD_SETUP_LOADING_MESSAGE = 'Checking your household setup...';
+const HOUSEHOLD_SETUP_READY_MESSAGE = 'Your household setup is complete. Review or save changes to continue.';
+
+export function buildHouseholdSetupFeedbackState({
+    isLoading = false,
+    errorMessage = '',
+    sessionNotice = '',
+    successMessage = '',
+    resumeStep = 0,
+    totalSteps = HOUSEHOLD_SETUP_TOTAL_STEPS,
+    emptyMessage = '',
+    loadingMessage = HOUSEHOLD_SETUP_LOADING_MESSAGE,
+    readyMessage = HOUSEHOLD_SETUP_READY_MESSAGE,
+} = {}) {
+    const isComplete = resumeStep >= totalSteps - 1;
+    const resolvedEmptyMessage = emptyMessage || `Resume your household setup at step ${Math.min(resumeStep, totalSteps - 1) + 1} of ${totalSteps}.`;
+
+    return {
+        ...buildAuthFeedbackState({
+            isLoading,
+            errorMessage,
+            sessionNotice,
+            successMessage: successMessage || (isComplete ? readyMessage : ''),
+            emptyMessage: resolvedEmptyMessage,
+            loadingMessage,
+        }),
+        resumeStep,
+        totalSteps,
+        isComplete,
+    };
 }
 
 const AUTH_ALLERGEN_CAPTURE_EMPTY_MESSAGE = 'Choose allergies to keep unsafe meals filtered out.';

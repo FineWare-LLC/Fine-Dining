@@ -472,6 +472,27 @@ const buildStoredAuthUserSnapshot = (userData, fallbackRole = null) => {
         break;
     }
 
+    const dislikedIngredientSources = [
+        Object.prototype.hasOwnProperty.call(userData, 'dislikedIngredients') ? userData.dislikedIngredients : undefined,
+        dietaryProfile && Object.prototype.hasOwnProperty.call(dietaryProfile, 'excludedIngredients') ? dietaryProfile.excludedIngredients : undefined,
+        questionnaire && Object.prototype.hasOwnProperty.call(questionnaire, 'disallowedIngredients') ? questionnaire.disallowedIngredients : undefined,
+    ];
+
+    for (const value of dislikedIngredientSources) {
+        const normalizedDislikedIngredients = normalizeOptionalIngredientArray(value);
+
+        if (normalizedDislikedIngredients === undefined) {
+            continue;
+        }
+
+        if (normalizedDislikedIngredients === null) {
+            return null;
+        }
+
+        basicUserInfo.dislikedIngredients = normalizedDislikedIngredients;
+        break;
+    }
+
     const normalizedFoodGoals = normalizeOptionalFoodGoalArray(
         Object.prototype.hasOwnProperty.call(userData, 'foodGoals') ? userData.foodGoals : undefined,
     );
@@ -557,6 +578,43 @@ export const buildUpdatedAuthUserSnapshot = (currentUser, updatedUser = {}) => {
               }
             : undefined;
 
+    const dislikedIngredients = resolveCanonicalDislikedIngredients({
+        currentUser,
+        updatedUser,
+        currentQuestionnaire,
+        updatedQuestionnaire,
+    });
+    if (dislikedIngredients === null) {
+        return null;
+    }
+
+    const currentNutritionTargetsValue = currentUser.nutritionTargets;
+    const updatedNutritionTargetsValue = updatedUser.nutritionTargets;
+    const hasCurrentNutritionTargets = Object.prototype.hasOwnProperty.call(currentUser, 'nutritionTargets');
+    const hasUpdatedNutritionTargets = Object.prototype.hasOwnProperty.call(updatedUser, 'nutritionTargets');
+    const currentNutritionTargets =
+        hasCurrentNutritionTargets && currentNutritionTargetsValue !== null
+            ? normalizeOptionalNutritionTargets(currentNutritionTargetsValue)
+            : undefined;
+    if (currentNutritionTargets === null) {
+        return null;
+    }
+
+    const updatedNutritionTargets = hasUpdatedNutritionTargets
+        ? normalizeOptionalNutritionTargets(updatedNutritionTargetsValue)
+        : undefined;
+    if (updatedNutritionTargets === null) {
+        return null;
+    }
+
+    const mergedNutritionTargets =
+        currentNutritionTargets !== undefined || updatedNutritionTargets !== undefined
+            ? {
+                  ...(currentNutritionTargets || {}),
+                  ...(updatedNutritionTargets || {}),
+              }
+            : undefined;
+
     const allergies = Object.prototype.hasOwnProperty.call(updatedUser, 'allergies')
         ? updatedUser.allergies
         : mergedQuestionnaire && Object.prototype.hasOwnProperty.call(mergedQuestionnaire, 'allergies')
@@ -572,10 +630,11 @@ export const buildUpdatedAuthUserSnapshot = (currentUser, updatedUser = {}) => {
         subscriptionStatus: pickCanonicalField('subscriptionStatus'),
         measurementSystem: pickCanonicalField('measurementSystem'),
         allergies,
+        ...(dislikedIngredients === undefined ? {} : { dislikedIngredients }),
         foodGoals: pickCanonicalField('foodGoals'),
         questionnaire: mergedQuestionnaire,
         dietaryProfile: pickCanonicalField('dietaryProfile'),
-        nutritionTargets: pickCanonicalField('nutritionTargets'),
+        nutritionTargets: mergedNutritionTargets,
         dailyCalories: pickCanonicalField('dailyCalories'),
         loginHistory: pickCanonicalField('loginHistory'),
     };
@@ -728,6 +787,55 @@ const normalizeOptionalFoodGoalArray = (values) => {
     }
 
     return normalizedFoodGoals;
+};
+
+const normalizeOptionalIngredientArray = (values) => normalizeOptionalFoodGoalArray(values);
+
+const resolveCanonicalDislikedIngredients = ({
+    currentUser,
+    updatedUser,
+    currentQuestionnaire,
+    updatedQuestionnaire,
+} = {}) => {
+    const candidateSources = [
+        updatedUser && Object.prototype.hasOwnProperty.call(updatedUser, 'dislikedIngredients')
+            ? updatedUser.dislikedIngredients
+            : undefined,
+        updatedUser?.dietaryProfile && Object.prototype.hasOwnProperty.call(updatedUser.dietaryProfile, 'excludedIngredients')
+            ? updatedUser.dietaryProfile.excludedIngredients
+            : undefined,
+        updatedQuestionnaire && Object.prototype.hasOwnProperty.call(updatedQuestionnaire, 'disallowedIngredients')
+            ? updatedQuestionnaire.disallowedIngredients
+            : undefined,
+        currentUser && Object.prototype.hasOwnProperty.call(currentUser, 'dislikedIngredients')
+            ? currentUser.dislikedIngredients
+            : undefined,
+        currentUser?.dietaryProfile && Object.prototype.hasOwnProperty.call(currentUser.dietaryProfile, 'excludedIngredients')
+            ? currentUser.dietaryProfile.excludedIngredients
+            : undefined,
+        currentQuestionnaire && Object.prototype.hasOwnProperty.call(currentQuestionnaire, 'disallowedIngredients')
+            ? currentQuestionnaire.disallowedIngredients
+            : undefined,
+    ];
+
+    let sawInvalidSource = false;
+
+    for (const value of candidateSources) {
+        const normalizedValues = normalizeOptionalIngredientArray(value);
+
+        if (normalizedValues === undefined) {
+            continue;
+        }
+
+        if (normalizedValues === null) {
+            sawInvalidSource = true;
+            continue;
+        }
+
+        return normalizedValues;
+    }
+
+    return sawInvalidSource ? null : undefined;
 };
 
 const normalizeOptionalNutritionTargets = (nutritionTargets) => {
@@ -1310,6 +1418,8 @@ const PROFILE_COMPLETENESS_READY_MESSAGE = 'Your profile is complete. Review or 
 const hasMeaningfulProfileArray = (values) =>
     Array.isArray(values) && values.some((value) => typeof value === 'string' ? value.trim() !== '' : value !== null && value !== undefined);
 
+export const hasMeaningfulFoodDislikes = (values) => hasMeaningfulProfileArray(values);
+
 const hasMeaningfulNutritionTargets = (nutritionTargets) =>
     nutritionTargets &&
     typeof nutritionTargets === 'object' &&
@@ -1412,6 +1522,30 @@ export function buildHouseholdSetupFeedbackState({
     };
 }
 
+const NUTRITION_TARGET_EDITING_EMPTY_MESSAGE = 'Choose calorie and macro targets to keep your optimizer aligned.';
+const NUTRITION_TARGET_EDITING_LOADING_MESSAGE = 'Saving your nutrition targets...';
+const NUTRITION_TARGET_EDITING_READY_MESSAGE = 'Nutrition targets are ready to save.';
+
+export function buildNutritionTargetEditingFeedbackState({
+    isLoading = false,
+    errorMessage = '',
+    sessionNotice = '',
+    successMessage = '',
+    hasNutritionTargets = false,
+    emptyMessage = NUTRITION_TARGET_EDITING_EMPTY_MESSAGE,
+    loadingMessage = NUTRITION_TARGET_EDITING_LOADING_MESSAGE,
+    readyMessage = NUTRITION_TARGET_EDITING_READY_MESSAGE,
+} = {}) {
+    return buildAuthFeedbackState({
+        isLoading,
+        errorMessage,
+        sessionNotice,
+        successMessage: successMessage || (hasNutritionTargets ? readyMessage : ''),
+        emptyMessage,
+        loadingMessage,
+    });
+}
+
 const AUTH_ALLERGEN_CAPTURE_EMPTY_MESSAGE = 'Choose allergies to keep unsafe meals filtered out.';
 const AUTH_ALLERGEN_CAPTURE_LOADING_MESSAGE = 'Saving your allergy preferences...';
 const AUTH_ALLERGEN_CAPTURE_READY_MESSAGE = 'Allergy preferences are ready to save.';
@@ -1431,6 +1565,30 @@ export function buildAllergenCaptureFeedbackState({
         errorMessage,
         sessionNotice,
         successMessage: successMessage || (hasAllergies ? readyMessage : ''),
+        emptyMessage,
+        loadingMessage,
+    });
+}
+
+const FOOD_DISLIKE_CAPTURE_EMPTY_MESSAGE = 'Choose disliked ingredients to keep your recommendations aligned.';
+const FOOD_DISLIKE_CAPTURE_LOADING_MESSAGE = 'Saving your food dislikes...';
+const FOOD_DISLIKE_CAPTURE_READY_MESSAGE = 'Food dislikes are ready to save.';
+
+export function buildFoodDislikeCaptureFeedbackState({
+    isLoading = false,
+    errorMessage = '',
+    sessionNotice = '',
+    successMessage = '',
+    hasFoodDislikes = false,
+    emptyMessage = FOOD_DISLIKE_CAPTURE_EMPTY_MESSAGE,
+    loadingMessage = FOOD_DISLIKE_CAPTURE_LOADING_MESSAGE,
+    readyMessage = FOOD_DISLIKE_CAPTURE_READY_MESSAGE,
+} = {}) {
+    return buildAuthFeedbackState({
+        isLoading,
+        errorMessage,
+        sessionNotice,
+        successMessage: successMessage || (hasFoodDislikes ? readyMessage : ''),
         emptyMessage,
         loadingMessage,
     });

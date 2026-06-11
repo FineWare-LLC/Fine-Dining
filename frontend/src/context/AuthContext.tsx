@@ -4,10 +4,28 @@ import { useApolloClient } from '@apollo/client/react'; // Import only the hook 
 import { useRouter } from 'next/router';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import storage from '@/utils/storage';
-import { persistLoginInfo, validateStoredAuthToken } from './authUtils';
+import { performAuthLogout, persistLoginInfo, resolveStoredAuthSession } from './authUtils';
+
+const AUTH_CONTEXT_FALLBACK_SESSION_NOTICE = 'Your session could not be verified. Please sign in again.';
+
+export const AUTH_CONTEXT_FALLBACK = {
+    user: null,
+    token: null,
+    loading: false,
+    isAuthenticated: false,
+    sessionNotice: AUTH_CONTEXT_FALLBACK_SESSION_NOTICE,
+    login: () => ({
+        ok: false,
+        user: null,
+        error: new Error(AUTH_CONTEXT_FALLBACK_SESSION_NOTICE),
+    }),
+    logout: async () => {},
+};
 
 // Create the context
-const AuthContext = createContext(null);
+const AuthContext = createContext(AUTH_CONTEXT_FALLBACK);
+
+export const resolveAuthContextValue = (context) => context ?? AUTH_CONTEXT_FALLBACK;
 
 // Define the provider component
 export const AuthProvider = ({ children }) => {
@@ -28,45 +46,23 @@ export const AuthProvider = ({ children }) => {
         const storedToken = storage.getItem('authToken');
         const storedUser = storage.getItem('userInfo'); // Basic user info if stored
 
-        const tokenValidation = validateStoredAuthToken(storedToken);
+        const session = resolveStoredAuthSession(storedToken, storedUser);
 
-        if (!storedToken) {
-            storage.removeItem('authToken');
-            storage.removeItem('userInfo');
-            setToken(null);
-            setUser(null);
-            setSessionNotice(storedUser ? 'Your saved session could not be read. Please sign in again.' : '');
-        } else if (tokenValidation.valid) {
-            if (storedUser) {
-                try {
-                    setToken(storedToken);
-                    setUser(JSON.parse(storedUser));
-                    setSessionNotice('');
-                } catch (e) {
-                    console.error('Failed to parse stored user info', e);
-                    // Clear potentially corrupted data
-                    storage.removeItem('authToken');
-                    storage.removeItem('userInfo');
-                    setToken(null);
-                    setUser(null);
-                    setSessionNotice('Your saved session could not be read. Please sign in again.');
-                }
-            } else {
-                storage.removeItem('authToken');
-                storage.removeItem('userInfo');
-                setToken(null);
-                setUser(null);
-                setSessionNotice('Your saved session could not be read. Please sign in again.');
-            }
+        if (session.status === 'hydrated') {
+            setToken(session.token);
+            setUser(session.user);
+            setSessionNotice('');
         } else {
-            if (storedToken && tokenValidation.error) {
-                console.warn('Stored auth token rejected:', tokenValidation.error);
+            if (session.status === 'invalid-user') {
+                console.error('Failed to parse stored user info', new Error('Stored auth user snapshot is invalid.'));
+            } else if (storedToken && session.tokenValidation.error) {
+                console.warn('Stored auth token rejected:', session.tokenValidation.error);
             }
             storage.removeItem('authToken');
             storage.removeItem('userInfo');
             setToken(null);
             setUser(null);
-            setSessionNotice(tokenValidation.error?.message || '');
+            setSessionNotice(session.sessionNotice);
         }
 
         setLoading(false); // Finished initial loading
@@ -91,21 +87,14 @@ export const AuthProvider = ({ children }) => {
     }, []);
     // Logout function
     const logout = useCallback(async () => {
-        storage.removeItem('authToken');
-        storage.removeItem('userInfo');
         setToken(null);
         setUser(null);
         setSessionNotice('');
-        try {
-            // Reset Apollo Client store on logout to clear cached data
-            if (client?.resetStore) {
-                await client.resetStore();
-            }
-        } catch (error) {
-            console.error('Error resetting Apollo cache on logout:', error);
-        }
-        // Redirect to login page after logout
-        router.push('/login').catch(() => {}); // Updated to /login
+        await performAuthLogout({
+            storageAdapter: storage,
+            client,
+            router,
+        });
     }, [router, client]);
 
     // Value provided by the context
@@ -125,8 +114,5 @@ export const AuthProvider = ({ children }) => {
 // Custom hook to use the Auth Context
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
+    return resolveAuthContextValue(context);
 };

@@ -89,6 +89,21 @@ const AUTH_SIGNUP_ERROR_MESSAGES = {
     invalidDailyCalories: 'Please enter a valid daily calorie target.',
 };
 
+const AUTH_SIGNUP_SAFE_ERROR_MESSAGES = new Map([
+    ['email already in use', 'Email already in use'],
+    ['email is required.', AUTH_SIGNUP_ERROR_MESSAGES.missingEmail],
+    ['invalid email format.', AUTH_SIGNUP_ERROR_MESSAGES.invalidEmail],
+    ['password must be at least 8 characters long.', AUTH_SIGNUP_ERROR_MESSAGES.weakPasswordLength],
+    ['password must contain at least one uppercase letter.', AUTH_SIGNUP_ERROR_MESSAGES.weakPasswordUppercase],
+    ['password must contain at least one lowercase letter.', AUTH_SIGNUP_ERROR_MESSAGES.weakPasswordLowercase],
+    ['password must contain at least one number.', AUTH_SIGNUP_ERROR_MESSAGES.weakPasswordNumber],
+    ['password must contain at least one special character.', AUTH_SIGNUP_ERROR_MESSAGES.weakPasswordSymbol],
+    [
+        'too many accounts created from this ip. please try again tomorrow.',
+        'Too many accounts created from this IP. Please try again tomorrow.',
+    ],
+]);
+
 const SIGNUP_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SIGNUP_ALLOWED_GENDERS = new Set(['MALE', 'FEMALE', 'OTHER']);
 const SIGNUP_ALLOWED_MEASUREMENT_SYSTEMS = new Set(['METRIC', 'IMPERIAL']);
@@ -134,6 +149,28 @@ const clearAuthSessionStorage = (storageAdapter = storage) => {
         // Fail shut if cleanup itself cannot remove the user snapshot.
     }
 };
+
+export async function performAuthLogout({
+    storageAdapter = storage,
+    client = null,
+    router = null,
+} = {}) {
+    clearAuthSessionStorage(storageAdapter);
+
+    try {
+        if (client?.resetStore) {
+            await client.resetStore();
+        }
+    } catch (error) {
+        console.error('Error resetting Apollo cache on logout:', error);
+    }
+
+    try {
+        await router?.push?.('/login');
+    } catch (error) {
+        // Redirect failures should not block logout cleanup.
+    }
+}
 
 const createAuthLoginValidationError = (code) => {
     const message = AUTH_LOGIN_ERROR_MESSAGES[code] || AUTH_LOGIN_ERROR_MESSAGES.invalidPayload;
@@ -183,6 +220,32 @@ export function getLoginErrorMessage(message) {
     }
 
     return AUTH_LOGIN_RECOVERY_MESSAGE;
+}
+
+export function getSignupErrorMessage(message) {
+    if (typeof message !== 'string') {
+        return AUTH_SIGNUP_ERROR_MESSAGES.invalidPayload;
+    }
+
+    const normalizedMessage = message.replace(/^(GraphQL|Network) error:\s*/i, '').trim();
+
+    if (!normalizedMessage) {
+        return AUTH_SIGNUP_ERROR_MESSAGES.invalidPayload;
+    }
+
+    const candidates = normalizedMessage
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+    for (const candidate of candidates) {
+        const safeMessage = AUTH_SIGNUP_SAFE_ERROR_MESSAGES.get(candidate.toLowerCase());
+        if (safeMessage) {
+            return safeMessage;
+        }
+    }
+
+    return AUTH_SIGNUP_ERROR_MESSAGES.invalidPayload;
 }
 
 const createAuthSignupValidationError = (code) => {
@@ -370,8 +433,10 @@ const decodeBase64Url = (value) => {
     throw new Error('Base64 decoding is not available in this environment.');
 };
 
+const hasNonWhitespaceCharacters = (value) => typeof value === 'string' && /\S/.test(value);
+
 const validateSignupPassword = (password) => {
-    if (typeof password !== 'string' || password.trim() === '') {
+    if (!hasNonWhitespaceCharacters(password)) {
         return createAuthSignupValidationError('missingPassword');
     }
 
@@ -524,7 +589,7 @@ export function validateLoginInput(input) {
         return { valid: false, error: createAuthLoginValidationError('invalidEmail') };
     }
 
-    if (typeof input.password !== 'string' || input.password.trim() === '') {
+    if (!hasNonWhitespaceCharacters(input.password)) {
         return { valid: false, error: createAuthLoginValidationError('missingPassword') };
     }
 
@@ -718,19 +783,26 @@ export function buildAuthFeedbackState({
 
 export function buildSessionRefreshFeedbackState({
     isLoading = false,
+    authLoading = false,
+    mutationLoading = false,
+    devLoading = false,
     errorMessage = '',
     sessionNotice = '',
     successMessage = '',
     emptyMessage = 'Ready to sign in.',
     loadingMessage = 'Refreshing your session...',
+    pendingLoadingMessage = 'Signing you in...',
 } = {}) {
+    const resolvedIsLoading = isLoading || authLoading || mutationLoading || devLoading;
+    const useSessionRefreshMessage = authLoading || (!mutationLoading && !devLoading && resolvedIsLoading);
+
     return buildAuthFeedbackState({
-        isLoading,
+        isLoading: resolvedIsLoading,
         errorMessage,
         sessionNotice,
         successMessage,
         emptyMessage,
-        loadingMessage,
+        loadingMessage: useSessionRefreshMessage ? loadingMessage : pendingLoadingMessage,
     });
 }
 

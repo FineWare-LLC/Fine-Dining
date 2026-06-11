@@ -85,6 +85,8 @@ const AUTH_SIGNUP_ERROR_MESSAGES = {
     invalidGender: 'Please choose a valid gender.',
     missingMeasurementSystem: 'Please select a measurement system.',
     invalidMeasurementSystem: 'Please choose a valid measurement system.',
+    invalidFoodGoals: 'Please choose valid diet goals.',
+    invalidAllergies: 'Please choose valid allergies.',
     invalidWeightGoal: 'Please choose a valid weight goal.',
     invalidDailyCalories: 'Please enter a valid daily calorie target.',
 };
@@ -262,6 +264,17 @@ export function normalizeAuthRole(role) {
     return AUTH_ALLOWED_ROLES.has(normalizedRole) ? normalizedRole : null;
 }
 
+const normalizeAuthMeasurementSystem = (measurementSystem) => {
+    if (typeof measurementSystem !== 'string') {
+        return null;
+    }
+
+    const normalizedMeasurementSystem = measurementSystem.trim().toUpperCase();
+    return SIGNUP_ALLOWED_MEASUREMENT_SYSTEMS.has(normalizedMeasurementSystem)
+        ? normalizedMeasurementSystem
+        : null;
+};
+
 export function resolveAuthDestination(role) {
     const normalizedRole = normalizeAuthRole(role);
     if (normalizedRole === 'ADMIN') {
@@ -385,6 +398,49 @@ const buildStoredAuthUserSnapshot = (userData, fallbackRole = null) => {
     basicUserInfo.subscriptionPlan = userData.subscriptionPlan || 'FREE';
     basicUserInfo.subscriptionStatus = userData.subscriptionStatus || 'inactive';
 
+    const hasQuestionnaire = Object.prototype.hasOwnProperty.call(userData, 'questionnaire');
+    const hasDietaryProfile = Object.prototype.hasOwnProperty.call(userData, 'dietaryProfile');
+    const questionnaire = hasQuestionnaire ? userData.questionnaire : null;
+    const dietaryProfile = hasDietaryProfile ? userData.dietaryProfile : null;
+    const allergySources = [
+        Object.prototype.hasOwnProperty.call(userData, 'allergies') ? userData.allergies : undefined,
+        questionnaire && Object.prototype.hasOwnProperty.call(questionnaire, 'allergies') ? questionnaire.allergies : undefined,
+        dietaryProfile && Object.prototype.hasOwnProperty.call(dietaryProfile, 'allergens') ? dietaryProfile.allergens : undefined,
+    ];
+
+    for (const allergyValues of allergySources) {
+        const normalizedAllergies = normalizeOptionalAllergyArray(allergyValues);
+
+        if (normalizedAllergies === undefined) {
+            continue;
+        }
+
+        if (normalizedAllergies === null) {
+            return null;
+        }
+
+        basicUserInfo.allergies = normalizedAllergies;
+        break;
+    }
+
+    const normalizedFoodGoals = normalizeOptionalFoodGoalArray(
+        Object.prototype.hasOwnProperty.call(userData, 'foodGoals') ? userData.foodGoals : undefined,
+    );
+    if (normalizedFoodGoals === null) {
+        return null;
+    }
+    if (normalizedFoodGoals !== undefined) {
+        basicUserInfo.foodGoals = normalizedFoodGoals;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(userData, 'measurementSystem')) {
+        const normalizedMeasurementSystem = normalizeAuthMeasurementSystem(userData.measurementSystem);
+        if (!normalizedMeasurementSystem) {
+            return null;
+        }
+        basicUserInfo.measurementSystem = normalizedMeasurementSystem;
+    }
+
     const dailyCalories = userData.dailyCalories;
     const hasLoginHistory = Object.prototype.hasOwnProperty.call(userData, 'loginHistory');
     const loginHistory = hasLoginHistory ? buildStoredAuthLoginHistorySnapshot(userData.loginHistory) : undefined;
@@ -397,6 +453,27 @@ const buildStoredAuthUserSnapshot = (userData, fallbackRole = null) => {
         ...(dailyCalories === undefined ? {} : { dailyCalories }),
         ...(loginHistory === undefined ? {} : { loginHistory }),
     };
+};
+
+export const buildUpdatedAuthUserSnapshot = (currentUser, updatedUser = {}) => {
+    if (!currentUser || typeof currentUser !== 'object' || Array.isArray(currentUser)) {
+        return null;
+    }
+
+    if (!updatedUser || typeof updatedUser !== 'object' || Array.isArray(updatedUser)) {
+        return null;
+    }
+
+    const mergedUser = {
+        ...currentUser,
+        ...updatedUser,
+    };
+
+    if (Object.prototype.hasOwnProperty.call(updatedUser, 'allergies')) {
+        mergedUser.allergies = updatedUser.allergies;
+    }
+
+    return buildStoredAuthUserSnapshot(mergedUser, mergedUser.role || currentUser.role);
 };
 
 export function parseStoredAuthUserSnapshot(storedUser, fallbackRole = null) {
@@ -521,8 +598,55 @@ const validateSignupPassword = (password) => {
     return null;
 };
 
-const normalizeSignupStringArray = (values) =>
-    values.map((value) => (typeof value === 'string' ? value.trim() : value)).filter((value) => value !== '');
+const normalizeOptionalFoodGoalArray = (values) => {
+    if (values === undefined || values === null) {
+        return undefined;
+    }
+
+    if (!Array.isArray(values)) {
+        return null;
+    }
+
+    const normalizedFoodGoals = [];
+
+    for (const value of values) {
+        if (typeof value !== 'string') {
+            return null;
+        }
+
+        const trimmedValue = value.trim();
+        if (trimmedValue !== '') {
+            normalizedFoodGoals.push(trimmedValue);
+        }
+    }
+
+    return normalizedFoodGoals;
+};
+
+const normalizeOptionalAllergyArray = (values) => {
+    if (values === undefined || values === null) {
+        return undefined;
+    }
+
+    if (!Array.isArray(values)) {
+        return null;
+    }
+
+    const normalizedAllergies = [];
+
+    for (const value of values) {
+        if (typeof value !== 'string') {
+            return null;
+        }
+
+        const trimmedValue = value.trim();
+        if (trimmedValue !== '') {
+            normalizedAllergies.push(trimmedValue);
+        }
+    }
+
+    return normalizedAllergies;
+};
 
 const hasOwnSignupField = (input, key) => Object.prototype.hasOwnProperty.call(input, key);
 
@@ -619,7 +743,8 @@ export function saveLoginInfo(token, userData, nowSeconds = Math.floor(Date.now(
 
 export function completeSignupSession(sessionResult, { onSuccess, onError } = {}) {
     if (!sessionResult?.ok) {
-        const message = sessionResult?.error?.message || AUTH_SESSION_ERROR_MESSAGES.storageUnavailable;
+        const rawMessage = typeof sessionResult?.error?.message === 'string' ? sessionResult.error.message.trim() : '';
+        const message = rawMessage || AUTH_SESSION_ERROR_MESSAGES.storageUnavailable;
         if (typeof onError === 'function') {
             onError(message);
         }
@@ -693,12 +818,12 @@ export function validateSignupInput(input) {
         return { valid: false, error: createAuthSignupValidationError('invalidGender') };
     }
 
-    const normalizedMeasurementSystem = typeof input.measurementSystem === 'string' ? input.measurementSystem.trim().toUpperCase() : '';
-    if (!normalizedMeasurementSystem) {
+    const normalizedMeasurementSystem = normalizeAuthMeasurementSystem(input.measurementSystem);
+    if (typeof input.measurementSystem !== 'string' || input.measurementSystem.trim() === '') {
         return { valid: false, error: createAuthSignupValidationError('missingMeasurementSystem') };
     }
 
-    if (!SIGNUP_ALLOWED_MEASUREMENT_SYSTEMS.has(normalizedMeasurementSystem)) {
+    if (!normalizedMeasurementSystem) {
         return { valid: false, error: createAuthSignupValidationError('invalidMeasurementSystem') };
     }
 
@@ -727,11 +852,27 @@ export function validateSignupInput(input) {
     }
 
     if (hasOwnSignupField(input, 'foodGoals')) {
-        normalizedInput.foodGoals = input.foodGoals;
+        const normalizedFoodGoals = normalizeOptionalFoodGoalArray(input.foodGoals);
+
+        if (normalizedFoodGoals === null) {
+            return { valid: false, error: createAuthSignupValidationError('invalidFoodGoals') };
+        }
+
+        if (normalizedFoodGoals !== undefined) {
+            normalizedInput.foodGoals = normalizedFoodGoals;
+        }
     }
 
     if (hasOwnSignupField(input, 'allergies')) {
-        normalizedInput.allergies = input.allergies;
+        const normalizedAllergies = normalizeOptionalAllergyArray(input.allergies);
+
+        if (normalizedAllergies === null) {
+            return { valid: false, error: createAuthSignupValidationError('invalidAllergies') };
+        }
+
+        if (normalizedAllergies !== undefined) {
+            normalizedInput.allergies = normalizedAllergies;
+        }
     }
 
     if (hasOwnSignupField(input, 'dailyCalories')) {
@@ -764,14 +905,6 @@ export function validateSignupInput(input) {
         }
 
         normalizedInput.dailyCalories = normalizedDailyCalories;
-    }
-
-    if (Array.isArray(normalizedInput.foodGoals)) {
-        normalizedInput.foodGoals = normalizeSignupStringArray(normalizedInput.foodGoals);
-    }
-
-    if (Array.isArray(normalizedInput.allergies)) {
-        normalizedInput.allergies = normalizeSignupStringArray(normalizedInput.allergies);
     }
 
     return { valid: true, input: normalizedInput };
@@ -837,6 +970,51 @@ export function buildAuthFeedbackState({
         minHeight: AUTH_FEEDBACK_MIN_HEIGHT,
         showSpinner: false,
     };
+}
+
+const AUTH_MEASUREMENT_SETUP_EMPTY_MESSAGE = 'Complete your measurement setup to continue.';
+const AUTH_MEASUREMENT_SETUP_LOADING_MESSAGE = 'Saving your measurement setup...';
+
+export function buildMeasurementSetupFeedbackState({
+    isLoading = false,
+    errorMessage = '',
+    sessionNotice = '',
+    successMessage = '',
+    emptyMessage = AUTH_MEASUREMENT_SETUP_EMPTY_MESSAGE,
+    loadingMessage = AUTH_MEASUREMENT_SETUP_LOADING_MESSAGE,
+} = {}) {
+    return buildAuthFeedbackState({
+        isLoading,
+        errorMessage,
+        sessionNotice,
+        successMessage,
+        emptyMessage,
+        loadingMessage,
+    });
+}
+
+const AUTH_ALLERGEN_CAPTURE_EMPTY_MESSAGE = 'Choose allergies to keep unsafe meals filtered out.';
+const AUTH_ALLERGEN_CAPTURE_LOADING_MESSAGE = 'Saving your allergy preferences...';
+const AUTH_ALLERGEN_CAPTURE_READY_MESSAGE = 'Allergy preferences are ready to save.';
+
+export function buildAllergenCaptureFeedbackState({
+    isLoading = false,
+    errorMessage = '',
+    sessionNotice = '',
+    successMessage = '',
+    hasAllergies = false,
+    emptyMessage = AUTH_ALLERGEN_CAPTURE_EMPTY_MESSAGE,
+    loadingMessage = AUTH_ALLERGEN_CAPTURE_LOADING_MESSAGE,
+    readyMessage = AUTH_ALLERGEN_CAPTURE_READY_MESSAGE,
+} = {}) {
+    return buildAuthFeedbackState({
+        isLoading,
+        errorMessage,
+        sessionNotice,
+        successMessage: successMessage || (hasAllergies ? readyMessage : ''),
+        emptyMessage,
+        loadingMessage,
+    });
 }
 
 export function buildSessionRefreshFeedbackState({

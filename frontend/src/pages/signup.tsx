@@ -20,7 +20,7 @@ import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { validateSignupInput } from '@/context/authUtils';
+import { completeSignupSession, validateSignupInput } from '@/context/authUtils';
 
 const REGISTER_USER = gql`
     mutation RegisterUser($input: CreateUserInput!) {
@@ -53,8 +53,17 @@ export default function SignupPage() {
     const [error, setError] = useState('');
     const [registerUser, { loading }] = useMutation(REGISTER_USER, {
         onCompleted: (data) => {
-            login(data.registerUser.token, data.registerUser.user);
-            router.push('/onboarding').catch(() => {});
+            const sessionResult = login(data.registerUser.token, data.registerUser.user);
+            const sessionCommitted = completeSignupSession(sessionResult, {
+                onSuccess: () => {
+                    router.push('/onboarding').catch(() => {});
+                },
+                onError: setError,
+            });
+
+            if (!sessionCommitted) {
+                return;
+            }
         },
         onError: (err) => setError(err.message),
     });

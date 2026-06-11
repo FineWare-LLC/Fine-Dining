@@ -32,6 +32,7 @@ const GET_USER_PROFILE = gql`
                 dietaryPattern
                 activityLevel
             }
+            dislikedIngredients
             allergies
             foodGoals
         }
@@ -63,6 +64,32 @@ const GET_FILTERED_MEALS = gql`
                 restaurant {
                     restaurantName
                 }
+            }
+        }
+    }
+`;
+
+const GET_AVAILABLE_MEALS = gql`
+    query GetAvailableMeals($limit: Int) {
+        getAllMeals(page: 1, limit: $limit) {
+            id
+            mealName
+            price
+            nutrition {
+                calories
+                protein
+                carbohydrates
+                fat
+                sodium
+            }
+            allergens
+            recipe {
+                tags
+                ingredients
+                difficulty
+            }
+            restaurant {
+                restaurantName
             }
         }
     }
@@ -167,11 +194,40 @@ function generateNutritionConstraints(user) {
     };
 }
 
+function normalizeFoodDislikeValue(value) {
+    return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
+function collectCanonicalDisallowedIngredients(user = {}) {
+    const disallowedIngredients = new Set();
+    const sources = [
+        user.dislikedIngredients,
+        user.questionnaire?.disallowedIngredients,
+        user.dietaryProfile?.excludedIngredients,
+    ];
+
+    for (const values of sources) {
+        if (!Array.isArray(values)) {
+            continue;
+        }
+
+        for (const value of values) {
+            const normalizedValue = normalizeFoodDislikeValue(value);
+            if (normalizedValue) {
+                disallowedIngredients.add(normalizedValue);
+            }
+        }
+    }
+
+    return disallowedIngredients;
+}
+
 /**
  * Filter meals based on user dietary preferences
  */
 function filterMealsByDiet(meals, user) {
     const userAllergies = collectCanonicalAllergies(user);
+    const disallowedIngredients = collectCanonicalDisallowedIngredients(user);
 
     return meals.filter(meal => {
         // Check allergies
@@ -180,16 +236,17 @@ function filterMealsByDiet(meals, user) {
         }
 
         // Check disallowed ingredients
-        const disallowedIngredients = user.questionnaire?.disallowedIngredients || [];
-        if (disallowedIngredients.length > 0 && meal.recipe?.ingredients) {
+        if (disallowedIngredients.size > 0 && meal.recipe?.ingredients) {
             const ingredientList = Array.isArray(meal.recipe.ingredients) 
                 ? meal.recipe.ingredients.join(' ').toLowerCase()
                 : (meal.recipe.ingredients || '').toLowerCase();
             
-            if (disallowedIngredients.some(ingredient => 
-                ingredientList.includes(ingredient.toLowerCase())
-            )) {
-                return false;
+            if (ingredientList) {
+                for (const ingredient of disallowedIngredients) {
+                    if (ingredientList.includes(ingredient)) {
+                        return false;
+                    }
+                }
             }
         }
         

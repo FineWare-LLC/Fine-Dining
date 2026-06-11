@@ -557,6 +557,33 @@ export const buildUpdatedAuthUserSnapshot = (currentUser, updatedUser = {}) => {
               }
             : undefined;
 
+    const currentNutritionTargetsValue = currentUser.nutritionTargets;
+    const updatedNutritionTargetsValue = updatedUser.nutritionTargets;
+    const hasCurrentNutritionTargets = Object.prototype.hasOwnProperty.call(currentUser, 'nutritionTargets');
+    const hasUpdatedNutritionTargets = Object.prototype.hasOwnProperty.call(updatedUser, 'nutritionTargets');
+    const normalizedCurrentNutritionTargets =
+        hasCurrentNutritionTargets && currentNutritionTargetsValue !== null
+            ? normalizeOptionalNutritionTargets(currentNutritionTargetsValue)
+            : undefined;
+    if (normalizedCurrentNutritionTargets === null) {
+        return null;
+    }
+
+    const normalizedUpdatedNutritionTargets = hasUpdatedNutritionTargets
+        ? normalizeOptionalNutritionTargets(updatedNutritionTargetsValue)
+        : undefined;
+    if (normalizedUpdatedNutritionTargets === null) {
+        return null;
+    }
+
+    const mergedNutritionTargets =
+        normalizedUpdatedNutritionTargets !== undefined
+            ? {
+                  ...(normalizedCurrentNutritionTargets || {}),
+                  ...normalizedUpdatedNutritionTargets,
+              }
+            : currentNutritionTargetsValue;
+
     const allergies = Object.prototype.hasOwnProperty.call(updatedUser, 'allergies')
         ? updatedUser.allergies
         : mergedQuestionnaire && Object.prototype.hasOwnProperty.call(mergedQuestionnaire, 'allergies')
@@ -575,7 +602,7 @@ export const buildUpdatedAuthUserSnapshot = (currentUser, updatedUser = {}) => {
         foodGoals: pickCanonicalField('foodGoals'),
         questionnaire: mergedQuestionnaire,
         dietaryProfile: pickCanonicalField('dietaryProfile'),
-        nutritionTargets: pickCanonicalField('nutritionTargets'),
+        nutritionTargets: mergedNutritionTargets,
         dailyCalories: pickCanonicalField('dailyCalories'),
         loginHistory: pickCanonicalField('loginHistory'),
     };

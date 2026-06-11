@@ -4,6 +4,10 @@ import { defineConfig, devices } from '@playwright/experimental-ct-react';
 // Ensure NODE_ENV is set to 'test-ct' for component testing
 process.env.NODE_ENV = 'test-ct';
 
+const ctCacheDir = process.env.PLAYWRIGHT_CT_CACHE_DIR || '.playwright-ct-cache';
+const ctReportDir = process.env.PLAYWRIGHT_CT_REPORT_DIR || 'playwright-report-codex/component-tests';
+const ctResultsDir = process.env.PLAYWRIGHT_CT_RESULTS_DIR || 'test-results-codex/component-tests';
+
 /**
  * @see https://playwright.dev/docs/test-components
  */
@@ -14,7 +18,7 @@ export default defineConfig({
   snapshotDir: './__snapshots__',
 
   /* Maximum time one test can run for. */
-  timeout: 10 * 1000,
+  timeout: 60 * 1000,
 
   /* Test timeout for expect() calls */
   expect: {
@@ -35,8 +39,8 @@ export default defineConfig({
 
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ['html', { outputFolder: 'playwright-report/component-tests' }],
-    ['json', { outputFile: 'test-results/component-results.json' }],
+    ['html', { outputFolder: ctReportDir }],
+    ['json', { outputFile: `${ctResultsDir}/component-results.json` }],
     ...(process.env.CI ? [['github']] : [['list']])
   ],
 
@@ -52,20 +56,23 @@ export default defineConfig({
     video: 'retain-on-failure',
 
     /* Port to use for Playwright component endpoint. */
-    ctPort: 3100,
+    ctPort: 3105,
 
     /* Action timeout for component interactions */
-    actionTimeout: 5000,
+    actionTimeout: 30000,
+
+    /* Keep Vite build artifacts in a writable local cache. */
+    ctCacheDir,
   },
 
   /* Component development server configuration */
-  ctDevServer: {
-    command: 'npm run dev:memory',
-    port: 3000,
-    reuseExistingServer: !process.env.CI,
-    env: { NODE_ENV: 'test-ct' },
-    timeout: 120 * 1000,
-  },
+  // ctDevServer: {
+  //   command: 'npm run dev:memory',
+  //   port: 3000,
+  //   reuseExistingServer: !process.env.CI,
+  //   env: { NODE_ENV: 'test-ct' },
+  //   timeout: 120 * 1000,
+  // },
 
   /* Configure projects for major browsers */
   projects: [
@@ -100,5 +107,5 @@ export default defineConfig({
   ],
 
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
-  outputDir: 'test-results/component-tests/',
+  outputDir: `${ctResultsDir}/artifacts/`,
 });

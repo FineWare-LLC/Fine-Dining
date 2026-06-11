@@ -20,7 +20,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import {
     buildAuthFeedbackContainerStyles,
-    buildAuthFeedbackState,
+    buildLoginFeedbackState,
     getLoginErrorMessage,
     validateLoginInput,
 } from '@/context/authUtils';
@@ -70,8 +70,10 @@ export default function LoginPage() {
         }
     });
 
-    const feedback = buildAuthFeedbackState({
-        isLoading: authLoading,
+    const feedback = buildLoginFeedbackState({
+        authLoading,
+        mutationLoading,
+        devLoading,
         errorMessage: error,
         sessionNotice,
         successMessage,
@@ -148,6 +150,7 @@ export default function LoginPage() {
                         role={feedback.role}
                         aria-live={feedback.ariaLive}
                         aria-atomic="true"
+                        aria-busy={feedback.state === 'loading' ? 'true' : 'false'}
                         sx={{
                             minHeight: feedback.minHeight,
                             display: 'flex',

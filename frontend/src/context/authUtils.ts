@@ -93,6 +93,7 @@ const SIGNUP_EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SIGNUP_ALLOWED_GENDERS = new Set(['MALE', 'FEMALE', 'OTHER']);
 const SIGNUP_ALLOWED_MEASUREMENT_SYSTEMS = new Set(['METRIC', 'IMPERIAL']);
 const SIGNUP_ALLOWED_WEIGHT_GOALS = new Set(['LOSE', 'GAIN', 'MAINTAIN']);
+const AUTH_ALLOWED_ROLES = new Set(['ADMIN', 'USER', 'PREMIUM', 'PRO', 'CREATOR', 'INFLUENCER']);
 
 const AUTH_FEEDBACK_MIN_HEIGHT = 56;
 const AUTH_FEEDBACK_SURFACE_STYLES = {
@@ -175,9 +176,22 @@ const createAuthSignupValidationError = (code) => {
     return new AuthSignupValidationError(code, message);
 };
 
+export function normalizeAuthRole(role) {
+    if (typeof role !== 'string') {
+        return null;
+    }
+
+    const normalizedRole = role.trim().toUpperCase();
+    return AUTH_ALLOWED_ROLES.has(normalizedRole) ? normalizedRole : null;
+}
+
 // Keep the signed auth identity as the canonical source after refresh.
 const buildCanonicalAuthUserSnapshot = (userData, tokenPayload = {}) => {
-    const canonicalSnapshot = buildStoredAuthUserSnapshot(userData);
+    const canonicalSnapshot = buildStoredAuthUserSnapshot(userData, tokenPayload.role);
+    if (!canonicalSnapshot) {
+        return null;
+    }
+
     const tokenUserId =
         typeof tokenPayload.userId === 'string' && tokenPayload.userId.trim() !== ''
             ? tokenPayload.userId.trim()
@@ -191,8 +205,12 @@ const buildCanonicalAuthUserSnapshot = (userData, tokenPayload = {}) => {
         canonicalSnapshot.email = tokenPayload.email.trim().toLowerCase();
     }
 
-    if (typeof tokenPayload.role === 'string' && tokenPayload.role.trim() !== '') {
-        canonicalSnapshot.role = tokenPayload.role.trim();
+    if (Object.prototype.hasOwnProperty.call(tokenPayload, 'role')) {
+        const tokenRole = normalizeAuthRole(tokenPayload.role);
+        if (!tokenRole) {
+            return null;
+        }
+        canonicalSnapshot.role = tokenRole;
     }
 
     if (typeof tokenPayload.subscriptionPlan === 'string' && tokenPayload.subscriptionPlan.trim() !== '') {
@@ -202,15 +220,21 @@ const buildCanonicalAuthUserSnapshot = (userData, tokenPayload = {}) => {
     return canonicalSnapshot;
 };
 
-const buildStoredAuthUserSnapshot = (userData) => {
+const buildStoredAuthUserSnapshot = (userData, fallbackRole = null) => {
     const basicUserInfo = {
         id: userData.id,
         name: userData.name,
         email: userData.email,
-        role: userData.role,
-        subscriptionPlan: userData.subscriptionPlan || 'FREE',
-        subscriptionStatus: userData.subscriptionStatus || 'inactive',
     };
+
+    const normalizedRole = normalizeAuthRole(userData.role) || normalizeAuthRole(fallbackRole);
+    if (!normalizedRole) {
+        return null;
+    }
+
+    basicUserInfo.role = normalizedRole;
+    basicUserInfo.subscriptionPlan = userData.subscriptionPlan || 'FREE';
+    basicUserInfo.subscriptionStatus = userData.subscriptionStatus || 'inactive';
 
     const dailyCalories = userData.dailyCalories;
 
@@ -220,7 +244,7 @@ const buildStoredAuthUserSnapshot = (userData) => {
     };
 };
 
-export function parseStoredAuthUserSnapshot(storedUser) {
+export function parseStoredAuthUserSnapshot(storedUser, fallbackRole = null) {
     if (typeof storedUser !== 'string' || storedUser.trim() === '') {
         return null;
     }
@@ -235,13 +259,12 @@ export function parseStoredAuthUserSnapshot(storedUser) {
         if (
             typeof parsedUser.id !== 'string' ||
             typeof parsedUser.name !== 'string' ||
-            typeof parsedUser.email !== 'string' ||
-            typeof parsedUser.role !== 'string'
+            typeof parsedUser.email !== 'string'
         ) {
             return null;
         }
 
-        return buildStoredAuthUserSnapshot(parsedUser);
+        return buildStoredAuthUserSnapshot(parsedUser, fallbackRole);
     } catch (error) {
         return null;
     }
@@ -272,7 +295,7 @@ export function resolveStoredAuthSession(storedToken, storedUser, nowSeconds = M
         };
     }
 
-    const storedUserSnapshot = parseStoredAuthUserSnapshot(storedUser);
+    const storedUserSnapshot = parseStoredAuthUserSnapshot(storedUser, tokenValidation.payload.role);
 
     if (!storedUserSnapshot) {
         return {
@@ -286,6 +309,16 @@ export function resolveStoredAuthSession(storedToken, storedUser, nowSeconds = M
     }
 
     const canonicalUserSnapshot = buildCanonicalAuthUserSnapshot(storedUserSnapshot, tokenValidation.payload);
+    if (!canonicalUserSnapshot) {
+        return {
+            status: 'invalid-user',
+            token: null,
+            user: null,
+            sessionNotice: AUTH_STORED_SESSION_ERROR_MESSAGE,
+            shouldClearStorage: true,
+            tokenValidation,
+        };
+    }
 
     return {
         status: 'hydrated',
@@ -363,6 +396,10 @@ export function validateStoredAuthToken(token, nowSeconds = Math.floor(Date.now(
             return { valid: false, error: createAuthTokenValidationError('invalidPayload') };
         }
 
+        if (Object.prototype.hasOwnProperty.call(payload, 'role') && !normalizeAuthRole(payload.role)) {
+            return { valid: false, error: createAuthTokenValidationError('invalidPayload') };
+        }
+
         const expiresAt = Number(payload.exp);
         if (!Number.isFinite(expiresAt)) {
             return { valid: false, error: createAuthTokenValidationError('invalidPayload') };
@@ -392,6 +429,15 @@ export function persistLoginInfo(token, userData, storageAdapter = storage, nowS
     }
 
     const canonicalUserInfo = buildCanonicalAuthUserSnapshot(userData, tokenValidation.payload);
+    if (!canonicalUserInfo) {
+        storageAdapter.removeItem('authToken');
+        storageAdapter.removeItem('userInfo');
+        return {
+            ok: false,
+            user: null,
+            error: createAuthTokenValidationError('invalidPayload'),
+        };
+    }
     const tokenStored = storageAdapter.setItem('authToken', token);
     const userStored = storageAdapter.setItem('userInfo', JSON.stringify(canonicalUserInfo));
 
@@ -639,6 +685,25 @@ export function buildAuthFeedbackState({
     };
 }
 
+export function buildLoginFeedbackState({
+    authLoading = false,
+    mutationLoading = false,
+    devLoading = false,
+    errorMessage = '',
+    sessionNotice = '',
+    successMessage = '',
+    emptyMessage = 'Ready to sign in.',
+} = {}) {
+    return buildAuthFeedbackState({
+        isLoading: authLoading || mutationLoading || devLoading,
+        loadingMessage: authLoading ? 'Checking your session...' : 'Signing you in...',
+        errorMessage,
+        sessionNotice,
+        successMessage,
+        emptyMessage,
+    });
+}
+
 export function buildAuthFeedbackContainerStyles(state = 'empty') {
     if (state === 'error') {
         return AUTH_FEEDBACK_SURFACE_STYLES.error;
@@ -723,7 +788,9 @@ export function resolveProtectedRouteState({
         };
     }
 
-    if (!userRole || typeof userRole !== 'string') {
+    const normalizedUserRole = normalizeAuthRole(userRole);
+
+    if (!normalizedUserRole) {
         return {
             state: 'error',
             canRender: false,
@@ -733,18 +800,20 @@ export function resolveProtectedRouteState({
         };
     }
 
-    const isAllowedRole = Array.isArray(allowedRoles)
-        ? allowedRoles.includes(userRole)
+    const normalizedAllowedRoles = Array.isArray(allowedRoles)
+        ? allowedRoles.map((role) => normalizeAuthRole(role)).filter(Boolean)
         : allowedRoles instanceof Set
-            ? allowedRoles.has(userRole)
-            : false;
+            ? Array.from(allowedRoles, (role) => normalizeAuthRole(role)).filter(Boolean)
+            : [];
+
+    const isAllowedRole = normalizedAllowedRoles.includes(normalizedUserRole);
 
     if (hasRoleRestriction && !isAllowedRole) {
         return {
             state: 'redirect',
             canRender: false,
-            redirectTo: userRole === 'ADMIN' ? '/admin' : '/dashboard',
-            message: userRole === 'ADMIN'
+            redirectTo: normalizedUserRole === 'ADMIN' ? '/admin' : '/dashboard',
+            message: normalizedUserRole === 'ADMIN'
                 ? 'Redirecting to the admin dashboard...'
                 : 'Redirecting to the dashboard...',
             error: createAuthRouteGuardError('unauthorizedRole'),

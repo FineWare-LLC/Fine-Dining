@@ -25,6 +25,14 @@ export class AuthSignupValidationError extends Error {
     }
 }
 
+export class AuthLoginValidationError extends Error {
+    constructor(code, message) {
+        super(message);
+        this.name = 'AuthLoginValidationError';
+        this.code = code;
+    }
+}
+
 const AUTH_TOKEN_ERROR_MESSAGES = {
     missing: 'Your session is no longer available. Please sign in again.',
     malformed: 'Your session is no longer valid. Please sign in again.',
@@ -34,6 +42,13 @@ const AUTH_TOKEN_ERROR_MESSAGES = {
 
 const AUTH_SESSION_ERROR_MESSAGES = {
     storageUnavailable: 'Unable to save your session. Please try again.',
+};
+
+const AUTH_LOGIN_ERROR_MESSAGES = {
+    invalidPayload: 'Please enter your email address and password.',
+    missingEmail: 'Please enter your email address.',
+    invalidEmail: 'Please enter a valid email address.',
+    missingPassword: 'Please enter your password.',
 };
 
 const AUTH_SIGNUP_ERROR_MESSAGES = {
@@ -70,6 +85,11 @@ const createAuthTokenValidationError = (code) => {
 const createAuthSessionStorageError = (code) => {
     const message = AUTH_SESSION_ERROR_MESSAGES[code] || AUTH_SESSION_ERROR_MESSAGES.storageUnavailable;
     return new AuthSessionStorageError(code, message);
+};
+
+const createAuthLoginValidationError = (code) => {
+    const message = AUTH_LOGIN_ERROR_MESSAGES[code] || AUTH_LOGIN_ERROR_MESSAGES.invalidPayload;
+    return new AuthLoginValidationError(code, message);
 };
 
 const createAuthSignupValidationError = (code) => {
@@ -141,6 +161,8 @@ const validateSignupPassword = (password) => {
 
 const normalizeSignupStringArray = (values) =>
     values.map((value) => (typeof value === 'string' ? value.trim() : value)).filter((value) => value !== '');
+
+const hasOwnSignupField = (input, key) => Object.prototype.hasOwnProperty.call(input, key);
 
 export function validateStoredAuthToken(token, nowSeconds = Math.floor(Date.now() / 1000)) {
     if (typeof token !== 'string' || token.trim() === '') {
@@ -229,6 +251,33 @@ export function completeSignupSession(sessionResult, { onSuccess, onError } = {}
     return true;
 }
 
+export function validateLoginInput(input) {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) {
+        return { valid: false, error: createAuthLoginValidationError('invalidPayload') };
+    }
+
+    const normalizedEmail = typeof input.email === 'string' ? input.email.trim().toLowerCase() : '';
+    if (!normalizedEmail) {
+        return { valid: false, error: createAuthLoginValidationError('missingEmail') };
+    }
+
+    if (!SIGNUP_EMAIL_REGEX.test(normalizedEmail)) {
+        return { valid: false, error: createAuthLoginValidationError('invalidEmail') };
+    }
+
+    if (typeof input.password !== 'string' || input.password.trim() === '') {
+        return { valid: false, error: createAuthLoginValidationError('missingPassword') };
+    }
+
+    return {
+        valid: true,
+        input: {
+            email: normalizedEmail,
+            password: input.password,
+        },
+    };
+}
+
 export function validateSignupInput(input) {
     if (!input || typeof input !== 'object' || Array.isArray(input)) {
         return { valid: false, error: createAuthSignupValidationError('invalidPayload') };
@@ -272,13 +321,40 @@ export function validateSignupInput(input) {
     }
 
     const normalizedInput = {
-        ...input,
         name: normalizedName,
         email: normalizedEmail,
         gender: normalizedGender,
         measurementSystem: normalizedMeasurementSystem,
         password: input.password,
     };
+
+    if (hasOwnSignupField(input, 'role')) {
+        normalizedInput.role = input.role;
+    }
+
+    if (hasOwnSignupField(input, 'weight')) {
+        normalizedInput.weight = input.weight;
+    }
+
+    if (hasOwnSignupField(input, 'height')) {
+        normalizedInput.height = input.height;
+    }
+
+    if (hasOwnSignupField(input, 'weightGoal')) {
+        normalizedInput.weightGoal = input.weightGoal;
+    }
+
+    if (hasOwnSignupField(input, 'foodGoals')) {
+        normalizedInput.foodGoals = input.foodGoals;
+    }
+
+    if (hasOwnSignupField(input, 'allergies')) {
+        normalizedInput.allergies = input.allergies;
+    }
+
+    if (hasOwnSignupField(input, 'dailyCalories')) {
+        normalizedInput.dailyCalories = input.dailyCalories;
+    }
 
     if (normalizedInput.weightGoal === undefined || normalizedInput.weightGoal === null) {
         delete normalizedInput.weightGoal;

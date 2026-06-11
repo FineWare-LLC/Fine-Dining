@@ -18,7 +18,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { buildAuthFeedbackState } from '@/context/authUtils';
+import { buildAuthFeedbackState, validateLoginInput } from '@/context/authUtils';
 
 const LOGIN_MUTATION = gql`
   mutation LoginUser($email: String!, $password: String!) {
@@ -87,8 +87,13 @@ export default function LoginPage() {
         e.preventDefault();
         setError('');
         setSuccessMessage('');
+        const validation = validateLoginInput({ email, password });
+        if (!validation.valid) {
+            setError(validation.error.message);
+            return;
+        }
         try {
-            await loginUserMutation({ variables: { email, password } });
+            await loginUserMutation({ variables: validation.input });
         } catch (err) {
             // Error is handled by onError callback
         }

@@ -25,6 +25,14 @@ export class AuthSignupValidationError extends Error {
     }
 }
 
+export class AuthProfileValidationError extends Error {
+    constructor(code, message) {
+        super(message);
+        this.name = 'AuthProfileValidationError';
+        this.code = code;
+    }
+}
+
 export class AuthLoginValidationError extends Error {
     constructor(code, message) {
         super(message);
@@ -89,6 +97,10 @@ const AUTH_SIGNUP_ERROR_MESSAGES = {
     invalidAllergies: 'Please choose valid allergies.',
     invalidWeightGoal: 'Please choose a valid weight goal.',
     invalidDailyCalories: 'Please enter a valid daily calorie target.',
+};
+
+const AUTH_PROFILE_ERROR_MESSAGES = {
+    invalidPayload: 'Please review the profile details and try again.',
 };
 
 const AUTH_SIGNUP_SAFE_ERROR_MESSAGES = new Map([
@@ -290,6 +302,11 @@ const createAuthSignupValidationError = (code) => {
     return new AuthSignupValidationError(code, message);
 };
 
+export const createAuthProfileValidationError = (code) => {
+    const message = AUTH_PROFILE_ERROR_MESSAGES[code] || AUTH_PROFILE_ERROR_MESSAGES.invalidPayload;
+    return new AuthProfileValidationError(code, message);
+};
+
 export function normalizeAuthRole(role) {
     if (typeof role !== 'string') {
         return null;
@@ -422,10 +439,25 @@ const buildStoredAuthUserSnapshot = (userData, fallbackRole = null) => {
         return null;
     }
 
+    const userId = userData.id;
+    const displayName = userData.name;
+    const emailAddress = userData.email;
+
+    if (
+        typeof userId !== 'string' ||
+        userId.trim() === '' ||
+        typeof displayName !== 'string' ||
+        displayName.trim() === '' ||
+        typeof emailAddress !== 'string' ||
+        emailAddress.trim() === ''
+    ) {
+        return null;
+    }
+
     const basicUserInfo = {
-        id: userData.id,
-        name: userData.name,
-        email: userData.email,
+        id: userId,
+        name: displayName,
+        email: emailAddress,
     };
 
     const normalizedRole = normalizeAuthRole(userData.role) || normalizeAuthRole(fallbackRole);
@@ -1420,6 +1452,15 @@ const hasMeaningfulProfileArray = (values) =>
 
 export const hasMeaningfulFoodDislikes = (values) => hasMeaningfulProfileArray(values);
 
+export const resolveFoodDislikeCaptureHasFoodDislikes = ({
+    dislikedIngredients,
+    dietaryProfileDislikedIngredients,
+    draftDislikedIngredients,
+} = {}) =>
+    hasMeaningfulFoodDislikes(dislikedIngredients) ||
+    hasMeaningfulFoodDislikes(dietaryProfileDislikedIngredients) ||
+    hasMeaningfulFoodDislikes(draftDislikedIngredients);
+
 const hasMeaningfulNutritionTargets = (nutritionTargets) =>
     nutritionTargets &&
     typeof nutritionTargets === 'object' &&
@@ -1565,6 +1606,30 @@ export function buildAllergenCaptureFeedbackState({
         errorMessage,
         sessionNotice,
         successMessage: successMessage || (hasAllergies ? readyMessage : ''),
+        emptyMessage,
+        loadingMessage,
+    });
+}
+
+const AUTH_MEDICAL_CONSTRAINT_NOTES_EMPTY_MESSAGE = 'Keep medical notes separate from your general preferences.';
+const AUTH_MEDICAL_CONSTRAINT_NOTES_LOADING_MESSAGE = 'Saving your medical notes...';
+const AUTH_MEDICAL_CONSTRAINT_NOTES_READY_MESSAGE = 'Medical notes are ready to save.';
+
+export function buildMedicalConstraintNotesFeedbackState({
+    isLoading = false,
+    errorMessage = '',
+    sessionNotice = '',
+    successMessage = '',
+    hasMedicalConstraintNotes = false,
+    emptyMessage = AUTH_MEDICAL_CONSTRAINT_NOTES_EMPTY_MESSAGE,
+    loadingMessage = AUTH_MEDICAL_CONSTRAINT_NOTES_LOADING_MESSAGE,
+    readyMessage = AUTH_MEDICAL_CONSTRAINT_NOTES_READY_MESSAGE,
+} = {}) {
+    return buildAuthFeedbackState({
+        isLoading,
+        errorMessage,
+        sessionNotice,
+        successMessage: successMessage || (hasMedicalConstraintNotes ? readyMessage : ''),
         emptyMessage,
         loadingMessage,
     });

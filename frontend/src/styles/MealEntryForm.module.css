@@ -1,0 +1,83 @@
+
+
+.meal-form {
+    max-width: 500px;
+    margin: 2em auto;
+    padding: 1.5em;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.meal-form__title {
+    text-align: center;
+    margin-bottom: 1.5em;
+    color: #333;
+}
+
+.meal-form__group {
+    margin-bottom: 1em;
+}
+
+.meal-form__label {
+    display: block;
+    margin-bottom: 0.3em;
+    font-weight: bold;
+    color: #555;
+}
+
+.meal-form__input {
+    width: 100%;
+    padding: 0.6em;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+    font-size: 1em;
+}
+
+.meal-form__input--error {
+    border-color: #d9534f;
+    background-color: #f2dede;
+}
+
+.meal-form__error {
+    color: #d9534f;
+    font-size: 0.85em;
+    margin-top: 0.3em;
+}
+
+.meal-form__button {
+    display: block;
+    width: 100%;
+    padding: 0.8em;
+    background-color: #5cb85c;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.meal-form__button:hover:not(:disabled) {
+    background-color: #4cae4c;
+}
+
+.meal-form__button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+/* Style for the honeypot field to hide it visually but keep it accessible to screen readers if needed (though usually unnecessary) */
+.meal-form__honeypot {
+    position: absolute;
+    left: -5000px;
+    /* Alternatively:
+    /* opacity: 0;
+    /* position: absolute;
+    /* top: 0;
+    /* left: 0;
+    /* height: 0;
+    /* width: 0;
+    /* z-index: -1; */
+}

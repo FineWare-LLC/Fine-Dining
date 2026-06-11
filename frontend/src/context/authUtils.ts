@@ -400,13 +400,21 @@ const buildStoredAuthUserSnapshot = (userData, fallbackRole = null) => {
 
     const hasQuestionnaire = Object.prototype.hasOwnProperty.call(userData, 'questionnaire');
     const hasDietaryProfile = Object.prototype.hasOwnProperty.call(userData, 'dietaryProfile');
-    const questionnaire = hasQuestionnaire ? userData.questionnaire : null;
+    const questionnaire = hasQuestionnaire ? normalizeOptionalQuestionnaire(userData.questionnaire) : undefined;
     const dietaryProfile = hasDietaryProfile ? userData.dietaryProfile : null;
     const allergySources = [
         Object.prototype.hasOwnProperty.call(userData, 'allergies') ? userData.allergies : undefined,
         questionnaire && Object.prototype.hasOwnProperty.call(questionnaire, 'allergies') ? questionnaire.allergies : undefined,
         dietaryProfile && Object.prototype.hasOwnProperty.call(dietaryProfile, 'allergens') ? dietaryProfile.allergens : undefined,
     ];
+
+    if (questionnaire === null) {
+        return null;
+    }
+
+    if (questionnaire !== undefined) {
+        basicUserInfo.questionnaire = questionnaire;
+    }
 
     for (const allergyValues of allergySources) {
         const normalizedAllergies = normalizeOptionalAllergyArray(allergyValues);
@@ -678,6 +686,68 @@ const normalizeOptionalAllergyArray = (values) => {
     }
 
     return normalizedAllergies;
+};
+
+const normalizeOptionalQuestionnaire = (questionnaire) => {
+    if (questionnaire === undefined) {
+        return undefined;
+    }
+
+    if (questionnaire === null || typeof questionnaire !== 'object' || Array.isArray(questionnaire)) {
+        return null;
+    }
+
+    const normalizedQuestionnaire = { ...questionnaire };
+    const questionnaireArrayFields = ['allergies', 'disallowedIngredients'];
+
+    for (const field of questionnaireArrayFields) {
+        if (!Object.prototype.hasOwnProperty.call(questionnaire, field)) {
+            continue;
+        }
+
+        const normalizedValues = normalizeOptionalAllergyArray(questionnaire[field]);
+        if (normalizedValues === null) {
+            return null;
+        }
+
+        if (normalizedValues === undefined) {
+            delete normalizedQuestionnaire[field];
+            continue;
+        }
+
+        normalizedQuestionnaire[field] = normalizedValues;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(questionnaire, 'dietaryPattern')) {
+        const dietaryPattern = questionnaire.dietaryPattern;
+
+        if (dietaryPattern === undefined || dietaryPattern === null) {
+            delete normalizedQuestionnaire.dietaryPattern;
+        } else if (typeof dietaryPattern !== 'string') {
+            return null;
+        } else {
+            const trimmedPattern = dietaryPattern.trim();
+            if (trimmedPattern) {
+                normalizedQuestionnaire.dietaryPattern = trimmedPattern;
+            } else {
+                delete normalizedQuestionnaire.dietaryPattern;
+            }
+        }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(questionnaire, 'activityLevel')) {
+        const activityLevel = questionnaire.activityLevel;
+
+        if (activityLevel === undefined || activityLevel === null) {
+            delete normalizedQuestionnaire.activityLevel;
+        } else if (!Number.isFinite(activityLevel) || !Number.isInteger(activityLevel)) {
+            return null;
+        } else {
+            normalizedQuestionnaire.activityLevel = activityLevel;
+        }
+    }
+
+    return normalizedQuestionnaire;
 };
 
 const hasOwnSignupField = (input, key) => Object.prototype.hasOwnProperty.call(input, key);

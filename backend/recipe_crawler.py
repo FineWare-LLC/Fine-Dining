@@ -200,6 +200,15 @@ class RecipePayloadValidationError(ValueError):
     """Raised when an extracted recipe payload is malformed or incomplete."""
 
 
+ALLOWED_COPYRIGHT_REVIEW_STATUSES = {
+    'FACTS_ONLY_PARAPHRASE',
+    'PERMISSIONED',
+    'PUBLIC_DOMAIN',
+    'REJECTED',
+    'UNKNOWN',
+}
+
+
 class RecipeStore:
     """Thin wrapper around the recipes collection in MongoDB."""
 
@@ -299,6 +308,8 @@ class RecipeStore:
         if not isinstance(source_url, str) or not source_url.strip():
             issues.append('source')
 
+        self._validate_source_details(data.get('sourceDetails'), issues)
+
         name = data.get('recipeName')
         if not isinstance(name, str) or not name.strip():
             issues.append('recipeName')
@@ -341,6 +352,29 @@ class RecipeStore:
 
         if issues:
             raise RecipePayloadValidationError(f"Invalid recipe payload: {', '.join(issues)}.")
+
+    def _validate_source_details(self, source_details: Dict, issues: List[str]):
+        """Validate provenance fields that must survive recipe transforms."""
+        if not isinstance(source_details, dict):
+            issues.append('sourceDetails')
+            return
+
+        required_fields = (
+            'siteName',
+            'extractionMethod',
+            'copyrightReviewStatus',
+            'transformationNotes',
+            'nutritionSource',
+            'pricingSource',
+        )
+        for field in required_fields:
+            value = source_details.get(field)
+            if not isinstance(value, str) or not value.strip():
+                issues.append(f'sourceDetails.{field}')
+
+        copyright_status = str(source_details.get('copyrightReviewStatus', '')).strip()
+        if copyright_status and copyright_status not in ALLOWED_COPYRIGHT_REVIEW_STATUSES:
+            issues.append('sourceDetails.copyrightReviewStatus')
 
     def _to_mongo_doc(self, data: Dict, source_url: str) -> Dict:
         """Map LLM-extracted dict → Mongo document matching recipe.schema.js."""
@@ -442,16 +476,24 @@ class RecipeStore:
 
     def stats(self) -> Dict:
         total_recipes = self.recipes.count_documents({})
-        queue_pending = self.crawl_queue.count_documents({'status': 'pending'})
-        queue_done = self.crawl_queue.count_documents({'status': 'done'})
-        queue_failed = self.crawl_queue.count_documents({'status': 'failed'})
-        queue_processing = self.crawl_queue.count_documents({'status': 'processing'})
+        queue_counts = {
+            'pending': 0,
+            'processing': 0,
+            'done': 0,
+            'failed': 0,
+        }
+        for row in self.crawl_queue.aggregate([
+            {'$group': {'_id': '$status', 'count': {'$sum': 1}}},
+        ]):
+            status = row.get('_id')
+            if status in queue_counts:
+                queue_counts[status] = int(row.get('count', 0) or 0)
         return {
             'total_recipes': total_recipes,
-            'queue_pending': queue_pending,
-            'queue_processing': queue_processing,
-            'queue_done': queue_done,
-            'queue_failed': queue_failed,
+            'queue_pending': queue_counts['pending'],
+            'queue_processing': queue_counts['processing'],
+            'queue_done': queue_counts['done'],
+            'queue_failed': queue_counts['failed'],
         }
 
 

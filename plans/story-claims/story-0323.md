@@ -9,3 +9,20 @@
 - branch: codex/story-0323-saved-recipe-state-contract-coverage
 - intended test plan: add a focused contract test for valid and invalid saved-recipe payloads, then run `npm --prefix frontend run test:unit` and `npm --prefix frontend run typecheck`
 - files expected to change: `frontend/src/tests/unit/cookbook-library.saved-recipe-state.contract-coverage.test.ts`, `frontend/src/models/Cookbook/cookbookSchema.ts`, `frontend/src/graphql/resolvers/mutations/cookbookMutations.ts`
+
+## Outcome
+
+- outcome: done
+- completedAt: 2026-06-12T16:40:11Z
+- verification:
+  - `./node_modules/.bin/tsx --test src/tests/unit/cookbook-library.saved-recipe-state.contract-coverage.test.ts`
+  - `npm --prefix frontend run test:unit`
+  - `npm --prefix frontend run typecheck`
+- changed files:
+  - `frontend/src/graphql/resolvers/mutations/cookbookMutations.ts`
+  - `frontend/src/graphql/resolvers/queries/cookbookQueries.ts`
+  - `frontend/src/models/Cookbook/cookbookSchema.ts`
+  - `frontend/src/tests/unit/cookbook-library.saved-recipe-state.contract-coverage.test.ts`
+  - `plans/story-board.jsonl`
+  - `plans/story-claims/story-0323.md`
+- follow-up stories added: none

@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0323 completed: saved recipe state now canonicalizes cookbook entry payloads, rejects malformed saved-recipe inputs, and populates entry recipes in cookbook queries.
 - story-0322 completed: unavailable item handling now normalizes hydrated substitution candidates into plain alternatives and rejects malformed payloads with typed user-safe errors.
 - story-0321 completed: export formats scale boundary now reads meal notes once per meal and stays deterministic on large reversible fixtures.
 - story-0671 completed: CSV/JSON parity contract coverage now uses a shared processed-meals loader for both JSON and CSV snapshots.

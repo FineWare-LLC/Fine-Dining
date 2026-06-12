@@ -7,6 +7,7 @@ import {
 } from '@/lib/restaurantDiscoveryError';
 import { validateNearbyRestaurantSearch } from '@/lib/restaurantDiscoveryValidation';
 import { normalizeCuisineCategories } from '@/utils/cuisineClassification';
+import { dedupeRestaurantResults } from '@/utils/restaurantDeduplication';
 
 const overpass = new OverpassProvider(
     process.env.OVERPASS_URL || 'https://overpass-api.de/api/interpreter',
@@ -43,7 +44,7 @@ export async function fetchAndStoreNearbyRestaurants(lat, lon, radius = 1000, ke
         );
     }
 
-    const docs = results.map((r) => {
+    const docs = dedupeRestaurantResults(results).map((r) => {
         const cuisineType = normalizeCuisineCategories(r.categories);
 
         return {

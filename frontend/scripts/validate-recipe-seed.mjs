@@ -15,6 +15,7 @@ const NUTRIENT_KEYS = [
     'calcium', 'iron', 'magnesium', 'phosphorus', 'potassium',
     'zinc', 'selenium', 'copper', 'manganese', 'omega3', 'omega6',
 ];
+const MIN_FULL_MEAL_INGREDIENTS = 6;
 
 function assert(condition, message) {
     if (!condition) {
@@ -71,6 +72,15 @@ function validateIngredientNormalization(recipe) {
     });
 }
 
+export function validateFullMealCompleteness(recipe) {
+    const recipeLabel = recipe?.recipeName || 'Recipe';
+
+    assert(
+        Array.isArray(recipe?.ingredients) && recipe.ingredients.length >= MIN_FULL_MEAL_INGREDIENTS,
+        `${recipeLabel}: expected at least ${MIN_FULL_MEAL_INGREDIENTS} ingredients for a full meal.`,
+    );
+}
+
 function sumIngredientNutrition(recipe, key) {
     return recipe.ingredients.reduce((sum, ingredient) => sum + ingredient.nutrition[key], 0);
 }
@@ -119,24 +129,28 @@ function validateIngredientSnapshotConsistency(actualIngredient, expectedIngredi
     );
 }
 
-export function validateRecipeIngredientPersistenceConsistency(recipe, model = new RecipeModel(recipe)) {
-    const recipeLabel = recipe?.recipeName || 'Recipe';
-    const hydratedRecipe = typeof model?.toObject === 'function'
+function hydrateRecipeSnapshot(model) {
+    return typeof model?.toObject === 'function'
         ? model.toObject({ depopulate: true, versionKey: false })
         : model;
+}
+
+export function validateRecipeIngredientPersistenceConsistency(recipe, model = new RecipeModel(recipe), hydratedRecipe) {
+    const recipeLabel = recipe?.recipeName || 'Recipe';
+    const snapshot = hydratedRecipe ?? hydrateRecipeSnapshot(model);
 
     assert(
-        Array.isArray(hydratedRecipe?.ingredients),
+        Array.isArray(snapshot?.ingredients),
         `${recipeLabel}: missing ingredients after model hydration.`,
     );
     assert(
-        hydratedRecipe.ingredients.length === recipe.ingredients.length,
+        snapshot.ingredients.length === recipe.ingredients.length,
         `${recipeLabel}: ingredient count changed during model hydration.`,
     );
 
     recipe.ingredients.forEach((ingredient, index) => {
         validateIngredientSnapshotConsistency(
-            hydratedRecipe.ingredients[index],
+            snapshot.ingredients[index],
             ingredient,
             recipeLabel,
             `ingredients[${index}]`,
@@ -144,23 +158,37 @@ export function validateRecipeIngredientPersistenceConsistency(recipe, model = n
     });
 }
 
-export function validateRecipeNutritionPersistenceConsistency(recipe, model = new RecipeModel(recipe)) {
+export function validateRecipeFullMealPersistenceConsistency(recipe, model = new RecipeModel(recipe), hydratedRecipe) {
     const recipeLabel = recipe?.recipeName || 'Recipe';
-    const hydratedRecipe = typeof model?.toObject === 'function'
-        ? model.toObject({ depopulate: true, versionKey: false })
-        : model;
+    const snapshot = hydratedRecipe ?? hydrateRecipeSnapshot(model);
 
     assert(
-        Array.isArray(hydratedRecipe?.ingredients),
+        Array.isArray(snapshot?.ingredients),
         `${recipeLabel}: missing ingredients after model hydration.`,
     );
     assert(
-        hydratedRecipe.ingredients.length === recipe.ingredients.length,
+        snapshot.ingredients.length === recipe.ingredients.length,
+        `${recipeLabel}: ingredient count changed during model hydration.`,
+    );
+
+    validateFullMealCompleteness(snapshot);
+}
+
+export function validateRecipeNutritionPersistenceConsistency(recipe, model = new RecipeModel(recipe), hydratedRecipe) {
+    const recipeLabel = recipe?.recipeName || 'Recipe';
+    const snapshot = hydratedRecipe ?? hydrateRecipeSnapshot(model);
+
+    assert(
+        Array.isArray(snapshot?.ingredients),
+        `${recipeLabel}: missing ingredients after model hydration.`,
+    );
+    assert(
+        snapshot.ingredients.length === recipe.ingredients.length,
         `${recipeLabel}: ingredient count changed during model hydration.`,
     );
 
     validateNutritionSnapshotConsistency(
-        hydratedRecipe.nutritionPerServing,
+        snapshot.nutritionPerServing,
         recipe.nutritionPerServing,
         recipeLabel,
         'nutritionPerServing',
@@ -168,7 +196,7 @@ export function validateRecipeNutritionPersistenceConsistency(recipe, model = ne
 
     recipe.ingredients.forEach((ingredient, index) => {
         validateNutritionSnapshotConsistency(
-            hydratedRecipe.ingredients[index]?.nutrition,
+            snapshot.ingredients[index]?.nutrition,
             ingredient.nutrition,
             recipeLabel,
             `ingredients[${index}].nutrition`,
@@ -290,7 +318,7 @@ export async function validateRecipeSeedPayload(payload, options = {}) {
         assert(recipe.recipeName, 'Recipe missing recipeName');
         assert(!names.has(recipe.recipeName), `Duplicate recipeName: ${recipe.recipeName}`);
         names.add(recipe.recipeName);
-        assert(Array.isArray(recipe.ingredients) && recipe.ingredients.length >= 6, `${recipe.recipeName}: expected at least 6 ingredients`);
+        validateFullMealCompleteness(recipe);
         validateInstructionParaphraseQuality(recipe);
         assert(recipe.servings >= 1, `${recipe.recipeName}: invalid servings`);
         assert(recipe.estimatedCost > 0, `${recipe.recipeName}: missing estimatedCost`);
@@ -304,8 +332,10 @@ export async function validateRecipeSeedPayload(payload, options = {}) {
 
         const model = new RecipeModel(recipe);
         await model.validate();
-        validateRecipeIngredientPersistenceConsistency(recipe, model);
-        validateRecipeNutritionPersistenceConsistency(recipe, model);
+        const hydratedRecipe = hydrateRecipeSnapshot(model);
+        validateRecipeFullMealPersistenceConsistency(recipe, model, hydratedRecipe);
+        validateRecipeIngredientPersistenceConsistency(recipe, model, hydratedRecipe);
+        validateRecipeNutritionPersistenceConsistency(recipe, model, hydratedRecipe);
         ingredientLines += recipe.ingredients.length;
     }
 

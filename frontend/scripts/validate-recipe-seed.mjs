@@ -267,14 +267,15 @@ export function validateRecipeSources(recipes) {
 }
 
 export async function validateRecipeSeedPayload(payload, options = {}) {
-    const expectedRecipeCount = options.expectedRecipeCount ?? 100;
-
     assert(payload.schemaVersion === 'fine-dining.recipe-seed.v1', 'Unexpected recipe seed schemaVersion');
+    assert(Array.isArray(payload.recipes), 'recipes must be an array');
+
+    const expectedRecipeCount = options.expectedRecipeCount ?? payload.recipes.length;
+
     assert(
         payload.recipeCount === expectedRecipeCount,
         `Expected recipeCount ${expectedRecipeCount}, found ${payload.recipeCount}`,
     );
-    assert(Array.isArray(payload.recipes), 'recipes must be an array');
     assert(
         payload.recipes.length === expectedRecipeCount,
         `Expected ${expectedRecipeCount} recipes, found ${payload.recipes.length}`,

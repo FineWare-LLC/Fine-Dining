@@ -18,6 +18,7 @@ import json
 import random
 import logging
 import threading
+from math import isfinite
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 from urllib.parse import urljoin, urlparse
@@ -56,6 +57,16 @@ logging.basicConfig(
     format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
 )
 logger = logging.getLogger('recipe_crawler')
+
+NUTRITION_KEYS = (
+    'calories', 'protein', 'carbohydrates', 'fat', 'fiber', 'sugar',
+    'sodium', 'cholesterol', 'saturatedFat', 'transFat', 'vitaminA',
+    'vitaminC', 'vitaminD', 'vitaminE', 'vitaminK', 'vitaminB6',
+    'vitaminB12', 'thiamin', 'riboflavin', 'niacin', 'folate',
+    'calcium', 'iron', 'magnesium', 'phosphorus', 'potassium',
+    'zinc', 'selenium', 'copper', 'manganese', 'omega3', 'omega6',
+)
+MIN_FULL_MEAL_INGREDIENTS = 6
 
 # ---------------------------------------------------------------------------
 # Seed URLs – popular recipe listing / search pages
@@ -342,6 +353,11 @@ class RecipeStore:
         if not isinstance(ingredients, list) or not ingredients:
             issues.append('ingredients')
         else:
+            if len(ingredients) < MIN_FULL_MEAL_INGREDIENTS:
+                raise RecipePayloadValidationError(
+                    f'Invalid recipe payload: expected at least {MIN_FULL_MEAL_INGREDIENTS} ingredients for a full meal.',
+                )
+
             for index, ingredient in enumerate(ingredients):
                 if not isinstance(ingredient, dict):
                     issues.append(f'ingredients[{index}]')
@@ -358,9 +374,20 @@ class RecipeStore:
                     break
 
                 quantity = ingredient.get('quantity')
-                if not isinstance(quantity, (int, float)) or quantity < 0:
+                if isinstance(quantity, bool) or not isinstance(quantity, (int, float)) or not isfinite(quantity) or quantity < 0:
                     issues.append(f'ingredients[{index}].quantity')
                     break
+
+                gram_weight = ingredient.get('gramWeight')
+                if isinstance(gram_weight, bool) or not isinstance(gram_weight, (int, float)) or not isfinite(gram_weight) or gram_weight < 0:
+                    issues.append(f'ingredients[{index}].gramWeight')
+                    break
+
+                self._validate_nutrition_profile(
+                    ingredient.get('nutrition'),
+                    issues,
+                    f'ingredients[{index}].nutrition',
+                )
 
         instructions = data.get('instructions')
         if not isinstance(instructions, str) or not instructions.strip():
@@ -378,6 +405,8 @@ class RecipeStore:
         servings = data.get('servings')
         if not isinstance(servings, (int, float)) or int(servings) < 1:
             issues.append('servings')
+
+        self._validate_nutrition_profile(data.get('nutritionPerServing'), issues, 'nutritionPerServing')
 
         prep_time = data.get('prepTime')
         if not isinstance(prep_time, (int, float)) or int(prep_time) < 0:
@@ -409,21 +438,32 @@ class RecipeStore:
         if copyright_status and copyright_status not in ALLOWED_COPYRIGHT_REVIEW_STATUSES:
             issues.append('sourceDetails.copyrightReviewStatus')
 
+    def _validate_nutrition_profile(self, nutrition: Dict, issues: List[str], field_path: str):
+        """Require a complete nutrition object for every recipe and ingredient."""
+        if not isinstance(nutrition, dict):
+            issues.append(field_path)
+            return
+
+        for key in NUTRITION_KEYS:
+            value = nutrition.get(key)
+            if isinstance(value, bool):
+                issues.append(f'{field_path}.{key}')
+                continue
+            try:
+                numeric_value = float(value)
+            except (TypeError, ValueError):
+                issues.append(f'{field_path}.{key}')
+                continue
+            if not isfinite(numeric_value):
+                issues.append(f'{field_path}.{key}')
+
     def _to_mongo_doc(self, data: Dict, source_url: str) -> Dict:
         """Map LLM-extracted dict → Mongo document matching recipe.schema.js."""
         now = datetime.now(timezone.utc)
         nut = data.get('nutritionPerServing', {})
-        nutrition_keys = [
-            'calories', 'protein', 'carbohydrates', 'fat', 'fiber', 'sugar',
-            'sodium', 'cholesterol', 'saturatedFat', 'transFat', 'vitaminA',
-            'vitaminC', 'vitaminD', 'vitaminE', 'vitaminK', 'vitaminB6',
-            'vitaminB12', 'thiamin', 'riboflavin', 'niacin', 'folate',
-            'calcium', 'iron', 'magnesium', 'phosphorus', 'potassium',
-            'zinc', 'selenium', 'copper', 'manganese', 'omega3', 'omega6',
-        ]
 
         def normalize_nutrition(values: Dict) -> Dict:
-            return {key: float(values.get(key, 0) or 0) for key in nutrition_keys}
+            return {key: float(values.get(key, 0) or 0) for key in NUTRITION_KEYS}
 
         def normalize_text(value, fallback=''):
             if isinstance(value, str):
@@ -804,6 +844,7 @@ class RecipeCrawler:
         self._pages_crawled = 0
         self._searches_done = 0
         self._errors = 0
+        self._last_error = ''
         self._started_at: Optional[datetime] = None
 
     # --- Control ------------------------------------------------------------
@@ -831,6 +872,7 @@ class RecipeCrawler:
         self._pages_crawled = 0
         self._searches_done = 0
         self._errors = 0
+        self._last_error = ''
 
         self._stop_event.clear()
         self._running = True
@@ -856,6 +898,7 @@ class RecipeCrawler:
             'recipes_found': self._recipes_found,
             'searches_done': self._searches_done,
             'errors': self._errors,
+            'last_error': getattr(self, '_last_error', ''),
             'started_at': self._started_at.isoformat() if self._started_at else None,
             'llm_available': self.llm.is_available(),
             'llm_model': self.llm.model,
@@ -896,6 +939,7 @@ class RecipeCrawler:
                 self._pages_crawled += 1
             except Exception as e:
                 logger.error('Error processing %s: %s', url, e)
+                self._last_error = str(e)
                 self.store.mark_done(url, status='failed', error=str(e))
                 self.store.log_crawl(url, success=False, error=str(e))
                 self._errors += 1
@@ -910,6 +954,7 @@ class RecipeCrawler:
     def _process_url(self, url: str):
         html = self.fetcher.fetch(url)
         if not html:
+            self._last_error = 'fetch_failed'
             self.store.mark_done(url, status='failed', error='fetch_failed')
             self.store.log_crawl(url, success=False, error='fetch_failed')
             return
@@ -938,6 +983,7 @@ class RecipeCrawler:
         recipe_data = self.llm.extract_recipe(page_text)
         if not recipe_data or recipe_data.get('error'):
             err = recipe_data.get('error', 'llm_extraction_failed') if recipe_data else 'llm_returned_none'
+            self._last_error = err
             self.store.mark_done(url, status='failed', error=err)
             self.store.log_crawl(url, success=False, error=err)
             return
@@ -948,12 +994,20 @@ class RecipeCrawler:
         instructions = recipe_data.get('instructions', '').strip()
 
         if not name or not ingredients or not instructions:
+            self._last_error = 'incomplete_extraction'
             self.store.mark_done(url, status='failed', error='incomplete_extraction')
             self.store.log_crawl(url, success=False, error='incomplete_extraction')
             return
 
         # Store
-        inserted = self.store.save_recipe(recipe_data, source_url=url)
+        try:
+            inserted = self.store.save_recipe(recipe_data, source_url=url)
+        except RecipePayloadValidationError as error:
+            self._last_error = str(error)
+            self.store.mark_done(url, status='failed', error=str(error))
+            self.store.log_crawl(url, success=False, error=str(error))
+            return
+
         if inserted:
             self._recipes_found += 1
             logger.info('✅ Saved recipe: %s (from %s)', name, url)

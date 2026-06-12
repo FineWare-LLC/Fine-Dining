@@ -210,6 +210,16 @@ ALLOWED_COPYRIGHT_REVIEW_STATUSES = {
 }
 
 
+def _normalize_instruction_steps(instructions: Optional[str]) -> List[str]:
+    if not isinstance(instructions, str):
+        return []
+    return [
+        re.sub(r'\s+', ' ', step).strip()
+        for step in instructions.splitlines()
+        if step.strip()
+    ]
+
+
 class RecipeStore:
     """Thin wrapper around the recipes collection in MongoDB."""
 
@@ -343,15 +353,8 @@ class RecipeStore:
         if not isinstance(instructions, str) or not instructions.strip():
             issues.append('instructions')
         else:
-            instruction_steps = [
-                step.strip()
-                for step in instructions.splitlines()
-                if step.strip()
-            ]
-            normalized_steps = [
-                re.sub(r'\s+', ' ', step).strip().lower()
-                for step in instruction_steps
-            ]
+            instruction_steps = _normalize_instruction_steps(instructions)
+            normalized_steps = [step.lower() for step in instruction_steps]
             if (
                 len(instruction_steps) < 4
                 or len(instruction_steps) > 8
@@ -458,7 +461,7 @@ class RecipeStore:
         return {
             'recipeName': str(data.get('recipeName', 'Untitled'))[:200],
             'ingredients': ingredients,
-            'instructions': str(data.get('instructions', '')),
+            'instructions': '\n'.join(_normalize_instruction_steps(data.get('instructions', ''))),
             'servings': servings,
             'servingSize': str(data.get('servingSize', '')),
             'nutritionPerServing': normalize_nutrition(nut),

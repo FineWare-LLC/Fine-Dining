@@ -84,6 +84,15 @@ VALID_INSTRUCTIONS = '\n'.join([
     'Season lightly and serve while hot.',
 ])
 
+MESSY_INSTRUCTIONS = '\n'.join([
+    '  Warm the skillet over medium heat.  ',
+    '',
+    'Cook   the rice until heated through. ',
+    '  Fold in the vegetables and protein.',
+    '',
+    '\tSeason lightly and serve while hot.\t',
+])
+
 
 class DummyThread:
     def __init__(self, target=None, daemon=None):
@@ -134,6 +143,37 @@ class RecipeCrawlerQueueFailureTests(unittest.TestCase):
         self.assertEqual(doc['totalTime'], 10)
         self.assertEqual(doc['ingredients'][0]['name'], 'Rice')
         self.assertEqual(doc['ingredients'][0]['quantity'], 2)
+
+    def test_save_recipe_persists_canonical_instruction_steps_across_round_trip(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+        store.recipes.insert_one.return_value = object()
+
+        payload = {
+            'recipeName': 'Canonical Bowl',
+            'ingredients': [
+                {
+                    'name': 'Rice',
+                    'quantity': 2,
+                    'unit': 'cup',
+                },
+            ],
+            'instructions': MESSY_INSTRUCTIONS,
+            'servings': 2,
+            'prepTime': 10,
+            'sourceDetails': VALID_SOURCE_DETAILS,
+        }
+
+        inserted = RecipeStore.save_recipe(
+            store,
+            payload,
+            'https://example.test/canonical-bowl',
+        )
+
+        self.assertTrue(inserted)
+        store.recipes.insert_one.assert_called_once()
+        doc = store.recipes.insert_one.call_args.args[0]
+        self.assertEqual(doc['instructions'], VALID_INSTRUCTIONS)
 
     def test_save_recipe_accepts_original_source_provenance_for_seeded_recipes(self):
         store = RecipeStore.__new__(RecipeStore)

@@ -927,6 +927,7 @@ export const typeDefs = gql`
         rating: Float
         userRatingsTotal: Int
         location: LatLng       # Using the simple LatLng type defined above
+        categories: [String]
     }
 
     type NearbyRestaurantsResult {
@@ -958,6 +959,7 @@ export const typeDefs = gql`
         rating: Float
         userRatingsTotal: Int
         location: LatLng
+        categories: [String]
         localScore: Int             # Local restaurant score (0-100)
         isChain: Boolean            # Whether this is identified as a chain restaurant
         website: String             # Restaurant website (if available)

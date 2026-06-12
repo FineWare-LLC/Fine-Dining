@@ -125,6 +125,23 @@ const sourceDetailsSchema = new Schema(
     { _id: false },
 );
 
+function createRecipePriceEstimationError(reason) {
+    const error = new Error(`FAIL-SHUT: Invalid recipe price estimation data (${reason}).`);
+    error.code = 'invalidRecipePriceEstimation';
+    error.reason = reason;
+    error.isUserSafe = true;
+    return error;
+}
+
+function hasValidEstimatedCost(value) {
+    if (value === undefined || value === null) {
+        return true;
+    }
+
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) && numericValue >= 0;
+}
+
 const recipeSchema = new Schema(
     {
         recipeName: {
@@ -226,9 +243,15 @@ const recipeSchema = new Schema(
 
 /** Auto-compute totalTime and costPerServing before saving */
 recipeSchema.pre('save', function (next) {
+    if (!hasValidEstimatedCost(this.estimatedCost)) {
+        return next(createRecipePriceEstimationError('estimatedCost'));
+    }
+
     this.totalTime = (this.prepTime || 0) + (this.cookTime || 0);
     const servings = Number(this.servings) || 0;
-    const estimatedCost = Number(this.estimatedCost) || 0;
+    const estimatedCost = this.estimatedCost === undefined || this.estimatedCost === null
+        ? 0
+        : Number(this.estimatedCost);
 
     this.costPerServing = servings > 0 && estimatedCost > 0
         ? +(estimatedCost / servings).toFixed(2)

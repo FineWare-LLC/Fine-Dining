@@ -22,18 +22,158 @@ function assert(condition, message) {
     }
 }
 
+function isValidNutritionValue(value) {
+    return typeof value === 'number' && Number.isFinite(value);
+}
+
+function validateNutritionProfile(nutrition, recipeLabel, fieldLabel) {
+    assert(
+        nutrition && typeof nutrition === 'object' && !Array.isArray(nutrition),
+        `${recipeLabel}: missing ${fieldLabel}.`,
+    );
+
+    for (const key of NUTRIENT_KEYS) {
+        assert(
+            isValidNutritionValue(nutrition[key]),
+            `${recipeLabel}: missing ${fieldLabel}.${key}.`,
+        );
+    }
+}
+
+function validateNutritionCompleteness(recipe) {
+    validateNutritionProfile(recipe.nutritionPerServing, recipe.recipeName, 'nutritionPerServing');
+
+    recipe.ingredients.forEach((ingredient, index) => {
+        validateNutritionProfile(ingredient.nutrition, `${recipe.recipeName}: ingredients[${index}]`, 'nutrition');
+    });
+}
+
+function validateIngredientNormalization(recipe) {
+    recipe.ingredients.forEach((ingredient, index) => {
+        const ingredientPath = `ingredients[${index}]`;
+
+        assert(
+            ingredient && typeof ingredient === 'object' && !Array.isArray(ingredient),
+            `${recipe.recipeName}: missing ${ingredientPath}`,
+        );
+        assert(
+            typeof ingredient.quantity === 'number' && Number.isFinite(ingredient.quantity) && ingredient.quantity >= 0,
+            `${recipe.recipeName}: missing ${ingredientPath}.quantity`,
+        );
+        assert(
+            typeof ingredient.unit === 'string' && ingredient.unit.trim(),
+            `${recipe.recipeName}: missing ${ingredientPath}.unit`,
+        );
+        assert(
+            typeof ingredient.gramWeight === 'number' && Number.isFinite(ingredient.gramWeight) && ingredient.gramWeight >= 0,
+            `${recipe.recipeName}: missing ${ingredientPath}.gramWeight`,
+        );
+    });
+}
+
 function sumIngredientNutrition(recipe, key) {
-    return recipe.ingredients.reduce((sum, ingredient) => sum + Number(ingredient.nutrition?.[key] || 0), 0);
+    return recipe.ingredients.reduce((sum, ingredient) => sum + ingredient.nutrition[key], 0);
 }
 
 function validateNutritionTotals(recipe) {
     for (const key of NUTRIENT_KEYS) {
-        const expected = Number(recipe.nutritionPerServing?.[key] || 0);
+        const expected = recipe.nutritionPerServing[key];
         const actual = sumIngredientNutrition(recipe, key) / recipe.servings;
         const tolerance = key === 'calories' || key === 'sodium' ? 2.5 : 0.15;
         const delta = Math.abs(expected - actual);
         assert(delta <= tolerance, `${recipe.recipeName}: ${key} mismatch. expected ${expected}, got ${actual.toFixed(2)}`);
     }
+}
+
+function validateNutritionSnapshotConsistency(actualNutrition, expectedNutrition, recipeLabel, fieldLabel) {
+    assert(
+        actualNutrition && typeof actualNutrition === 'object' && !Array.isArray(actualNutrition),
+        `${recipeLabel}: missing ${fieldLabel}.`,
+    );
+
+    for (const key of NUTRIENT_KEYS) {
+        assert(
+            actualNutrition[key] === expectedNutrition[key],
+            `${recipeLabel}: ${fieldLabel}.${key} changed during model hydration`,
+        );
+    }
+}
+
+function validateIngredientSnapshotConsistency(actualIngredient, expectedIngredient, recipeLabel, fieldLabel) {
+    assert(
+        actualIngredient && typeof actualIngredient === 'object' && !Array.isArray(actualIngredient),
+        `${recipeLabel}: missing ${fieldLabel}.`,
+    );
+
+    assert(
+        actualIngredient.quantity === expectedIngredient.quantity,
+        `${recipeLabel}: ${fieldLabel}.quantity changed during model hydration`,
+    );
+    assert(
+        actualIngredient.unit === expectedIngredient.unit,
+        `${recipeLabel}: ${fieldLabel}.unit changed during model hydration`,
+    );
+    assert(
+        actualIngredient.gramWeight === expectedIngredient.gramWeight,
+        `${recipeLabel}: ${fieldLabel}.gramWeight changed during model hydration`,
+    );
+}
+
+export function validateRecipeIngredientPersistenceConsistency(recipe, model = new RecipeModel(recipe)) {
+    const recipeLabel = recipe?.recipeName || 'Recipe';
+    const hydratedRecipe = typeof model?.toObject === 'function'
+        ? model.toObject({ depopulate: true, versionKey: false })
+        : model;
+
+    assert(
+        Array.isArray(hydratedRecipe?.ingredients),
+        `${recipeLabel}: missing ingredients after model hydration.`,
+    );
+    assert(
+        hydratedRecipe.ingredients.length === recipe.ingredients.length,
+        `${recipeLabel}: ingredient count changed during model hydration.`,
+    );
+
+    recipe.ingredients.forEach((ingredient, index) => {
+        validateIngredientSnapshotConsistency(
+            hydratedRecipe.ingredients[index],
+            ingredient,
+            recipeLabel,
+            `ingredients[${index}]`,
+        );
+    });
+}
+
+export function validateRecipeNutritionPersistenceConsistency(recipe, model = new RecipeModel(recipe)) {
+    const recipeLabel = recipe?.recipeName || 'Recipe';
+    const hydratedRecipe = typeof model?.toObject === 'function'
+        ? model.toObject({ depopulate: true, versionKey: false })
+        : model;
+
+    assert(
+        Array.isArray(hydratedRecipe?.ingredients),
+        `${recipeLabel}: missing ingredients after model hydration.`,
+    );
+    assert(
+        hydratedRecipe.ingredients.length === recipe.ingredients.length,
+        `${recipeLabel}: ingredient count changed during model hydration.`,
+    );
+
+    validateNutritionSnapshotConsistency(
+        hydratedRecipe.nutritionPerServing,
+        recipe.nutritionPerServing,
+        recipeLabel,
+        'nutritionPerServing',
+    );
+
+    recipe.ingredients.forEach((ingredient, index) => {
+        validateNutritionSnapshotConsistency(
+            hydratedRecipe.ingredients[index]?.nutrition,
+            ingredient.nutrition,
+            recipeLabel,
+            `ingredients[${index}].nutrition`,
+        );
+    });
 }
 
 function normalizeInstructionStep(step) {
@@ -126,11 +266,19 @@ export function validateRecipeSources(recipes) {
     }
 }
 
-export async function validateRecipeSeedPayload(payload) {
+export async function validateRecipeSeedPayload(payload, options = {}) {
+    const expectedRecipeCount = options.expectedRecipeCount ?? 100;
+
     assert(payload.schemaVersion === 'fine-dining.recipe-seed.v1', 'Unexpected recipe seed schemaVersion');
-    assert(payload.recipeCount === 100, `Expected recipeCount 100, found ${payload.recipeCount}`);
+    assert(
+        payload.recipeCount === expectedRecipeCount,
+        `Expected recipeCount ${expectedRecipeCount}, found ${payload.recipeCount}`,
+    );
     assert(Array.isArray(payload.recipes), 'recipes must be an array');
-    assert(payload.recipes.length === 100, `Expected 100 recipes, found ${payload.recipes.length}`);
+    assert(
+        payload.recipes.length === expectedRecipeCount,
+        `Expected ${expectedRecipeCount} recipes, found ${payload.recipes.length}`,
+    );
 
     validateRecipeSources(payload.recipes);
 
@@ -148,11 +296,15 @@ export async function validateRecipeSeedPayload(payload) {
         assert(recipe.costPerServing > 0, `${recipe.recipeName}: missing costPerServing`);
         validateRecipeSourceDetails(recipe, index);
 
+        validateIngredientNormalization(recipe);
         validatePurchaseOptions(recipe);
+        validateNutritionCompleteness(recipe);
         validateNutritionTotals(recipe);
 
         const model = new RecipeModel(recipe);
         await model.validate();
+        validateRecipeIngredientPersistenceConsistency(recipe, model);
+        validateRecipeNutritionPersistenceConsistency(recipe, model);
         ingredientLines += recipe.ingredients.length;
     }
 
@@ -164,9 +316,9 @@ export async function validateRecipeSeedPayload(payload) {
     };
 }
 
-export async function validateRecipeSeed(seedFile = seedPath) {
+export async function validateRecipeSeed(seedFile = seedPath, options = {}) {
     const payload = JSON.parse(await fs.readFile(seedFile, 'utf8'));
-    return validateRecipeSeedPayload(payload);
+    return validateRecipeSeedPayload(payload, options);
 }
 
 async function main() {

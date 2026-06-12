@@ -93,8 +93,6 @@ export function validateRecipeTagsInput(input) {
 export {
     recipeSchema,
     RecipeModel,
-    RecipeTagValidationError,
-    validateRecipeTagsInput,
 };
 
 export default RecipeModel;

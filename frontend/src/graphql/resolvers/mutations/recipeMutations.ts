@@ -3,6 +3,40 @@ import { withErrorHandling } from '../queries/baseQueries';
 import { RecipeModel, validateRecipeTagsInput } from '@/models/Recipe/index';
 import { UserModel } from '@/models/User/index';
 
+const deleteCreatedRecipe = async (recipeId) => {
+    if (!recipeId) {
+        return;
+    }
+
+    await RecipeModel.findByIdAndDelete(recipeId).catch((rollbackError) => {
+        console.error('Recipe rollback failed:', rollbackError);
+    });
+};
+
+const snapshotRecipeState = (recipe) => {
+    if (recipe && typeof recipe.toObject === 'function') {
+        return recipe.toObject({ depopulate: true });
+    }
+
+    return { ...recipe };
+};
+
+const restoreRecipeState = async (recipe, snapshot) => {
+    if (!recipe || !snapshot) {
+        return;
+    }
+
+    if (typeof recipe.set === 'function') {
+        recipe.set(snapshot);
+    } else {
+        Object.assign(recipe, snapshot);
+    }
+
+    if (typeof recipe.save === 'function') {
+        await recipe.save();
+    }
+};
+
 /**
  * Save/like a recipe for the authenticated user
  *
@@ -86,7 +120,12 @@ export const createRecipe = withErrorHandling(async (_parent, args, context) => 
         updatedAt: new Date()
     });
 
-    return newRecipe.populate('author');
+    try {
+        return await newRecipe.populate('author');
+    } catch (error) {
+        await deleteCreatedRecipe(newRecipe?._id);
+        throw error;
+    }
 });
 
 /**
@@ -117,11 +156,20 @@ export const updateRecipe = withErrorHandling(async (_parent, args, context) => 
         updates.tags = validatedTags.input;
     }
 
+    const originalRecipeState = snapshotRecipeState(recipe);
+
     Object.assign(recipe, updates);
     recipe.updatedAt = new Date();
 
     await recipe.save();
-    return recipe.populate('author');
+    try {
+        return await recipe.populate('author');
+    } catch (error) {
+        await restoreRecipeState(recipe, originalRecipeState).catch((rollbackError) => {
+            console.error('Recipe rollback failed:', rollbackError);
+        });
+        throw error;
+    }
 });
 
 /**

@@ -20,6 +20,7 @@ const CRAWLER_QUEUE_FEEDBACK_SURFACE_STYLES = {
 const FULL_MEAL_COMPLETENESS_FAILURE_PATTERN = /expected at least \d+ ingredients for a full meal/i;
 const NUTRITION_COMPLETENESS_FAILURE_PATTERN = /nutritionperserving\.|ingredients\[\d+\]\.nutrition\./i;
 const INGREDIENT_NORMALIZATION_FAILURE_PATTERN = /ingredients\[\d+\]\.(?:quantity|unit|gramWeight)/i;
+const DUPLICATE_DETECTION_FAILURE_PATTERN = /duplicate\s+(?:ingredient row|recipe\s*name|recipe source|key error)/i;
 
 function normalizeCount(value) {
     return Number.isFinite(value) ? value : 0;
@@ -52,6 +53,10 @@ function isNutritionCompletenessFailure(lastError = '') {
 
 function isIngredientNormalizationFailure(lastError = '') {
     return INGREDIENT_NORMALIZATION_FAILURE_PATTERN.test(String(lastError));
+}
+
+function isDuplicateDetectionFailure(lastError = '') {
+    return DUPLICATE_DETECTION_FAILURE_PATTERN.test(String(lastError));
 }
 
 function isFullMealCompletenessFailure(lastError = '') {
@@ -104,7 +109,9 @@ export function buildCrawlerQueueFeedbackState({
     const lastError = typeof recipeStatus.last_error === 'string' ? recipeStatus.last_error : '';
 
     if (failedRecipes > 0) {
-        const failureMessage = isNutritionCompletenessFailure(lastError)
+        const failureMessage = isDuplicateDetectionFailure(lastError)
+            ? `Recipe crawler reported ${failedRecipes} failed recipes. Review duplicate title, ingredient, and source checks.`
+            : isNutritionCompletenessFailure(lastError)
             ? `Recipe crawler reported ${failedRecipes} failed recipes. Review nutrition completeness and extraction details.`
             : isIngredientNormalizationFailure(lastError)
                 ? `Recipe crawler reported ${failedRecipes} failed recipes. Review ingredient normalization and extraction details.`

@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0322 completed: unavailable item handling now normalizes hydrated substitution candidates into plain alternatives and rejects malformed payloads with typed user-safe errors.
 - story-0321 completed: export formats scale boundary now reads meal notes once per meal and stays deterministic on large reversible fixtures.
 - story-0671 completed: CSV/JSON parity contract coverage now uses a shared processed-meals loader for both JSON and CSV snapshots.
 
@@ -27,6 +28,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- `story-0322`: Unavailable item handling: contract coverage is done.
 - `story-0320`: Export formats: operator feedback is done.
 
 ## Selection Rules

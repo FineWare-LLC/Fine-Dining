@@ -70,6 +70,23 @@ const normalizeCookbooks = (cookbooks) => {
         return { invalid: true };
     }
 
+    const isValidCookbook = (cookbook) => (
+        Boolean(
+            cookbook
+            && typeof cookbook === 'object'
+            && !Array.isArray(cookbook)
+            && typeof cookbook.id === 'string'
+            && cookbook.id.trim()
+            && typeof cookbook.name === 'string'
+            && cookbook.name.trim()
+            && Array.isArray(cookbook.entries),
+        )
+    );
+
+    if (cookbooks.some((cookbook) => !isValidCookbook(cookbook))) {
+        return { invalid: true };
+    }
+
     return cookbooks;
 };
 

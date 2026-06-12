@@ -339,6 +339,10 @@ export default function RecipesPage() {
                         </Box>
                     ) : cookbookFeedback.state === 'empty' ? (
                         <Box
+                            role={cookbookFeedback.role}
+                            aria-live={cookbookFeedback.ariaLive}
+                            aria-busy={cookbookFeedback.ariaBusy}
+                            aria-atomic="true"
                             sx={{
                                 py: 4,
                                 px: 2,

@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-11T15:27:59.373Z
+Generated: 2026-06-12T18:03:48Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0326 completed: saved recipe state operator feedback now fails shut on malformed cookbook payloads and keeps empty cookbook screens accessible.
 - story-0325 completed: create cookbook now returns the canonical populated snapshot that matches a refresh query.
 - story-0324 completed: cookbook failure path now surfaces recoverable loading, empty, and error states and keeps add-to-cookbook retries open.
 - story-0323 completed: saved recipe state now canonicalizes cookbook entry payloads, rejects malformed saved-recipe inputs, and populates entry recipes in cookbook queries.
@@ -31,6 +32,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0326: Saved recipe state operator feedback is done.
 - story-0325: Saved recipe state persistence consistency is done.
 - `story-0322`: Unavailable item handling: contract coverage is done.
 - `story-0320`: Export formats: operator feedback is done.

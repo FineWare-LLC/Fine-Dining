@@ -19,6 +19,7 @@ import React, { useState } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
+import { buildCookbookSharingDisplayState } from '@/utils/cookbookSharing';
 import {
     buildCookbookLibraryFeedbackContainerStyles,
     buildCookbookLibraryFeedbackState,
@@ -223,39 +224,54 @@ export default function CookbookPage() {
                         </Button>
                     </Box>
                 ) : (
-                    cookbooks.map((cb) => (
-                        <Box key={cb.id} sx={{ mb: 4 }}>
-                            <Typography variant="h5" gutterBottom>{cb.name}</Typography>
-                            {cb.description && <Typography variant="body2" color="text.secondary" gutterBottom>{cb.description}</Typography>}
-                            <Typography variant="body2" sx={{ mb: 2 }}>{cb.entries?.length || 0} recipes</Typography>
-                            <Grid container spacing={2}>
-                                {(cb.entries || []).map((entry) => (
-                                    <Grid item xs={12} sm={6} md={4} key={entry.id}>
-                                        <Card variant="outlined">
-                                            <CardContent>
-                                                <Typography variant="subtitle1" noWrap>{entry.recipe?.recipeName}</Typography>
-                                                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', my: 1 }}>
-                                                    <Chip label={`${entry.desiredServings} srv`} size="small" />
-                                                    <Chip label={`Pref: ${entry.preferenceScore}/10`} size="small" color="primary" variant="outlined" />
-                                                    {entry.maxTimesPerWeek != null && <Chip label={`≤${entry.maxTimesPerWeek}/wk`} size="small" />}
-                                                    {entry.minTimesPerWeek > 0 && <Chip label={`≥${entry.minTimesPerWeek}/wk`} size="small" />}
-                                                </Box>
-                                                {entry.recipe?.nutritionPerServing && (
-                                                    <Typography variant="caption" color="text.secondary">
-                                                        {Math.round(entry.recipe.nutritionPerServing.calories)} cal · {Math.round(entry.recipe.nutritionPerServing.protein)}g protein
-                                                    </Typography>
-                                                )}
-                                            </CardContent>
-                                            <CardActions>
-                                                <IconButton size="small" onClick={() => setEditEntry({ ...entry, cookbookId: cb.id })}><EditIcon fontSize="small" /></IconButton>
-                                                <IconButton size="small" color="error" onClick={() => handleRemove(cb.id, entry.id)}><DeleteIcon fontSize="small" /></IconButton>
-                                            </CardActions>
-                                        </Card>
-                                    </Grid>
-                                ))}
-                            </Grid>
-                        </Box>
-                    ))
+                    cookbooks.map((cb) => {
+                        const sharingState = buildCookbookSharingDisplayState(cb);
+
+                        return (
+                            <Box key={cb.id} sx={{ mb: 4 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                    <Typography variant="h5" gutterBottom sx={{ mb: 0 }}>
+                                        {cb.name}
+                                    </Typography>
+                                    <Chip
+                                        size="small"
+                                        label={sharingState.label}
+                                        color={sharingState.color}
+                                        variant={sharingState.variant}
+                                        aria-label={sharingState.ariaLabel}
+                                    />
+                                </Box>
+                                {cb.description && <Typography variant="body2" color="text.secondary" gutterBottom>{cb.description}</Typography>}
+                                <Typography variant="body2" sx={{ mb: 2 }}>{cb.entries?.length || 0} recipes</Typography>
+                                <Grid container spacing={2}>
+                                    {(cb.entries || []).map((entry) => (
+                                        <Grid item xs={12} sm={6} md={4} key={entry.id}>
+                                            <Card variant="outlined">
+                                                <CardContent>
+                                                    <Typography variant="subtitle1" noWrap>{entry.recipe?.recipeName}</Typography>
+                                                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', my: 1 }}>
+                                                        <Chip label={`${entry.desiredServings} srv`} size="small" />
+                                                        <Chip label={`Pref: ${entry.preferenceScore}/10`} size="small" color="primary" variant="outlined" />
+                                                        {entry.maxTimesPerWeek != null && <Chip label={`≤${entry.maxTimesPerWeek}/wk`} size="small" />}
+                                                        {entry.minTimesPerWeek > 0 && <Chip label={`≥${entry.minTimesPerWeek}/wk`} size="small" />}
+                                                    </Box>
+                                                    {entry.recipe?.nutritionPerServing && (
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            {Math.round(entry.recipe.nutritionPerServing.calories)} cal · {Math.round(entry.recipe.nutritionPerServing.protein)}g protein
+                                                        </Typography>
+                                                    )}
+                                                </CardContent>
+                                                <CardActions>
+                                                    <IconButton size="small" onClick={() => setEditEntry({ ...entry, cookbookId: cb.id })}><EditIcon fontSize="small" /></IconButton>
+                                                    <IconButton size="small" color="error" onClick={() => handleRemove(cb.id, entry.id)}><DeleteIcon fontSize="small" /></IconButton>
+                                                </CardActions>
+                                            </Card>
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            </Box>
+                        );
+                    })
                 )}
 
             {/* Create Cookbook Dialog */}

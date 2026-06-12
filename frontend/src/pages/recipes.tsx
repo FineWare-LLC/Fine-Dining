@@ -24,6 +24,7 @@ import {
     buildCookbookLibraryFeedbackContainerStyles,
     buildCookbookLibraryFeedbackState,
 } from '@/utils/cookbookFeedback';
+import { buildCookbookSharingDisplayState } from '@/utils/cookbookSharing';
 
 const SEARCH_RECIPES = gql`
     query SearchRecipesByDiet(
@@ -362,12 +363,37 @@ export default function RecipesPage() {
                             </Button>
                         </Box>
                     ) : (
-                        cookbooks.map((cb) => (
-                            <Button key={cb.id} fullWidth variant="outlined" sx={{ mb: 1 }}
-                                onClick={() => handleAddToCookbook(cb.id)}>
-                                {cb.name} ({cb.entries?.length || 0} recipes)
-                            </Button>
-                        ))
+                        cookbooks.map((cb) => {
+                            const sharingState = buildCookbookSharingDisplayState(cb);
+
+                            return (
+                                <Button
+                                    key={cb.id}
+                                    fullWidth
+                                    variant="outlined"
+                                    sx={{ mb: 1, justifyContent: 'flex-start', textTransform: 'none' }}
+                                    onClick={() => handleAddToCookbook(cb.id)}
+                                >
+                                    <Box sx={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                                        <Box sx={{ minWidth: 0, textAlign: 'left' }}>
+                                            <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
+                                                {cb.name}
+                                            </Typography>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {cb.entries?.length || 0} recipes
+                                            </Typography>
+                                        </Box>
+                                        <Chip
+                                            size="small"
+                                            label={sharingState.label}
+                                            color={sharingState.color}
+                                            variant={sharingState.variant}
+                                            aria-label={sharingState.ariaLabel}
+                                        />
+                                    </Box>
+                                </Button>
+                            );
+                        })
                     )}
                 </DialogContent>
                 <DialogActions>

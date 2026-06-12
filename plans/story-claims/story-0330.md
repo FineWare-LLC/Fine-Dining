@@ -1,0 +1,27 @@
+# story-0330
+
+- storyId: story-0330
+- title: Cookbook sharing: persistence consistency
+- owner: fine-dining-monitor
+- claimedAt: 2026-06-12T20:00:05Z
+- completedAt: 2026-06-12T20:03:48Z
+- branch: codex/story-0330-cookbook-sharing-persistence-consistency
+- intendedTestPlan: `npm --prefix frontend run test:unit` then `npm --prefix frontend run typecheck`
+- expectedFiles:
+  - `frontend/src/utils/cookbookSharing.ts`
+  - `frontend/src/pages/recipes.tsx`
+  - `frontend/src/pages/cookbook.tsx`
+  - `frontend/src/tests/unit/cookbook-library.cookbook-sharing.persistence-consistency.test.ts`
+- outcome: done
+- verification:
+  - `cd frontend && NODE_OPTIONS=--import=./src/utils/serverOptimizerAliasRegister.mjs npx tsx --test src/tests/unit/cookbook-library.cookbook-sharing.persistence-consistency.test.ts`
+  - `npm --prefix frontend run test:unit`
+  - `npm --prefix frontend run typecheck`
+- changedFiles:
+  - `frontend/src/utils/cookbookSharing.ts`
+  - `frontend/src/pages/recipes.tsx`
+  - `frontend/src/pages/cookbook.tsx`
+  - `frontend/src/tests/unit/cookbook-library.cookbook-sharing.persistence-consistency.test.ts`
+  - `plans/story-board.jsonl`
+  - `plans/story-board.md`
+- followUpStories: none

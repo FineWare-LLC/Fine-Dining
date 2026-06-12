@@ -17,6 +17,10 @@ const CRAWLER_QUEUE_FEEDBACK_SURFACE_STYLES = {
     },
 };
 
+const FULL_MEAL_COMPLETENESS_FAILURE_PATTERN = /expected at least \d+ ingredients for a full meal/i;
+const NUTRITION_COMPLETENESS_FAILURE_PATTERN = /nutritionperserving\.|ingredients\[\d+\]\.nutrition\./i;
+const INGREDIENT_NORMALIZATION_FAILURE_PATTERN = /ingredients\[\d+\]\.(?:quantity|unit|gramWeight)/i;
+
 function normalizeCount(value) {
     return Number.isFinite(value) ? value : 0;
 }
@@ -40,6 +44,18 @@ function formatQueueSummary(recipeStatus = {}) {
 
 function pluralize(count, singular, plural) {
     return count === 1 ? singular : plural;
+}
+
+function isNutritionCompletenessFailure(lastError = '') {
+    return NUTRITION_COMPLETENESS_FAILURE_PATTERN.test(String(lastError));
+}
+
+function isIngredientNormalizationFailure(lastError = '') {
+    return INGREDIENT_NORMALIZATION_FAILURE_PATTERN.test(String(lastError));
+}
+
+function isFullMealCompletenessFailure(lastError = '') {
+    return FULL_MEAL_COMPLETENESS_FAILURE_PATTERN.test(String(lastError));
 }
 
 export function buildCrawlerQueueFeedbackState({
@@ -81,6 +97,30 @@ export function buildCrawlerQueueFeedbackState({
     }
 
     const summary = formatQueueSummary(recipeStatus);
+    const failedRecipes = Math.max(
+        normalizeCount(recipeStatus.queue_failed),
+        normalizeCount(recipeStatus.errors),
+    );
+    const lastError = typeof recipeStatus.last_error === 'string' ? recipeStatus.last_error : '';
+
+    if (failedRecipes > 0) {
+        const failureMessage = isNutritionCompletenessFailure(lastError)
+            ? `Recipe crawler reported ${failedRecipes} failed recipes. Review nutrition completeness and extraction details.`
+            : isIngredientNormalizationFailure(lastError)
+                ? `Recipe crawler reported ${failedRecipes} failed recipes. Review ingredient normalization and extraction details.`
+                : isFullMealCompletenessFailure(lastError)
+                    ? `Recipe crawler reported ${failedRecipes} failed recipes. Review full-meal completeness and extraction details.`
+                : `Recipe crawler reported ${failedRecipes} failed recipes. Review paraphrase quality and extraction details.`;
+
+        return {
+            state: 'error',
+            message: failureMessage,
+            role: 'alert',
+            ariaLive: 'assertive',
+            minHeight: CRAWLER_QUEUE_FEEDBACK_MIN_HEIGHT,
+            showSpinner: false,
+        };
+    }
 
     if (summary.total === 0 && !summary.running) {
         return {

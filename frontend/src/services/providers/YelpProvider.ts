@@ -78,7 +78,7 @@ export class YelpProvider {
                 distance_m: Math.round(b.distance ?? 0),
                 rating: b.rating,
                 price: b.price,
-                open_now: b.is_closed === false ? true : undefined,
+                ...(typeof b.is_closed === 'boolean' ? { open_now: !b.is_closed } : {}),
                 provider: "yelp",
                 url: b.url,
                 address: [b.location.address1, b.location.city].filter(Boolean).join(", "),

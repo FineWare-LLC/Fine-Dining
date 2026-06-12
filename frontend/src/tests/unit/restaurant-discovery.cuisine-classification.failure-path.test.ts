@@ -101,7 +101,7 @@ test('YelpProvider.findNearby normalizes cuisine labels and omits malformed cate
                 distance_m: 78,
                 rating: 4.1,
                 price: '$',
-                open_now: undefined,
+                open_now: false,
                 provider: 'yelp',
                 url: 'https://example.com/fallback-bistro',
                 address: '9 Example Ave, New York',

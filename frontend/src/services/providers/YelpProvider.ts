@@ -1,6 +1,18 @@
 // @ts-nocheck
 import { Place, NearbyQuery } from '../../types/places.ts';
+import {
+    createRestaurantDiscoveryError,
+    RestaurantDiscoveryErrorCodes,
+} from '@/lib/restaurantDiscoveryError';
 import { normalizeCuisineCategories } from '@/utils/cuisineClassification';
+
+function createYelpUnavailableError(cause) {
+    return createRestaurantDiscoveryError(
+        RestaurantDiscoveryErrorCodes.UNAVAILABLE,
+        'Nearby restaurants are temporarily unavailable. Please try again.',
+        cause,
+    );
+}
 
 /**
  * Yelp client: nearby restaurants.
@@ -36,25 +48,53 @@ export class YelpProvider {
             url.searchParams.set("term", keyword);
         }
 
-        const res = await fetch(url.toString(), {
-            headers: { 
-                Authorization: `Bearer ${this.apiKey}`,
-                Accept: 'application/json'
-            },
-            signal: AbortSignal.timeout(8000)
-        });
-
-        if (!res.ok) {
-            throw new Error(`Yelp error ${res.status}: ${res.statusText}`);
+        let res;
+        try {
+            res = await fetch(url.toString(), {
+                headers: {
+                    Authorization: `Bearer ${this.apiKey}`,
+                    Accept: 'application/json',
+                },
+                signal: AbortSignal.timeout(8000),
+            });
+        } catch (err) {
+            throw createYelpUnavailableError(err);
         }
 
-        const data = await res.json();
+        if (!res.ok) {
+            throw createYelpUnavailableError(new Error(`Yelp error ${res.status}: ${res.statusText}`));
+        }
 
-        if (!data.businesses || !Array.isArray(data.businesses)) {
-            return [];
+        let data;
+        try {
+            data = await res.json();
+        } catch (err) {
+            throw createYelpUnavailableError(err);
+        }
+
+        if (!data || !Array.isArray(data.businesses)) {
+            throw createYelpUnavailableError(new Error('Yelp API returned an invalid payload.'));
         }
 
         return data.businesses.map((b) => {
+            if (
+                !b ||
+                typeof b.id !== 'string' ||
+                typeof b.name !== 'string' ||
+                !b.location ||
+                typeof b.review_count !== 'number' ||
+                !Number.isFinite(b.review_count) ||
+                !b.coordinates ||
+                typeof b.coordinates.latitude !== 'number' ||
+                !Number.isFinite(b.coordinates.latitude) ||
+                typeof b.coordinates.longitude !== 'number' ||
+                !Number.isFinite(b.coordinates.longitude)
+            ) {
+                throw createYelpUnavailableError(
+                    new Error('Yelp API returned an invalid payload.'),
+                );
+            }
+
             const rawCategories = Array.isArray(b.categories)
                 ? b.categories
                     .map((category) => {

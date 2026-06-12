@@ -4,7 +4,22 @@ import React from 'react';
 import MealCatalog from './MealCatalog';
 import NutritionRequirementsForm from './NutritionRequirementsForm';
 import OptimizedMealPlanDisplay from './OptimizedMealPlanDisplay';
-import { resolveMealPlanningEmptyState } from '@/utils/mealPlanningEmptyStates';
+import { buildMealPlanOptimizerFeedbackState } from '@/utils/mealPlanningEmptyStates';
+
+const optimizerFeedbackPanelStyles = {
+    mt: 3,
+    minHeight: 72,
+    textAlign: 'center',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 1.5,
+    borderRadius: 2,
+    border: '1px dashed rgba(255,255,255,0.16)',
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    p: 3,
+};
 
 /**
  * MealPlanOptimizer - Extracted component for meal plan optimization functionality
@@ -23,18 +38,23 @@ const MealPlanOptimizer = ({
     onGenerateOptimizedPlan,
     onAddMeals,
 }) => {
-    const mealPlanOptimizerEmptyState = resolveMealPlanningEmptyState({
-        surface: 'optimizer',
+    const mealPlanOptimizerFeedbackState = buildMealPlanOptimizerFeedbackState({
+        isLoading: optimizationLoading,
+        optimizationError,
         selectedMeals,
         optimizedMealPlan,
     });
 
     const handleMealPlanOptimizerEmptyStateAction = () => {
-        if (mealPlanOptimizerEmptyState.actionKind === 'open-catalog') {
+        if (mealPlanOptimizerFeedbackState.kind !== 'empty') {
+            return;
+        }
+
+        if (mealPlanOptimizerFeedbackState.actionKind === 'open-catalog') {
             onTabChange?.(null, 0);
         }
 
-        if (mealPlanOptimizerEmptyState.actionKind === 'generate-plan') {
+        if (mealPlanOptimizerFeedbackState.actionKind === 'generate-plan') {
             onGenerateOptimizedPlan?.();
         }
     };
@@ -73,44 +93,89 @@ const MealPlanOptimizer = ({
 
             {/* Tab 3: Results */}
             {tabValue === 2 && (
-                mealPlanOptimizerEmptyState.status === 'invalid' ? (
-                    <Alert severity="warning" sx={{ mt: 3 }}>
-                        {mealPlanOptimizerEmptyState.error.message}
-                    </Alert>
-                ) : optimizedMealPlan ? (
-                    <OptimizedMealPlanDisplay mealPlan={optimizedMealPlan} />
-                ) : (
+                mealPlanOptimizerFeedbackState.kind === 'loading' ? (
                     <Box
-                        role={mealPlanOptimizerEmptyState.role}
-                        aria-live={mealPlanOptimizerEmptyState.ariaLive}
+                        role="status"
+                        aria-live="polite"
+                        aria-atomic="true"
+                        aria-busy="true"
+                        sx={optimizerFeedbackPanelStyles}
+                    >
+                        <CircularProgress
+                            size={20}
+                            color="primary"
+                            aria-label="Generating optimized meal plan"
+                        />
+                        <Typography variant="h6" component="p" sx={{ fontWeight: 700 }}>
+                            {mealPlanOptimizerFeedbackState.title}
+                        </Typography>
+                        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 520 }}>
+                            {mealPlanOptimizerFeedbackState.message}
+                        </Typography>
+                    </Box>
+                ) : mealPlanOptimizerFeedbackState.kind === 'error' ? (
+                    <Alert
+                        severity="error"
+                        role="alert"
+                        aria-live="assertive"
                         aria-atomic="true"
                         sx={{
-                            mt: 3,
-                            minHeight: mealPlanOptimizerEmptyState.minHeight,
-                            textAlign: 'center',
-                            display: 'flex',
-                            flexDirection: 'column',
+                            ...optimizerFeedbackPanelStyles,
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: 1.5,
-                            borderRadius: 2,
-                            border: '1px dashed rgba(255,255,255,0.16)',
-                            backgroundColor: 'rgba(255,255,255,0.02)',
-                            p: 3,
+                            textAlign: 'center',
+                        }}
+                    >
+                        {mealPlanOptimizerFeedbackState.message}
+                    </Alert>
+                ) : mealPlanOptimizerFeedbackState.kind === 'invalid' ? (
+                    <Alert
+                        severity="warning"
+                        role="alert"
+                        aria-live="assertive"
+                        aria-atomic="true"
+                        sx={{ mt: 3, minHeight: 72, alignItems: 'center' }}
+                    >
+                        {mealPlanOptimizerFeedbackState.message}
+                    </Alert>
+                ) : mealPlanOptimizerFeedbackState.kind === 'success' ? (
+                    <Box
+                        role={mealPlanOptimizerFeedbackState.role}
+                        aria-live={mealPlanOptimizerFeedbackState.ariaLive}
+                        aria-atomic="true"
+                        aria-busy={mealPlanOptimizerFeedbackState.ariaBusy ? 'true' : 'false'}
+                        sx={{
+                            ...optimizerFeedbackPanelStyles,
+                            minHeight: mealPlanOptimizerFeedbackState.minHeight,
+                            alignItems: 'stretch',
+                            justifyContent: 'flex-start',
+                            textAlign: 'left',
+                        }}
+                    >
+                        <OptimizedMealPlanDisplay mealPlan={optimizedMealPlan} />
+                    </Box>
+                ) : (
+                    <Box
+                        role={mealPlanOptimizerFeedbackState.role}
+                        aria-live={mealPlanOptimizerFeedbackState.ariaLive}
+                        aria-atomic="true"
+                        sx={{
+                            ...optimizerFeedbackPanelStyles,
+                            minHeight: mealPlanOptimizerFeedbackState.minHeight,
                         }}
                     >
                         <Typography variant="h6" component="p" sx={{ fontWeight: 700 }}>
-                            {mealPlanOptimizerEmptyState.title}
+                            {mealPlanOptimizerFeedbackState.title}
                         </Typography>
                         <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 520 }}>
-                            {mealPlanOptimizerEmptyState.message}
+                            {mealPlanOptimizerFeedbackState.message}
                         </Typography>
                         <Button
                             variant="contained"
                             color="primary"
                             onClick={handleMealPlanOptimizerEmptyStateAction}
                         >
-                            {mealPlanOptimizerEmptyState.actionLabel}
+                            {mealPlanOptimizerFeedbackState.actionLabel}
                         </Button>
                     </Box>
                 )
@@ -129,12 +194,6 @@ const MealPlanOptimizer = ({
                 </Button>
             </Box>
 
-            {/* Display optimization error if any */}
-            {optimizationError && (
-                <Box sx={{ mt: 2, color: 'error.main', textAlign: 'center' }}>
-          Error: {optimizationError.message || 'Failed to generate meal plan'}
-                </Box>
-            )}
         </Box>
     );
 };

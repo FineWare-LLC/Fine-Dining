@@ -3,6 +3,7 @@
 const MEAL_PLANNING_EMPTY_STATE_MIN_HEIGHT = 72;
 const MEAL_PLANNING_EMPTY_STATE_ERROR_MESSAGE = 'We could not read this meal planning empty state. Please refresh the planner.';
 const MEAL_PLANNING_CATALOG_FAILURE_MESSAGE = 'We could not load meals. Please try again.';
+const MEAL_PLANNING_CATALOG_LOADING_MESSAGE = 'Loading meal catalog...';
 
 const MEAL_PLANNING_EMPTY_STATE_SURFACES = {
     catalog: 'catalog',
@@ -30,6 +31,36 @@ export class MealPlanningEmptyStateValidationError extends Error {
 const normalizeArray = (value) => (Array.isArray(value) ? value : null);
 const normalizeString = (value) => (typeof value === 'string' ? value.trim() : '');
 
+const normalizeOptimizedMealPlan = (value) => {
+    if (typeof value === 'undefined' || value === null) {
+        return { status: 'empty' };
+    }
+
+    if (typeof value !== 'object' || Array.isArray(value)) {
+        return { status: 'invalid' };
+    }
+
+    const meals = normalizeArray(value.meals);
+    if (meals === null) {
+        return { status: 'invalid' };
+    }
+
+    if (meals.length === 0) {
+        return { status: 'empty' };
+    }
+
+    const totalNutrition = value.totalNutrition;
+    if (!totalNutrition || typeof totalNutrition !== 'object' || Array.isArray(totalNutrition)) {
+        return { status: 'invalid' };
+    }
+
+    if (!Number.isFinite(Number(value.totalCost))) {
+        return { status: 'invalid' };
+    }
+
+    return { status: 'resolved' };
+};
+
 const createState = ({
     status,
     title = null,
@@ -37,6 +68,7 @@ const createState = ({
     actionLabel = null,
     actionKind = null,
     error = null,
+    showSpinner = false,
 }) => ({
     status,
     title,
@@ -46,7 +78,7 @@ const createState = ({
     role: status === 'invalid' || status === 'error' ? 'alert' : 'status',
     ariaLive: status === 'invalid' || status === 'error' ? 'assertive' : 'polite',
     minHeight: MEAL_PLANNING_EMPTY_STATE_MIN_HEIGHT,
-    showSpinner: false,
+    showSpinner,
     error,
 });
 
@@ -88,6 +120,13 @@ const buildOptimizerState = ({ selectedMealCount }) => (
             actionKind: 'open-catalog',
         }
 );
+
+const buildCatalogLoadingState = () => createState({
+    status: 'loading',
+    message: MEAL_PLANNING_CATALOG_LOADING_MESSAGE,
+    error: null,
+    showSpinner: true,
+});
 
 export function resolveMealPlanningEmptyState({
     surface,
@@ -155,12 +194,12 @@ export function resolveMealPlanningEmptyState({
         return invalidState('invalidPayload');
     }
 
-    if (optimizedMealPlan !== null
-        && (typeof optimizedMealPlan !== 'object' || Array.isArray(optimizedMealPlan))) {
+    const normalizedOptimizedMealPlan = normalizeOptimizedMealPlan(optimizedMealPlan);
+    if (normalizedOptimizedMealPlan.status === 'invalid') {
         return invalidState('invalidPayload');
     }
 
-    if (optimizedMealPlan) {
+    if (normalizedOptimizedMealPlan.status === 'resolved') {
         return createState({
             status: 'resolved',
             title: null,
@@ -176,5 +215,114 @@ export function resolveMealPlanningEmptyState({
     return createState({
         status: 'empty',
         ...optimizerState,
+    });
+}
+
+export function resolveMealPlanOptimizerDisplayState({
+    selectedMeals,
+    optimizedMealPlan,
+} = {}) {
+    const emptyState = resolveMealPlanningEmptyState({
+        surface: MEAL_PLANNING_EMPTY_STATE_SURFACES.optimizer,
+        selectedMeals,
+        optimizedMealPlan,
+    });
+
+    return {
+        emptyState,
+        shouldRenderOptimizedMealPlan: emptyState.status === 'resolved',
+    };
+}
+
+export function buildMealPlanOptimizerFeedbackState({
+    isLoading = false,
+    optimizationError = null,
+    selectedMeals,
+    optimizedMealPlan,
+} = {}) {
+    const displayState = resolveMealPlanOptimizerDisplayState({
+        selectedMeals,
+        optimizedMealPlan,
+    });
+    const emptyState = displayState.emptyState;
+    const optimizationErrorMessage = typeof optimizationError === 'string'
+        ? optimizationError.trim()
+        : optimizationError?.message?.trim?.() || '';
+
+    if (isLoading) {
+        return {
+            kind: 'loading',
+            role: 'status',
+            ariaLive: 'polite',
+            ariaBusy: true,
+            minHeight: MEAL_PLANNING_EMPTY_STATE_MIN_HEIGHT,
+            showSpinner: true,
+            title: 'Generating optimized meal plan...',
+            message: 'We are still preparing your result. This panel will update when the optimizer finishes.',
+        };
+    }
+
+    if (optimizationError !== null && optimizationError !== undefined) {
+        return {
+            kind: 'error',
+            role: 'alert',
+            ariaLive: 'assertive',
+            ariaBusy: false,
+            minHeight: MEAL_PLANNING_EMPTY_STATE_MIN_HEIGHT,
+            showSpinner: false,
+            message: optimizationErrorMessage || 'Failed to generate meal plan.',
+        };
+    }
+
+    if (emptyState.status === 'invalid') {
+        return {
+            kind: 'invalid',
+            role: 'alert',
+            ariaLive: 'assertive',
+            ariaBusy: false,
+            minHeight: MEAL_PLANNING_EMPTY_STATE_MIN_HEIGHT,
+            showSpinner: false,
+            message: emptyState.error.message,
+        };
+    }
+
+    if (displayState.shouldRenderOptimizedMealPlan) {
+        return {
+            kind: 'success',
+            role: 'status',
+            ariaLive: 'polite',
+            ariaBusy: false,
+            minHeight: MEAL_PLANNING_EMPTY_STATE_MIN_HEIGHT,
+            showSpinner: false,
+            displayState,
+        };
+    }
+
+    return {
+        kind: 'empty',
+        ...emptyState,
+        ariaBusy: false,
+    };
+}
+
+export function buildMealCatalogFeedbackState({
+    isLoading = false,
+    meals,
+    visibleMeals,
+    searchTerm = '',
+    restaurantFilter = null,
+    errorMessage = '',
+} = {}) {
+    if (isLoading) {
+        return buildCatalogLoadingState();
+    }
+
+    return resolveMealPlanningEmptyState({
+        surface: MEAL_PLANNING_EMPTY_STATE_SURFACES.catalog,
+        meals,
+        visibleMeals,
+        searchTerm,
+        restaurantFilter,
+        errorMessage,
     });
 }

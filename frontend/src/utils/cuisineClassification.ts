@@ -122,18 +122,16 @@ export function normalizeCuisineCategories(payload) {
 
     if (typeof payload === 'string') {
         addCuisineTokens(categories, payload);
-        return [...categories];
-    }
-
-    if (Array.isArray(payload)) {
+    } else if (Array.isArray(payload)) {
         for (const value of payload) {
             addCuisineTokens(categories, value);
         }
-        return [...categories];
+    } else {
+        throw createCuisineClassificationError(
+            CuisineClassificationErrorCodes.INVALID_PAYLOAD,
+            INVALID_CUISINE_PAYLOAD_MESSAGE,
+        );
     }
 
-    throw createCuisineClassificationError(
-        CuisineClassificationErrorCodes.INVALID_PAYLOAD,
-        INVALID_CUISINE_PAYLOAD_MESSAGE,
-    );
+    return [...categories].sort((left, right) => left.localeCompare(right));
 }

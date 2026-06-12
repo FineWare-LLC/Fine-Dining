@@ -27,7 +27,7 @@ test('normalizeCuisineCategories accepts provider payloads and returns canonical
             'food',
             'thai / japanese',
         ]),
-        ['Italian', 'Mexican', 'Sushi', 'Thai', 'Japanese'],
+        ['Italian', 'Japanese', 'Mexican', 'Sushi', 'Thai'],
     );
 
     assert.deepEqual(

@@ -5,6 +5,8 @@
  * over chains, franchises, and corporate establishments.
  */
 
+import { RestaurantDiscoveryErrorCodes } from '@/lib/restaurantDiscoveryError';
+
 /**
  * Comprehensive list of chain restaurant names and patterns
  * This includes major fast food, casual dining, and corporate restaurant chains
@@ -251,6 +253,19 @@ function buildFilterCriteria(filterOptions = {}) {
 }
 
 export function buildLocalRestaurantResult(result, filterOptions = {}) {
+    const filterCriteria = buildFilterCriteria(filterOptions);
+
+    if (result?.status === 'error') {
+        return {
+            ...result,
+            restaurants: [],
+            status: 'error',
+            filteredCount: 0,
+            localCount: 0,
+            filterCriteria,
+        };
+    }
+
     const upstreamRestaurants = Array.isArray(result?.restaurants) ? result.restaurants : [];
     const localRestaurants = filterForLocalRestaurants(upstreamRestaurants, filterOptions);
     const status = result?.status === 'error'
@@ -265,7 +280,7 @@ export function buildLocalRestaurantResult(result, filterOptions = {}) {
         status,
         filteredCount: upstreamRestaurants.length,
         localCount: localRestaurants.length,
-        filterCriteria: buildFilterCriteria(filterOptions),
+        filterCriteria,
     };
 }
 
@@ -281,11 +296,32 @@ export function buildLocalRestaurantResult(result, filterOptions = {}) {
 export async function findNearbyLocalRestaurants(lat, lon, radius = 1000, keyword = '', filterOptions = {}) {
     // Import the original service dynamically to avoid circular dependencies
     const placesService = await import('./places.service');
-    
-    // Get all nearby restaurants first
-    const result = await placesService.findNearbyRestaurants(lat, lon, radius, keyword);
+    const requireHours = filterOptions.requireHours === true;
 
-    return buildLocalRestaurantResult(result, filterOptions);
+    try {
+        // Get all nearby restaurants first
+        const result = await placesService.findNearbyRestaurants(lat, lon, radius, keyword, {
+            requireHours,
+        });
+
+        return buildLocalRestaurantResult(result, filterOptions);
+    } catch (error) {
+        if (
+            error?.code === RestaurantDiscoveryErrorCodes.INVALID_QUERY ||
+            error?.code === RestaurantDiscoveryErrorCodes.RATE_LIMITED
+        ) {
+            throw error;
+        }
+
+        return buildLocalRestaurantResult(
+            {
+                source: null,
+                status: 'error',
+                restaurants: [],
+            },
+            filterOptions,
+        );
+    }
 }
 
 export { isChainRestaurant, calculateLocalScore };

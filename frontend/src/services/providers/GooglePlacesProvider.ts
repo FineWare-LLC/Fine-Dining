@@ -3,6 +3,7 @@
 
 import {
     createRestaurantDiscoveryError,
+    createRestaurantDiscoveryRateLimitedError,
     RestaurantDiscoveryErrorCodes,
 } from '@/lib/restaurantDiscoveryError';
 import { normalizeCuisineCategories } from '@/utils/cuisineClassification';
@@ -40,6 +41,11 @@ export class GooglePlacesProvider {
 
         const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?${params.toString()}`;
         const res = await global.fetch(url);
+        if (res.status === 429) {
+            throw createRestaurantDiscoveryRateLimitedError(
+                new Error('Google Places API error: 429'),
+            );
+        }
         if (!res.ok) {
             throw createGooglePlacesUnavailableError(
                 new Error(`Google Places API error: ${res.status}`),

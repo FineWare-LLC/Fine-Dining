@@ -2,6 +2,7 @@
 // Use global fetch (works with both browser and Node.js with global.fetch set)
 
 import { normalizeCuisineCategories } from '@/utils/cuisineClassification';
+import { createRestaurantDiscoveryRateLimitedError } from '@/lib/restaurantDiscoveryError';
 
 export class OverpassPayloadError extends Error {
     constructor(message = 'Invalid Overpass response payload') {
@@ -31,6 +32,12 @@ out center;`;
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body,
         });
+
+        if (res.status === 429) {
+            throw createRestaurantDiscoveryRateLimitedError(
+                new Error('Overpass API error: 429'),
+            );
+        }
 
         if (!res.ok) {
             throw new Error(`Overpass error: ${res.status}`);

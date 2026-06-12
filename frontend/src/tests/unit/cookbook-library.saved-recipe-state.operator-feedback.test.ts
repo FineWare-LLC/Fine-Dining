@@ -12,6 +12,7 @@ const canonicalCookbooks = [
     {
         id: 'cookbook-42',
         name: 'Weeknight Wins',
+        isPublic: false,
         entries: [],
     },
 ];

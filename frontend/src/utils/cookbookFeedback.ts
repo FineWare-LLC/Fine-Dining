@@ -79,6 +79,7 @@ const normalizeCookbooks = (cookbooks) => {
             && cookbook.id.trim()
             && typeof cookbook.name === 'string'
             && cookbook.name.trim()
+            && typeof cookbook.isPublic === 'boolean'
             && Array.isArray(cookbook.entries),
         )
     );

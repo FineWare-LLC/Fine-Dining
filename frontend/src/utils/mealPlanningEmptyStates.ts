@@ -36,8 +36,7 @@ const normalizeWarnings = (warnings) => {
         return [];
     }
 
-    const seen = new Set();
-    const normalized = [];
+    const canonicalWarnings = new Map();
 
     warnings.forEach((warning) => {
         const message = typeof warning === 'string' ? warning.trim() : '';
@@ -46,17 +45,20 @@ const normalizeWarnings = (warnings) => {
         }
 
         const key = message.toLowerCase();
-        if (seen.has(key)) {
+        const current = canonicalWarnings.get(key);
+        if (!current) {
+            canonicalWarnings.set(key, new Set([message]));
             return;
         }
 
-        seen.add(key);
-        normalized.push(message);
+        current.add(message);
     });
 
-    return normalized.sort((left, right) => (
-        left.toLowerCase().localeCompare(right.toLowerCase()) || left.localeCompare(right)
-    ));
+    return Array.from(canonicalWarnings.entries())
+        .map(([key, messages]) => (messages.size === 1 ? Array.from(messages)[0] : key))
+        .sort((left, right) => (
+            left.toLowerCase().localeCompare(right.toLowerCase()) || left.localeCompare(right)
+        ));
 };
 
 const normalizeOptimizedMealPlan = (value) => {

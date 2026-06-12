@@ -54,7 +54,9 @@ const normalizeWarnings = (warnings) => {
         normalized.push(message);
     });
 
-    return normalized;
+    return normalized.sort((left, right) => (
+        left.toLowerCase().localeCompare(right.toLowerCase()) || left.localeCompare(right)
+    ));
 };
 
 const normalizeOptimizedMealPlan = (value) => {

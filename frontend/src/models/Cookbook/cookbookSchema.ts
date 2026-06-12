@@ -287,7 +287,7 @@ export const cookbookSchema = new Schema(
 
 // Fail-Shut: Prevent cookbook from growing unreasonably large
 cookbookSchema.pre('validate', function (next) {
-    if (this.entries.length > 10000 || this.meals.length > 10000 || this.recipes.length > 10000) {
+    if (this.entries.length > 10000 || this.meals.length > 10000 || this.recipes.length > 10000 || this.restaurants.length > 10000) {
         const error = new Error('FAIL-SHUT: Cookbook size limit exceeded. Operation aborted.');
         if (typeof next === 'function') {
             return next(error);

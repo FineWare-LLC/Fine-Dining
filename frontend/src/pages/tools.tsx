@@ -24,6 +24,11 @@ import {
     resolveAffiliateLinkSeparationState,
 } from '@/utils/affiliateLinkSeparationFeedback';
 import {
+    buildStorePreferenceFeedbackContainerStyles,
+    buildStorePreferenceFeedbackState,
+    resolveStorePreferenceState,
+} from '@/utils/storePreferenceFeedback';
+import {
     buildGroceryListAggregationFeedbackState,
     buildPantryAwareGroceryListFeedbackState,
 } from '@/utils/shoppingListFeedback';
@@ -137,6 +142,18 @@ function getAffiliateLinkSeparationMessageColor(state) {
     return 'rgba(255,255,255,0.78)';
 }
 
+function getStorePreferenceMessageColor(state) {
+    if (state === 'error') {
+        return '#FFB3A7';
+    }
+
+    if (state === 'success') {
+        return '#C6E8C5';
+    }
+
+    return 'rgba(255,255,255,0.78)';
+}
+
 function buildSubstitutionCandidateSearchText(candidate) {
     return [
         candidate?.mealName,
@@ -228,6 +245,24 @@ export default function ToolsPage() {
         () => buildAffiliateLinkSeparationFeedbackContainerStyles(affiliateLinkFeedbackState.state),
         [affiliateLinkFeedbackState.state],
     );
+    const storePreferenceState = useMemo(
+        () => resolveStorePreferenceState(selectedMeals),
+        [selectedMeals],
+    );
+    const storePreferenceFeedbackState = useMemo(
+        () => buildStorePreferenceFeedbackState({
+            isLoading: isGenerating,
+            storePreferenceState,
+        }),
+        [isGenerating, storePreferenceState],
+    );
+    const storePreferenceFeedbackStyles = useMemo(
+        () => buildStorePreferenceFeedbackContainerStyles(storePreferenceFeedbackState.state),
+        [storePreferenceFeedbackState.state],
+    );
+    const storePreferenceActionHref = storePreferenceFeedbackState?.actionKind
+        ? GROCERY_ACTION_HREFS[storePreferenceFeedbackState.actionKind] || null
+        : null;
     const affiliateLinkActionHref = affiliateLinkFeedbackState.actionKind
         ? GROCERY_ACTION_HREFS[affiliateLinkFeedbackState.actionKind] || null
         : null;
@@ -436,6 +471,89 @@ export default function ToolsPage() {
                                     Your pantry already covers this grocery list.
                                         </Typography>
                                     )
+                                ) : null}
+                            </Box>
+                        </Paper>
+                    </Grid>
+                    <Grid item xs={12}>
+                        <Paper
+                            sx={{
+                                p: 3,
+                                bgcolor: '#1C1815',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                ...storePreferenceFeedbackStyles,
+                            }}
+                        >
+                            <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: '1.25rem' }}>Store preference</Typography>
+                            <Typography sx={{ color: 'rgba(255,255,255,0.72)', mt: 0.5 }}>
+                                Preferred stores steer shopping links and price estimates toward where you actually shop.
+                            </Typography>
+                            <Box
+                                role={storePreferenceFeedbackState.role}
+                                aria-live={storePreferenceFeedbackState.ariaLive}
+                                aria-busy={storePreferenceFeedbackState.ariaBusy}
+                                aria-atomic="true"
+                                sx={{
+                                    mt: 2,
+                                    minHeight: storePreferenceFeedbackState.minHeight + 88,
+                                    p: 2,
+                                    borderRadius: 2,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: 1.5,
+                                }}
+                            >
+                                <Box sx={{ display: 'flex', gap: 1.5, alignItems: storePreferenceFeedbackState.showSpinner ? 'center' : 'flex-start' }}>
+                                    {storePreferenceFeedbackState.showSpinner && <CircularProgress size={18} />}
+                                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                                        {storePreferenceFeedbackState.title && (
+                                            <Typography sx={{ color: '#fff', fontWeight: 800 }}>
+                                                {storePreferenceFeedbackState.title}
+                                            </Typography>
+                                        )}
+                                        {storePreferenceFeedbackState.state === 'error' ? (
+                                            <Alert severity="error" sx={{ mt: 0.5 }}>
+                                                {storePreferenceFeedbackState.message}
+                                            </Alert>
+                                        ) : (
+                                            <Typography sx={{ color: getStorePreferenceMessageColor(storePreferenceFeedbackState.state) }}>
+                                                {storePreferenceFeedbackState.message}
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                    {storePreferenceFeedbackState.actionLabel && storePreferenceActionHref && (
+                                        <Button
+                                            href={storePreferenceActionHref}
+                                            variant={storePreferenceFeedbackState.state === 'error' ? 'contained' : 'outlined'}
+                                            size="small"
+                                        >
+                                            {storePreferenceFeedbackState.actionLabel}
+                                        </Button>
+                                    )}
+                                </Box>
+                                {storePreferenceFeedbackState.state === 'success' ? (
+                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                        <Chip
+                                            label={storePreferenceState.preferredStore}
+                                            sx={{ bgcolor: 'rgba(255,255,255,0.12)', color: '#fff' }}
+                                        />
+                                        <Chip
+                                            label={`${storePreferenceState.matchedMealCount} of ${storePreferenceState.totalMealCount} ${storePreferenceState.totalMealCount === 1 ? 'meal' : 'meals'} matched`}
+                                            sx={{ bgcolor: 'rgba(255,255,255,0.12)', color: '#fff' }}
+                                        />
+                                        {storePreferenceState.labeledMealCount > storePreferenceState.matchedMealCount && (
+                                            <Chip
+                                                label={`${storePreferenceState.labeledMealCount - storePreferenceState.matchedMealCount} ${storePreferenceState.labeledMealCount - storePreferenceState.matchedMealCount === 1 ? 'meal' : 'meals'} use a different store`}
+                                                sx={{ bgcolor: 'rgba(255,255,255,0.12)', color: '#fff' }}
+                                            />
+                                        )}
+                                        {storePreferenceState.missingMealCount > 0 && (
+                                            <Chip
+                                                label={`${storePreferenceState.missingMealCount} ${storePreferenceState.missingMealCount === 1 ? 'meal' : 'meals'} still need a store label`}
+                                                sx={{ bgcolor: 'rgba(255,255,255,0.12)', color: '#fff' }}
+                                            />
+                                        )}
+                                    </Box>
                                 ) : null}
                             </Box>
                         </Paper>

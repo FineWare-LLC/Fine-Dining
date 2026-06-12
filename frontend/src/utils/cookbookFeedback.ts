@@ -18,6 +18,7 @@ const COOKBOOK_LIBRARY_FEEDBACK_SURFACE_STYLES = {
 };
 
 const COOKBOOK_LIBRARY_LOADING_MESSAGE = 'Loading your saved recipes...';
+export const COOKBOOK_LIBRARY_RESOLVED_MESSAGE = 'Cookbooks loaded.';
 const COOKBOOK_LIBRARY_EMPTY_TITLE = 'No cookbooks yet';
 const COOKBOOK_LIBRARY_EMPTY_MESSAGE = 'Create a cookbook to start saving recipes.';
 const COOKBOOK_LIBRARY_EMPTY_ACTION_LABEL = 'Create cookbook';

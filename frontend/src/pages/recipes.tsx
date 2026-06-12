@@ -23,6 +23,7 @@ import { useAuth } from '@/context/AuthContext';
 import {
     buildCookbookLibraryFeedbackContainerStyles,
     buildCookbookLibraryFeedbackState,
+    COOKBOOK_LIBRARY_RESOLVED_MESSAGE,
 } from '@/utils/cookbookFeedback';
 import { buildCookbookSharingDisplayState } from '@/utils/cookbookSharing';
 
@@ -61,6 +62,17 @@ const ADD_RECIPE_TO_COOKBOOK = gql`
 const ALLERGENS = ['GLUTEN', 'DAIRY', 'NUTS', 'EGGS', 'SOY', 'SHELLFISH', 'FISH', 'SESAME'];
 const DIETS = ['VEGAN', 'VEGETARIAN', 'KETO', 'PALEO', 'GLUTEN_FREE', 'DAIRY_FREE', 'MEDITERRANEAN', 'LOW_CARB'];
 const MEAL_TYPES = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK', 'DESSERT', 'SIDE'];
+const srOnly = {
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    padding: 0,
+    margin: -1,
+    overflow: 'hidden',
+    clip: 'rect(0, 0, 0, 0)',
+    whiteSpace: 'nowrap',
+    border: 0,
+};
 
 export default function RecipesPage() {
     const { logout, user } = useAuth();
@@ -111,6 +123,12 @@ export default function RecipesPage() {
             router.push('/cookbook').catch(() => {});
         }
     };
+
+    const cookbookSharingResolvedAnnouncement = cookbookFeedback.state === 'resolved' ? (
+        <Box role={cookbookFeedback.role} aria-live={cookbookFeedback.ariaLive} aria-atomic="true" sx={srOnly}>
+            {COOKBOOK_LIBRARY_RESOLVED_MESSAGE}
+        </Box>
+    ) : null;
 
     const handleAddToCookbook = async (cookbookId) => {
         try {
@@ -363,37 +381,40 @@ export default function RecipesPage() {
                             </Button>
                         </Box>
                     ) : (
-                        cookbooks.map((cb) => {
-                            const sharingState = buildCookbookSharingDisplayState(cb);
+                        <>
+                            {cookbookSharingResolvedAnnouncement}
+                            {cookbooks.map((cb) => {
+                                const sharingState = buildCookbookSharingDisplayState(cb);
 
-                            return (
-                                <Button
-                                    key={cb.id}
-                                    fullWidth
-                                    variant="outlined"
-                                    sx={{ mb: 1, justifyContent: 'flex-start', textTransform: 'none' }}
-                                    onClick={() => handleAddToCookbook(cb.id)}
-                                >
-                                    <Box sx={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-                                        <Box sx={{ minWidth: 0, textAlign: 'left' }}>
-                                            <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
-                                                {cb.name}
-                                            </Typography>
-                                            <Typography variant="caption" color="text.secondary">
-                                                {cb.entries?.length || 0} recipes
-                                            </Typography>
+                                return (
+                                    <Button
+                                        key={cb.id}
+                                        fullWidth
+                                        variant="outlined"
+                                        sx={{ mb: 1, justifyContent: 'flex-start', textTransform: 'none' }}
+                                        onClick={() => handleAddToCookbook(cb.id)}
+                                    >
+                                        <Box sx={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                                            <Box sx={{ minWidth: 0, textAlign: 'left' }}>
+                                                <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
+                                                    {cb.name}
+                                                </Typography>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    {cb.entries?.length || 0} recipes
+                                                </Typography>
+                                            </Box>
+                                            <Chip
+                                                size="small"
+                                                label={sharingState.label}
+                                                color={sharingState.color}
+                                                variant={sharingState.variant}
+                                                aria-label={sharingState.ariaLabel}
+                                            />
                                         </Box>
-                                        <Chip
-                                            size="small"
-                                            label={sharingState.label}
-                                            color={sharingState.color}
-                                            variant={sharingState.variant}
-                                            aria-label={sharingState.ariaLabel}
-                                        />
-                                    </Box>
-                                </Button>
-                            );
-                        })
+                                    </Button>
+                                );
+                            })}
+                        </>
                     )}
                 </DialogContent>
                 <DialogActions>

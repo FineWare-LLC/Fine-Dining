@@ -26,6 +26,11 @@ import {
     COOKBOOK_LIBRARY_RESOLVED_MESSAGE,
 } from '@/utils/cookbookFeedback';
 import { buildCookbookSharingDisplayState } from '@/utils/cookbookSharing';
+import {
+    buildRecipeSearchFeedbackContainerStyles,
+    buildRecipeSearchFeedbackState,
+    RECIPE_SEARCH_RESOLVED_MESSAGE,
+} from '@/utils/recipeSearchFeedback';
 
 const SEARCH_RECIPES = gql`
     query SearchRecipesByDiet(
@@ -87,7 +92,7 @@ export default function RecipesPage() {
     const [selectedRecipe, setSelectedRecipe] = useState(null);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-    const { data, loading } = useQuery(SEARCH_RECIPES, {
+    const { data, loading, error, refetch } = useQuery(SEARCH_RECIPES, {
         variables: { ...filters, page: 1, limit: 30 },
     });
     const {
@@ -102,6 +107,11 @@ export default function RecipesPage() {
     const [addRecipeMutation] = useMutation(ADD_RECIPE_TO_COOKBOOK);
 
     const recipes = data?.searchRecipesByDiet || [];
+    const recipeSearchFeedback = buildRecipeSearchFeedbackState({
+        isLoading: loading,
+        recipes,
+        error,
+    });
     const cookbooks = Array.isArray(cookbooksData?.getCookbooksByUser) ? cookbooksData.getCookbooksByUser : [];
     const cookbookFeedback = buildCookbookLibraryFeedbackState({
         isLoading: cookbooksLoading,
@@ -123,6 +133,18 @@ export default function RecipesPage() {
             router.push('/cookbook').catch(() => {});
         }
     };
+
+    const handleRecipeSearchFeedbackAction = () => {
+        if (recipeSearchFeedback.actionKind === 'retry-search') {
+            refetch().catch(() => {});
+        }
+    };
+
+    const recipeSearchResolvedAnnouncement = recipeSearchFeedback.state === 'resolved' ? (
+        <Box role={recipeSearchFeedback.role} aria-live={recipeSearchFeedback.ariaLive} aria-atomic="true" sx={srOnly}>
+            {RECIPE_SEARCH_RESOLVED_MESSAGE}
+        </Box>
+    ) : null;
 
     const cookbookSharingResolvedAnnouncement = cookbookFeedback.state === 'resolved' ? (
         <Box role={cookbookFeedback.role} aria-live={cookbookFeedback.ariaLive} aria-atomic="true" sx={srOnly}>
@@ -248,57 +270,129 @@ export default function RecipesPage() {
                         </Box>
                     )}
 
-                    {loading ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress /></Box>
-                    ) : recipes.length === 0 ? (
-                        <Box sx={{ textAlign: 'center', py: 8 }}>
-                            <Typography variant="h6" color="text.secondary">No recipes found. Try adjusting your filters.</Typography>
+                    {recipeSearchFeedback.state === 'loading' ? (
+                        <Box
+                            role={recipeSearchFeedback.role}
+                            aria-live={recipeSearchFeedback.ariaLive}
+                            aria-busy={recipeSearchFeedback.ariaBusy}
+                            aria-atomic="true"
+                            sx={{
+                                textAlign: 'center',
+                                py: 8,
+                                px: 2,
+                                minHeight: recipeSearchFeedback.minHeight,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 1.25,
+                                borderRadius: 1,
+                                ...buildRecipeSearchFeedbackContainerStyles(recipeSearchFeedback.state),
+                            }}
+                        >
+                            {recipeSearchFeedback.showSpinner && <CircularProgress />}
+                            <Typography variant="body2" color="text.secondary">
+                                {recipeSearchFeedback.message}
+                            </Typography>
+                        </Box>
+                    ) : recipeSearchFeedback.state === 'error' ? (
+                        <Box
+                            role={recipeSearchFeedback.role}
+                            aria-live={recipeSearchFeedback.ariaLive}
+                            aria-atomic="true"
+                            sx={{
+                                textAlign: 'center',
+                                py: 8,
+                                px: 2,
+                                minHeight: recipeSearchFeedback.minHeight,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 1.25,
+                                borderRadius: 1,
+                                ...buildRecipeSearchFeedbackContainerStyles(recipeSearchFeedback.state),
+                            }}
+                        >
+                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                {recipeSearchFeedback.title}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 420, textAlign: 'center' }}>
+                                {recipeSearchFeedback.message}
+                            </Typography>
+                            <Button variant="outlined" size="small" color="error" onClick={handleRecipeSearchFeedbackAction}>
+                                {recipeSearchFeedback.actionLabel}
+                            </Button>
+                        </Box>
+                    ) : recipeSearchFeedback.state === 'empty' ? (
+                        <Box
+                            role={recipeSearchFeedback.role}
+                            aria-live={recipeSearchFeedback.ariaLive}
+                            aria-busy={recipeSearchFeedback.ariaBusy}
+                            aria-atomic="true"
+                            sx={{
+                                textAlign: 'center',
+                                py: 8,
+                                px: 2,
+                                minHeight: recipeSearchFeedback.minHeight,
+                                ...buildRecipeSearchFeedbackContainerStyles(recipeSearchFeedback.state),
+                            }}
+                        >
+                            <Typography variant="h6" color="text.secondary" gutterBottom>
+                                {recipeSearchFeedback.title}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                {recipeSearchFeedback.message}
+                            </Typography>
                         </Box>
                     ) : (
-                        <Grid container spacing={3}>
-                            {recipes.map((recipe) => (
-                                <Grid item xs={12} sm={6} md={4} key={recipe.id}>
-                                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                        <CardContent sx={{ flexGrow: 1 }}>
-                                            <Typography variant="h6" gutterBottom noWrap>{recipe.recipeName}</Typography>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                                <Rating value={recipe.averageRating || 0} precision={0.5} readOnly size="small" />
-                                                <Typography variant="caption" color="text.secondary">({recipe.ratingCount || 0})</Typography>
-                                            </Box>
-                                            <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
-                                                <Chip icon={<AccessTimeIcon />} label={`${recipe.totalTime || recipe.prepTime}m`} size="small" />
-                                                <Chip label={recipe.difficulty} size="small" color={recipe.difficulty === 'EASY' ? 'success' : recipe.difficulty === 'HARD' ? 'error' : 'warning'} />
-                                                {recipe.cuisine && <Chip label={recipe.cuisine} size="small" variant="outlined" />}
-                                            </Box>
-                                            {recipe.nutritionPerServing && (
-                                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
-                                                    <Chip icon={<LocalFireDepartmentIcon />} label={`${Math.round(recipe.nutritionPerServing.calories)} cal`} size="small" variant="outlined" />
-                                                    <Chip label={`${Math.round(recipe.nutritionPerServing.protein)}g protein`} size="small" variant="outlined" />
+                        <>
+                            {recipeSearchResolvedAnnouncement}
+                            <Grid container spacing={3}>
+                                {recipes.map((recipe) => (
+                                    <Grid item xs={12} sm={6} md={4} key={recipe.id}>
+                                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                            <CardContent sx={{ flexGrow: 1 }}>
+                                                <Typography variant="h6" gutterBottom noWrap>{recipe.recipeName}</Typography>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                                    <Rating value={recipe.averageRating || 0} precision={0.5} readOnly size="small" />
+                                                    <Typography variant="caption" color="text.secondary">({recipe.ratingCount || 0})</Typography>
                                                 </Box>
-                                            )}
-                                            {recipe.dietaryTags?.length > 0 && (
-                                                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                                                    {recipe.dietaryTags.slice(0, 3).map((tag) => (
-                                                        <Chip key={tag} label={tag} size="small" color="info" variant="outlined" />
-                                                    ))}
+                                                <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
+                                                    <Chip icon={<AccessTimeIcon />} label={`${recipe.totalTime || recipe.prepTime}m`} size="small" />
+                                                    <Chip label={recipe.difficulty} size="small" color={recipe.difficulty === 'EASY' ? 'success' : recipe.difficulty === 'HARD' ? 'error' : 'warning'} />
+                                                    {recipe.cuisine && <Chip label={recipe.cuisine} size="small" variant="outlined" />}
                                                 </Box>
-                                            )}
-                                            {recipe.costPerServing > 0 && (
-                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                                    ${recipe.costPerServing.toFixed(2)} / serving
-                                                </Typography>
-                                            )}
-                                        </CardContent>
-                                        <CardActions>
-                                            <Button size="small" startIcon={<BookmarkAddIcon />}
-                                                onClick={() => { setSelectedRecipe(recipe); setAddDialogOpen(true); }}>
-                                                Add to Cookbook
-                                            </Button>
-                                        </CardActions>
-                                    </Card>
-                                </Grid>
-                            ))}
-                        </Grid>
+                                                {recipe.nutritionPerServing && (
+                                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
+                                                        <Chip icon={<LocalFireDepartmentIcon />} label={`${Math.round(recipe.nutritionPerServing.calories)} cal`} size="small" variant="outlined" />
+                                                        <Chip label={`${Math.round(recipe.nutritionPerServing.protein)}g protein`} size="small" variant="outlined" />
+                                                    </Box>
+                                                )}
+                                                {recipe.dietaryTags?.length > 0 && (
+                                                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                                                        {recipe.dietaryTags.slice(0, 3).map((tag) => (
+                                                            <Chip key={tag} label={tag} size="small" color="info" variant="outlined" />
+                                                        ))}
+                                                    </Box>
+                                                )}
+                                                {recipe.costPerServing > 0 && (
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                                        ${recipe.costPerServing.toFixed(2)} / serving
+                                                    </Typography>
+                                                )}
+                                            </CardContent>
+                                            <CardActions>
+                                                <Button size="small" startIcon={<BookmarkAddIcon />}
+                                                    onClick={() => { setSelectedRecipe(recipe); setAddDialogOpen(true); }}>
+                                                    Add to Cookbook
+                                                </Button>
+                                            </CardActions>
+                                        </Card>
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        </>
                     )}
             {/* Add to Cookbook Dialog */}
             <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)}>

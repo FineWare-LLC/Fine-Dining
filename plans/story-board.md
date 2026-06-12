@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-12T19:02:53Z
+Generated: 2026-06-12T19:32:17Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0329 completed: cookbook sharing failure path now rolls back orphaned cookbooks when user linkage fails, so sharing failures fail shut instead of leaving partial data.
 - story-0328 completed: cookbook sharing contract coverage now requires explicit `isPublic` flags for cookbook payloads and keeps the recipes query aligned.
 - story-0327 completed: saved recipe state now keeps the next swiper card canonical at the scale boundary without skipping the following recipe.
 - story-0326 completed: saved recipe state operator feedback now fails shut on malformed cookbook payloads and keeps empty cookbook screens accessible.
@@ -34,6 +35,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0329: Cookbook sharing failure path is done.
 - story-0328: Cookbook sharing contract coverage is done.
 - story-0327: Saved recipe state scale boundary is done.
 - story-0326: Saved recipe state operator feedback is done.

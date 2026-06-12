@@ -29,7 +29,14 @@ export const createCookbook = withErrorHandling(async (_, { userId, input }, con
     });
     await cookbook.save();
 
-    await User.findByIdAndUpdate(userId, { $push: { cookbooks: cookbook._id } });
+    try {
+        await User.findByIdAndUpdate(userId, { $push: { cookbooks: cookbook._id } });
+    } catch (error) {
+        await Cookbook.findByIdAndDelete(cookbook._id).catch((rollbackError) => {
+            console.error('Cookbook rollback failed:', rollbackError);
+        });
+        throw error;
+    }
 
     return await cookbook.populate('entries.recipe meals recipes restaurants');
 });

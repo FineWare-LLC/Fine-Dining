@@ -8,6 +8,8 @@ import {
     Restaurant as RestaurantIcon,
     Star as StarIcon,
     AccessTime as AccessTimeIcon,
+    Block as BlockIcon,
+    HelpOutline as HelpOutlineIcon,
     Directions as DirectionsIcon,
     Refresh as RefreshIcon,
     MyLocation as MyLocationIcon,
@@ -30,8 +32,12 @@ import {
     Paper,
     Divider,
 } from '@mui/material';
-import React, { useEffect, useState, useCallback } from 'react';
-import { buildNearbyRestaurantsFeedbackState } from '@/utils/nearbyRestaurantsFeedback';
+import React, { useState, useCallback } from 'react';
+import {
+    buildNearbyRestaurantsFeedbackState,
+    resolveNearbyRestaurantsErrorMessage,
+} from '@/utils/nearbyRestaurantsFeedback';
+import { buildRestaurantHoursAvailabilityState } from '@/utils/restaurantHoursAvailability';
 
 const NearbyRestaurants = () => {
     const theme = useTheme();
@@ -152,7 +158,7 @@ const NearbyRestaurants = () => {
             );
             
             if (!response.ok) {
-                throw new Error(`API request failed: ${response.status}`);
+                throw new Error(await resolveNearbyRestaurantsErrorMessage(response));
             }
             
             const data = await response.json();
@@ -160,7 +166,11 @@ const NearbyRestaurants = () => {
             setError(null);
         } catch (err) {
             console.error('Error fetching restaurants:', err);
-            setError('Could not load nearby restaurants. Please try again.');
+            setError(
+                err instanceof Error && err.message
+                    ? err.message
+                    : 'Could not load nearby restaurants. Please try again.',
+            );
         } finally {
             setLoading(false);
         }
@@ -174,11 +184,6 @@ const NearbyRestaurants = () => {
             fetchNearbyRestaurants(userLocation);
         }
     };
-
-    // Initial load
-    useEffect(() => {
-        getCurrentLocation();
-    }, [getCurrentLocation]);
 
     // Format distance
     const formatDistance = (distanceM) => {
@@ -326,6 +331,7 @@ const NearbyRestaurants = () => {
                 <Box
                     role={errorFeedback.role}
                     aria-live={errorFeedback.ariaLive}
+                    aria-busy={errorFeedback.ariaBusy}
                     sx={{ mb: 2, minHeight: errorFeedback.minHeight }}
                 >
                     <Alert severity="error">{errorFeedback.message}</Alert>
@@ -339,6 +345,7 @@ const NearbyRestaurants = () => {
                         <Box
                             role={emptyFeedback.role}
                             aria-live={emptyFeedback.ariaLive}
+                            aria-busy={emptyFeedback.ariaBusy}
                             sx={{ minHeight: emptyFeedback.minHeight }}
                         >
                             <Alert severity="info">{emptyFeedback.message}</Alert>
@@ -346,8 +353,9 @@ const NearbyRestaurants = () => {
                     ) : (
                         <>
                             <Box
-                                role="status"
-                                aria-live="polite"
+                                role={successFeedback.role}
+                                aria-live={successFeedback.ariaLive}
+                                aria-busy={successFeedback.ariaBusy}
                                 sx={{ mb: 2, minHeight: 56 }}
                             >
                                 <Typography variant="body2" color="text.secondary">
@@ -356,127 +364,143 @@ const NearbyRestaurants = () => {
                             </Box>
                             
                             <Stack spacing={2}>
-                                {places.map((place) => (
-                                    <Card
-                                        key={place.id}
-                                        sx={{
-                                            borderRadius: 2,
-                                            border: '1px solid',
-                                            borderColor: 'divider',
-                                            transition: 'all 0.2s ease',
-                                            '&:hover': {
-                                                transform: 'translateY(-1px)',
-                                                boxShadow: theme.shadows[4],
-                                                borderColor: 'primary.main',
-                                            },
-                                        }}
-                                    >
-                                        <CardContent sx={{ p: 2 }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <Box sx={{ flex: 1 }}>
-                                                    {/* Restaurant name and link */}
-                                                    <Typography
-                                                        variant="h6"
-                                                        component={place.url ? 'a' : 'div'}
-                                                        href={place.url || '#'}
-                                                        target={place.url ? '_blank' : undefined}
-                                                        rel={place.url ? 'noopener noreferrer' : undefined}
-                                                        sx={{
-                                                            fontWeight: 'bold',
-                                                            color: place.url ? 'primary.main' : 'text.primary',
-                                                            textDecoration: 'none',
-                                                            '&:hover': place.url ? { textDecoration: 'underline' } : {},
-                                                            mb: 1,
-                                                        }}
-                                                    >
-                                                        {place.name}
-                                                    </Typography>
+                                {places.map((place) => {
+                                    const hoursAvailability = buildRestaurantHoursAvailabilityState(place.open_now);
 
-                                                    {/* Address */}
-                                                    {place.address && (
-                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                            {place.address}
+                                    return (
+                                        <Card
+                                            key={place.id}
+                                            sx={{
+                                                borderRadius: 2,
+                                                border: '1px solid',
+                                                borderColor: 'divider',
+                                                transition: 'all 0.2s ease',
+                                                '&:hover': {
+                                                    transform: 'translateY(-1px)',
+                                                    boxShadow: theme.shadows[4],
+                                                    borderColor: 'primary.main',
+                                                },
+                                            }}
+                                        >
+                                            <CardContent sx={{ p: 2 }}>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <Box sx={{ flex: 1 }}>
+                                                        {/* Restaurant name and link */}
+                                                        <Typography
+                                                            variant="h6"
+                                                            component={place.url ? 'a' : 'div'}
+                                                            href={place.url || '#'}
+                                                            target={place.url ? '_blank' : undefined}
+                                                            rel={place.url ? 'noopener noreferrer' : undefined}
+                                                            sx={{
+                                                                fontWeight: 'bold',
+                                                                color: place.url ? 'primary.main' : 'text.primary',
+                                                                textDecoration: 'none',
+                                                                '&:hover': place.url ? { textDecoration: 'underline' } : {},
+                                                                mb: 1,
+                                                            }}
+                                                        >
+                                                            {place.name}
                                                         </Typography>
-                                                    )}
 
-                                                    {/* Distance and details */}
-                                                    <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                            <LocationOnIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                                                            <Typography variant="body2" color="text.secondary">
-                                                                {formatDistance(place.distance_m)}
+                                                        {/* Address */}
+                                                        {place.address && (
+                                                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                                                {place.address}
                                                             </Typography>
-                                                        </Box>
+                                                        )}
 
-                                                        {place.rating && (
+                                                        {/* Distance and details */}
+                                                        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
                                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                                <StarIcon sx={{ fontSize: 16, color: 'warning.main' }} />
-                                                                <Typography variant="body2">
-                                                                    {place.rating}
+                                                                <LocationOnIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    {formatDistance(place.distance_m)}
                                                                 </Typography>
+                                                            </Box>
+
+                                                            {place.rating && (
+                                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                                    <StarIcon sx={{ fontSize: 16, color: 'warning.main' }} />
+                                                                    <Typography variant="body2">
+                                                                        {place.rating}
+                                                                    </Typography>
+                                                                </Box>
+                                                            )}
+
+                                                            {place.price && (
+                                                                <Typography variant="body2" color="success.main" fontWeight="bold">
+                                                                    {place.price}
+                                                                </Typography>
+                                                            )}
+
+                                                            <Chip
+                                                                label={hoursAvailability.label}
+                                                                size="small"
+                                                                color={
+                                                                    hoursAvailability.color === 'default'
+                                                                        ? undefined
+                                                                        : hoursAvailability.color
+                                                                }
+                                                                variant="outlined"
+                                                                icon={
+                                                                    hoursAvailability.state === 'open' ? (
+                                                                        <AccessTimeIcon sx={{ fontSize: 14 }} />
+                                                                    ) : hoursAvailability.state === 'closed' ? (
+                                                                        <BlockIcon sx={{ fontSize: 14 }} />
+                                                                    ) : (
+                                                                        <HelpOutlineIcon sx={{ fontSize: 14 }} />
+                                                                    )
+                                                                }
+                                                                aria-label={hoursAvailability.ariaLabel}
+                                                                sx={{ minWidth: hoursAvailability.minWidth }}
+                                                            />
+                                                        </Stack>
+
+                                                        {/* Categories */}
+                                                        {place.categories && place.categories.length > 0 && (
+                                                            <Box sx={{ mt: 1 }}>
+                                                                <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                                                                    {place.categories.slice(0, 3).map((category, index) => (
+                                                                        <Chip
+                                                                            key={index}
+                                                                            label={category}
+                                                                            size="small"
+                                                                            variant="outlined"
+                                                                            sx={{ fontSize: '0.75rem', height: 24 }}
+                                                                        />
+                                                                    ))}
+                                                                </Stack>
                                                             </Box>
                                                         )}
 
-                                                        {place.price && (
-                                                            <Typography variant="body2" color="success.main" fontWeight="bold">
-                                                                {place.price}
-                                                            </Typography>
-                                                        )}
+                                                        {/* Provider source */}
+                                                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                                                            Source: {place.provider}
+                                                        </Typography>
+                                                    </Box>
 
-                                                        {place.open_now === true && (
-                                                            <Chip
-                                                                label="Open now"
-                                                                size="small"
-                                                                color="success"
-                                                                variant="outlined"
-                                                                icon={<AccessTimeIcon sx={{ fontSize: 14 }} />}
-                                                            />
-                                                        )}
-                                                    </Stack>
-
-                                                    {/* Categories */}
-                                                    {place.categories && place.categories.length > 0 && (
-                                                        <Box sx={{ mt: 1 }}>
-                                                            <Stack direction="row" spacing={0.5} flexWrap="wrap">
-                                                                {place.categories.slice(0, 3).map((category, index) => (
-                                                                    <Chip
-                                                                        key={index}
-                                                                        label={category}
-                                                                        size="small"
-                                                                        variant="outlined"
-                                                                        sx={{ fontSize: '0.75rem', height: 24 }}
-                                                                    />
-                                                                ))}
-                                                            </Stack>
-                                                        </Box>
-                                                    )}
-
-                                                    {/* Provider source */}
-                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                                                        Source: {place.provider}
-                                                    </Typography>
+                                                    {/* Directions button */}
+                                                    <IconButton
+                                                        onClick={() => handleDirections(place)}
+                                                        sx={{
+                                                            ml: 1,
+                                                            backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                                                            '&:hover': {
+                                                                backgroundColor: 'primary.main',
+                                                                color: 'white',
+                                                            },
+                                                            transition: 'all 0.2s ease',
+                                                        }}
+                                                        title="Get directions"
+                                                    >
+                                                        <DirectionsIcon sx={{ fontSize: 20 }} />
+                                                    </IconButton>
                                                 </Box>
-
-                                                {/* Directions button */}
-                                                <IconButton
-                                                    onClick={() => handleDirections(place)}
-                                                    sx={{
-                                                        ml: 1,
-                                                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                                                        '&:hover': {
-                                                            backgroundColor: 'primary.main',
-                                                            color: 'white',
-                                                        },
-                                                        transition: 'all 0.2s ease',
-                                                    }}
-                                                    title="Get directions"
-                                                >
-                                                    <DirectionsIcon sx={{ fontSize: 20 }} />
-                                                </IconButton>
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
-                                ))}
+                                            </CardContent>
+                                        </Card>
+                                    );
+                                })}
                             </Stack>
                         </>
                     )}

@@ -52,6 +52,27 @@ out center;`;
                     latitude: el.lat ?? el.center?.lat ?? null,
                     longitude: el.lon ?? el.center?.lon ?? null,
                 },
-            }));
+            }))
+            .sort((a, b) => {
+                const aName = String(a.name || '').toLowerCase();
+                const bName = String(b.name || '').toLowerCase();
+                if (aName !== bName) {
+                    return aName < bName ? -1 : 1;
+                }
+
+                const aVicinity = String(a.vicinity || '').toLowerCase();
+                const bVicinity = String(b.vicinity || '').toLowerCase();
+                if (aVicinity !== bVicinity) {
+                    return aVicinity < bVicinity ? -1 : 1;
+                }
+
+                const aPlaceId = String(a.placeId || '').toLowerCase();
+                const bPlaceId = String(b.placeId || '').toLowerCase();
+                if (aPlaceId !== bPlaceId) {
+                    return aPlaceId < bPlaceId ? -1 : 1;
+                }
+
+                return 0;
+            });
     }
 }

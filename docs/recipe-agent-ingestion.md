@@ -56,7 +56,7 @@ Every recipe must include:
 
 - `recipeName`: clear full-meal name, max 200 chars.
 - `ingredients`: at least 6 structured ingredient rows for full meals.
-- `instructions`: one string, 4-8 concise original steps separated by newlines, with no duplicated steps.
+- `instructions`: one string, 4-8 concise original steps separated by newlines, in recipe order, with no duplicated steps.
 - `servings`, `servingSize`, `prepTime`, `cookTime`, `totalTime`.
 - `nutritionPerServing`: all fields from `FullNutrition`.
 - `mealTypes`: one or more of `BREAKFAST`, `LUNCH`, `DINNER`, `SNACK`, `DESSERT`, `SIDE`.

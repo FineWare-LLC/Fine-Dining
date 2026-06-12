@@ -148,7 +148,7 @@ JSON schema:
       ]
     }
   ],
-  "instructions": "string (full instructions as a single block of text)",
+  "instructions": "string (4-8 concise original steps, one per line, in recipe order)",
   "servings": number,
   "servingSize": "string, e.g. '1 bowl (350g)'",
   "nutritionPerServing": {
@@ -189,6 +189,7 @@ Set unknown numeric nutrition values to 0. Estimate values when the page provide
 Only include allergens that are actually present in the ingredients.
 Pick mealTypes that best fit the recipe (can be multiple).
 Do not copy a source page's headnote, story, photos, or distinctive instruction prose. Extract facts, rewrite instructions into original concise operational steps, and keep the source URL for attribution/review.
+Write instructions as 4-8 concise original steps, one per line, preserving the recipe order and avoiding duplicate steps.
 Do not invent affiliate links. Use an empty affiliateUrl and monetizationStatus "PENDING_PARTNER" unless a configured partner API generated the URL.
 
 Raw page text:

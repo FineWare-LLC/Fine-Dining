@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from crawler_api import crawler_start  # noqa: E402
 from recipe_crawler import (  # noqa: E402
     CrawlQueueWriteError,
+    EXTRACTION_PROMPT,
     RecipeCrawler,
     RecipePayloadValidationError,
     RecipeStore,
@@ -137,6 +138,13 @@ NUMBERED_DUPLICATE_INSTRUCTIONS = '\n'.join([
     '4. Season lightly and serve while hot.',
 ])
 
+NUMBERED_VALID_INSTRUCTIONS = '\n'.join([
+    '1. Warm the skillet over medium heat.',
+    '2. Cook the rice until heated through.',
+    '3. Fold in the vegetables and protein.',
+    '4. Season lightly and serve while hot.',
+])
+
 
 class DummyThread:
     def __init__(self, target=None, daemon=None):
@@ -193,6 +201,35 @@ class RecipeCrawlerQueueFailureTests(unittest.TestCase):
         store.recipes.insert_one.assert_called_once()
         doc = store.recipes.insert_one.call_args.args[0]
         self.assertEqual(doc['instructions'], VALID_INSTRUCTIONS)
+
+    def test_save_recipe_accepts_numbered_instruction_steps_in_order(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+        store.recipes.insert_one.return_value = object()
+
+        payload = make_recipe_payload('Numbered Bowl')
+        payload['instructions'] = NUMBERED_VALID_INSTRUCTIONS
+
+        inserted = RecipeStore.save_recipe(
+            store,
+            payload,
+            'https://example.test/numbered-bowl',
+        )
+
+        self.assertTrue(inserted)
+        store.recipes.insert_one.assert_called_once()
+        doc = store.recipes.insert_one.call_args.args[0]
+        self.assertEqual(doc['instructions'], VALID_INSTRUCTIONS)
+
+    def test_extraction_prompt_requires_ordered_instruction_steps(self):
+        self.assertIn(
+            'instructions": "string (4-8 concise original steps, one per line, in recipe order)"',
+            EXTRACTION_PROMPT,
+        )
+        self.assertIn(
+            'Write instructions as 4-8 concise original steps, one per line, preserving the recipe order and avoiding duplicate steps.',
+            EXTRACTION_PROMPT,
+        )
 
     def test_save_recipe_trims_recipe_name_and_source_before_persistence(self):
         store = RecipeStore.__new__(RecipeStore)

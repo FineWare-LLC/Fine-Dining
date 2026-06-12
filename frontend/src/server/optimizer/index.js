@@ -1,5 +1,5 @@
 import { performance } from 'node:perf_hooks';
-import { normalizeMealPlanRequest } from './normalizer.js';
+import { buildMealPlanRequestSignature, normalizeMealPlanRequest } from './normalizer.js';
 import { fetchRecipeCatalog } from './catalog.js';
 import { buildOptimizationModel } from './modelBuilder.js';
 import { solveHighsModel, interpretModelStatus } from './solver.js';
@@ -11,19 +11,7 @@ import { writeAuditRecord } from './audit.js';
 export async function optimizeMealPlan(payload, options = {}) {
     const normalized = normalizeMealPlanRequest(payload);
 
-    const requestSignature = {
-        userId: normalized.userId,
-        horizonDays: normalized.horizonDays,
-        mealsPerDay: normalized.mealsPerDay,
-        diet: normalized.diet,
-        micros: normalized.micros,
-        allergens: normalized.allergens,
-        bannedIngredients: normalized.bannedIngredients,
-        inventory: normalized.inventory,
-        budget: normalized.budget,
-        binary: normalized.binary,
-        allowLeftovers: normalized.allowLeftovers,
-    };
+    const requestSignature = buildMealPlanRequestSignature(normalized);
 
     const catalog = await fetchRecipeCatalog(normalized);
     const modelHash = hashModelInput([

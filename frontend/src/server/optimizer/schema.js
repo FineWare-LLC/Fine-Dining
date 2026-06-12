@@ -15,10 +15,10 @@ export const MealPlanRequestSchema = z.object({
         carb_g: z.number().finite().min(0),
         fat_g: z.number().finite().min(0),
     }),
-    micros: z.record(NutrientRangeSchema).default({}),
+    micros: z.record(z.string(), NutrientRangeSchema).default({}),
     allergens: z.array(z.string()).default([]),
     banned_ingredients: z.array(z.string()).default([]),
-    preferences: z.record(z.any()).default({}),
+    preferences: z.record(z.string(), z.any()).default({}),
     inventory: z
         .array(
             z.object({
@@ -47,7 +47,7 @@ export const MealPlanResponseSchema = z.object({
     objective: z.object({
         name: z.string(),
         value: z.number().finite().optional(),
-        breakdown: z.record(z.number()).optional(),
+            breakdown: z.record(z.string(), z.number()).optional(),
     }),
     daily: z
         .array(
@@ -74,7 +74,7 @@ export const MealPlanResponseSchema = z.object({
             }),
         )
         .default([]),
-    shadow_prices: z.record(z.number()).optional(),
+    shadow_prices: z.record(z.string(), z.number()).optional(),
     diagnostics: z
         .object({
             solve_time_ms: z.number().finite().nonnegative().optional(),

@@ -1,7 +1,7 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import mongoose from 'mongoose';
 import { promises as fs } from 'fs';
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import mongoose from 'mongoose';
 import { AsvabQuestionModel } from '../../models/AsvabQuestion/index.js';
 
 export default test('seedAsvabQuestions reads questions from JSON file', async t => {
@@ -23,7 +23,15 @@ export default test('seedAsvabQuestions reads questions from JSON file', async t
   await fs.rm(tmp, { recursive: true, force: true });
 
   assert.equal(count, 1);
-  assert.deepEqual(insertTracker.mock.calls[0].arguments[0], sample);
+  assert.deepEqual(insertTracker.mock.calls[0].arguments[0], [
+    {
+      questionText: 'Q1?',
+      options: ['A','B','C','D'],
+      correctAnswer: 'A',
+      explanation: '',
+      category: '',
+    },
+  ]);
   assert.equal(connectTracker.mock.callCount(), 1);
   assert.equal(disconnectTracker.mock.callCount(), 1);
   assert.equal(deleteTracker.mock.callCount(), 1);

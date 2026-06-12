@@ -1,6 +1,8 @@
 // @ts-nocheck
 // Use global fetch (works with both browser and Node.js with global.fetch set)
 
+import { normalizeCuisineCategories } from '@/utils/cuisineClassification';
+
 export class OverpassPayloadError extends Error {
     constructor(message = 'Invalid Overpass response payload') {
         super(message);
@@ -41,18 +43,27 @@ out center;`;
 
         return data.elements
             .filter((el) => el.type === 'node' || el.center)
-            .map((el) => ({
-                placeId: `${el.type}-${el.id}`,
-                name: el.tags?.name || 'Unnamed restaurant',
-                vicinity: el.tags?.['addr:full'] || el.tags?.['addr:street'] || el.tags?.city || 'Unknown',
-                website: el.tags?.website || null,
-                rating: null,
-                userRatingsTotal: null,
-                location: {
-                    latitude: el.lat ?? el.center?.lat ?? null,
-                    longitude: el.lon ?? el.center?.lon ?? null,
-                },
-            }))
+            .map((el) => {
+                const categories = normalizeCuisineCategories(el.tags?.cuisine);
+
+                return {
+                    placeId: `${el.type}-${el.id}`,
+                    name: el.tags?.name || 'Unnamed restaurant',
+                    vicinity:
+                        el.tags?.['addr:full'] ||
+                        el.tags?.['addr:street'] ||
+                        el.tags?.city ||
+                        'Unknown',
+                    website: el.tags?.website || null,
+                    rating: null,
+                    userRatingsTotal: null,
+                    location: {
+                        latitude: el.lat ?? el.center?.lat ?? null,
+                        longitude: el.lon ?? el.center?.lon ?? null,
+                    },
+                    ...(categories.length > 0 ? { categories } : {}),
+                };
+            })
             .sort((a, b) => {
                 const aName = String(a.name || '').toLowerCase();
                 const bName = String(b.name || '').toLowerCase();

@@ -4,6 +4,10 @@ Generated: 2026-06-11T15:27:59.373Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
+## Recent Completion
+
+- story-0671 completed: CSV/JSON parity contract coverage now uses a shared processed-meals loader for both JSON and CSV snapshots.
+
 ## Claim Protocol
 
 1. Read `plans/story-board.jsonl` and `plans/story-claims/`.

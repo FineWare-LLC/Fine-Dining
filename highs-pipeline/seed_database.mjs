@@ -3,7 +3,6 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { promisify } from 'util';
-import { parse } from 'csv-parse/sync';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 
@@ -14,6 +13,10 @@ import { scrapeAllChains } from './src/fetcher/scraper.mjs';
 
 // Import database repair module
 import databaseRepair from './database-repair.mjs';
+import {
+    parseProcessedMealsCsv,
+    parseProcessedMealsJson,
+} from './src/processedMealsLoader.mjs';
 
 // Load environment variables
 dotenv.config();
@@ -132,7 +135,7 @@ async function runWebScraper() {
 
             const filePath = path.join(processedDir, latestFile);
             const fileContent = await fs.readFile(filePath, 'utf8');
-            return JSON.parse(fileContent);
+            return parseProcessedMealsJson(fileContent);
         }
 
         // Fall back to CSV if no JSON files are found
@@ -149,49 +152,7 @@ async function runWebScraper() {
 
         const filePath = path.join(processedDir, latestFile);
         const fileContent = await fs.readFile(filePath, 'utf8');
-
-        // Parse CSV manually to avoid issues with the csv-parse library
-        const lines = fileContent.split('\n');
-        const headers = lines[0].split(',');
-
-        const processedMeals = [];
-
-        for (let i = 1; i < lines.length; i++) {
-            if (!lines[i].trim()) continue;
-
-            const values = lines[i].split(',');
-            const meal = {};
-
-            for (let j = 0; j < headers.length; j++) {
-                let value = values[j];
-
-                // Try to parse numeric values
-                if (!isNaN(value) && value.trim() !== '') {
-                    value = parseFloat(value);
-                }
-
-                // Handle allergens specially
-                if (headers[j] === 'allergens') {
-                    try {
-                        // Try to parse as JSON
-                        value = JSON.parse(value);
-                        // If it's a string, try to parse it again
-                        if (typeof value === 'string') {
-                            value = JSON.parse(value);
-                        }
-                    } catch (e) {
-                        // If parsing fails, use an empty array
-                        value = [];
-                    }
-                }
-
-                meal[headers[j]] = value;
-            }
-
-            processedMeals.push(meal);
-        }
-
-        return processedMeals;
+        return parseProcessedMealsCsv(fileContent);
     }
 }
 
@@ -268,12 +229,12 @@ async function seedDatabase() {
         
     } finally {
         // Stop automatic monitoring and save repair logs
-        databaseRepair.stopAutoMonitoring();
-        await databaseRepair.saveRepairLog();
+        // databaseRepair.stopAutoMonitoring();
+        // await databaseRepair.saveRepairLog();
         
         // Show final repair statistics
-        const finalStats = databaseRepair.getRepairStats();
-        console.log('Final database repair statistics:', finalStats);
+        // const finalStats = databaseRepair.getRepairStats();
+        // console.log('Final database repair statistics:', finalStats);
         
         // Disconnect from MongoDB
         await mongoose.disconnect();
@@ -301,17 +262,17 @@ async function connectToDatabase() {
         console.log('Connected to MongoDB');
 
         // Perform database health check and repair immediately after connection
-        console.log('Performing database health check and repair...');
-        const repairSuccess = await databaseRepair.performHealthCheckAndRepair();
+        // console.log('Performing database health check and repair...');
+        // const repairSuccess = await databaseRepair.performHealthCheckAndRepair();
         
-        if (repairSuccess) {
-            console.log('Database health check and repair completed successfully');
+        // if (repairSuccess) {
+        //     console.log('Database health check and repair completed successfully');
             
-            // Start automatic monitoring (check every 30 minutes)
-            databaseRepair.startAutoMonitoring(30);
-        } else {
-            console.warn('Database repair encountered issues, but continuing with operation');
-        }
+        //     // Start automatic monitoring (check every 30 minutes)
+        //     databaseRepair.startAutoMonitoring(30);
+        // } else {
+        //     console.warn('Database repair encountered issues, but continuing with operation');
+        // }
 
     } catch (error) {
         console.error('Error connecting to MongoDB:', error);
@@ -428,6 +389,87 @@ async function createUsers() {
     }
 
     users.push(user2);
+
+    // User 3 - Food Creator
+    const user3Email = 'chef@example.com';
+    let user3 = await User.findOne({ email: user3Email });
+
+    if (!user3) {
+        console.log(`Creating food creator user with email ${user3Email}...`);
+
+        user3 = await User.create({
+            name: 'Chef Maria',
+            email: user3Email,
+            password: 'password123',
+            role: 'CREATOR',
+            nutritionTargets: {
+                calories: 2200,
+                protein: 140,
+                carbohydrates: 220,
+                fat: 80,
+            },
+            measurementSystem: 'METRIC',
+            gender: 'FEMALE',
+            foodGoals: ['Gourmet', 'Healthy', 'Seasonal'],
+            preferredCuisines: ['French', 'Italian', 'Japanese'],
+        });
+        console.log(`Created food creator user with ID ${user3._id}`);
+    }
+    users.push(user3);
+
+    // User 4 - Fitness Influencer
+    const user4Email = 'influencer@example.com';
+    let user4 = await User.findOne({ email: user4Email });
+
+    if (!user4) {
+        console.log(`Creating fitness influencer user with email ${user4Email}...`);
+
+        user4 = await User.create({
+            name: 'Fitness Guru Sam',
+            email: user4Email,
+            password: 'password123',
+            role: 'INFLUENCER',
+            nutritionTargets: {
+                calories: 2800,
+                protein: 200,
+                carbohydrates: 350,
+                fat: 70,
+            },
+            measurementSystem: 'IMPERIAL',
+            gender: 'MALE',
+            foodGoals: ['Performance', 'Strength', 'Clean Eating'],
+            preferredCuisines: ['American', 'Greek'],
+        });
+        console.log(`Created fitness influencer user with ID ${user4._id}`);
+    }
+    users.push(user4);
+
+    // User 5 - Admin User (for dev environment)
+    const user5Email = 'admin@dev.local';
+    let user5 = await User.findOne({ email: user5Email });
+
+    if (!user5) {
+        console.log(`Creating admin user with email ${user5Email}...`);
+
+        user5 = await User.create({
+            name: 'Dev Admin',
+            email: user5Email,
+            password: 'admin123',
+            role: 'ADMIN',
+            nutritionTargets: {
+                calories: 2200,
+                protein: 140,
+                carbohydrates: 250,
+                fat: 70,
+            },
+            measurementSystem: 'METRIC',
+            gender: 'MALE',
+            foodGoals: ['Balanced Diet'],
+            preferredCuisines: ['Italian', 'French'],
+        });
+        console.log(`Created admin user with ID ${user5._id}`);
+    }
+    users.push(user5);
 
     return users;
 }

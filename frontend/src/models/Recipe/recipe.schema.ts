@@ -125,6 +125,45 @@ const sourceDetailsSchema = new Schema(
     { _id: false },
 );
 
+function createRecipePriceEstimationError(reason) {
+    const error = new Error(`FAIL-SHUT: Invalid recipe price estimation data (${reason}).`);
+    error.code = 'invalidRecipePriceEstimation';
+    error.reason = reason;
+    error.isUserSafe = true;
+    return error;
+}
+
+function hasValidEstimatedCost(value) {
+    if (value === undefined || value === null) {
+        return true;
+    }
+
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) && numericValue >= 0;
+}
+
+function normalizeFiniteNumber(value) {
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue : null;
+}
+
+function resolveRecipeTotalTime(recipe) {
+    const prepTime = normalizeFiniteNumber(recipe?.prepTime) ?? 0;
+    const cookTime = normalizeFiniteNumber(recipe?.cookTime) ?? 0;
+    return Math.max(0, prepTime + cookTime);
+}
+
+function resolveRecipeCostPerServing(recipe) {
+    const servings = normalizeFiniteNumber(recipe?.servings);
+    const estimatedCost = normalizeFiniteNumber(recipe?.estimatedCost);
+
+    if (servings !== null && servings > 0 && estimatedCost !== null && estimatedCost > 0) {
+        return +(estimatedCost / servings).toFixed(2);
+    }
+
+    return 0;
+}
+
 const recipeSchema = new Schema(
     {
         recipeName: {
@@ -171,7 +210,14 @@ const recipeSchema = new Schema(
         /** Prep / cook times */
         prepTime:   { type: Number, required: true, min: 0 }, // minutes
         cookTime:   { type: Number, default: 0, min: 0 },     // minutes
-        totalTime:  { type: Number, default: 0, min: 0 },     // auto-set via pre-save
+        totalTime:  {
+            type: Number,
+            default: 0,
+            min: 0,
+            get: function () {
+                return resolveRecipeTotalTime(this);
+            },
+        },     // auto-set via pre-save
 
         difficulty: {
             type: String,
@@ -207,7 +253,14 @@ const recipeSchema = new Schema(
 
         /** Cost */
         estimatedCost: { type: Number, default: 0, min: 0 }, // total cost for all servings
-        costPerServing: { type: Number, default: 0, min: 0 }, // auto-set via pre-save
+        costPerServing: {
+            type: Number,
+            default: 0,
+            min: 0,
+            get: function () {
+                return resolveRecipeCostPerServing(this);
+            },
+        }, // auto-set via pre-save
 
         /** Authorship & ratings */
         author: {
@@ -226,13 +279,12 @@ const recipeSchema = new Schema(
 
 /** Auto-compute totalTime and costPerServing before saving */
 recipeSchema.pre('save', function (next) {
-    this.totalTime = (this.prepTime || 0) + (this.cookTime || 0);
-    const servings = Number(this.servings) || 0;
-    const estimatedCost = Number(this.estimatedCost) || 0;
+    if (!hasValidEstimatedCost(this.estimatedCost)) {
+        return next(createRecipePriceEstimationError('estimatedCost'));
+    }
 
-    this.costPerServing = servings > 0 && estimatedCost > 0
-        ? +(estimatedCost / servings).toFixed(2)
-        : 0;
+    this.totalTime = resolveRecipeTotalTime(this);
+    this.costPerServing = resolveRecipeCostPerServing(this);
     next();
 });
 

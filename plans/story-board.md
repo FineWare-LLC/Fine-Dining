@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-12T23:07:32Z
+Generated: 2026-06-12T23:32:45Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0337 completed: tag management now caches tag array length during validation, keeping large recipe tag payloads deterministic at the scale boundary.
 - story-0336 completed: tag management operator feedback now gives recipe search loading, empty, success, and error states accessible announcements without layout shift.
 - story-0335 completed: tag management now normalizes recipe tags during validation so saved and refreshed cookbook snapshots stay canonical.
 - story-0334 completed: tag management now rolls back recipe writes when post-save refreshes fail, so failed tag edits do not leave partial data behind.
@@ -42,6 +43,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0337: Tag management scale boundary is done.
 - story-0336: Tag management operator feedback is done.
 - story-0335: Tag management persistence consistency is done.
 - story-0334: Tag management failure path is done.

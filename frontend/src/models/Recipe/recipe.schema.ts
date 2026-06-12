@@ -163,8 +163,10 @@ const normalizeRecipeTags = (input) => {
 
     const seenTags = new Set();
     const normalizedTags = [];
+    const tagCount = input.length;
 
-    for (const tag of input) {
+    for (let index = 0; index < tagCount; index += 1) {
+        const tag = input[index];
         const normalizedTag = normalizeRecipeTagText(tag);
         if (!normalizedTag) {
             return null;

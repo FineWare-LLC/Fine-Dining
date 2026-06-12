@@ -84,6 +84,38 @@ VALID_INSTRUCTIONS = '\n'.join([
     'Season lightly and serve while hot.',
 ])
 
+NUTRITION_KEYS = [
+    'calories', 'protein', 'carbohydrates', 'fat', 'fiber', 'sugar',
+    'sodium', 'cholesterol', 'saturatedFat', 'transFat', 'vitaminA',
+    'vitaminC', 'vitaminD', 'vitaminE', 'vitaminK', 'vitaminB6',
+    'vitaminB12', 'thiamin', 'riboflavin', 'niacin', 'folate',
+    'calcium', 'iron', 'magnesium', 'phosphorus', 'potassium',
+    'zinc', 'selenium', 'copper', 'manganese', 'omega3', 'omega6',
+]
+
+
+def complete_nutrition():
+    return {key: 1 for key in NUTRITION_KEYS}
+
+
+def make_recipe_payload(recipe_name='Valid Bowl'):
+    return {
+        'recipeName': recipe_name,
+        'ingredients': [
+            {
+                'name': 'Rice',
+                'quantity': 2,
+                'unit': 'cup',
+                'nutrition': complete_nutrition(),
+            },
+        ],
+        'instructions': VALID_INSTRUCTIONS,
+        'servings': 2,
+        'prepTime': 10,
+        'nutritionPerServing': complete_nutrition(),
+        'sourceDetails': VALID_SOURCE_DETAILS,
+    }
+
 MESSY_INSTRUCTIONS = '\n'.join([
     '  Warm the skillet over medium heat.  ',
     '',
@@ -91,6 +123,13 @@ MESSY_INSTRUCTIONS = '\n'.join([
     '  Fold in the vegetables and protein.',
     '',
     '\tSeason lightly and serve while hot.\t',
+])
+
+NUMBERED_DUPLICATE_INSTRUCTIONS = '\n'.join([
+    '1. Warm the skillet over medium heat.',
+    '2. Warm the skillet over medium heat.',
+    '3. Fold in the vegetables and protein.',
+    '4. Season lightly and serve while hot.',
 ])
 
 
@@ -174,6 +213,36 @@ class RecipeCrawlerQueueFailureTests(unittest.TestCase):
         store.recipes.insert_one.assert_called_once()
         doc = store.recipes.insert_one.call_args.args[0]
         self.assertEqual(doc['instructions'], VALID_INSTRUCTIONS)
+
+    def test_save_recipe_rejects_numbered_duplicate_instruction_paraphrases(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+
+        with self.assertRaises(RecipePayloadValidationError) as exc_info:
+            RecipeStore.save_recipe(
+                store,
+                {
+                    'recipeName': 'Numbered Thin Bowl',
+                    'ingredients': [
+                        {
+                            'name': 'Rice',
+                            'quantity': 2,
+                            'unit': 'cup',
+                        },
+                    ],
+                    'instructions': NUMBERED_DUPLICATE_INSTRUCTIONS,
+                    'servings': 2,
+                    'prepTime': 10,
+                    'sourceDetails': VALID_SOURCE_DETAILS,
+                },
+                'https://example.test/numbered-thin-bowl',
+            )
+
+        self.assertEqual(
+            str(exc_info.exception),
+            'Invalid recipe payload: instructions.paraphraseQuality.',
+        )
+        store.recipes.insert_one.assert_not_called()
 
     def test_save_recipe_accepts_original_source_provenance_for_seeded_recipes(self):
         store = RecipeStore.__new__(RecipeStore)
@@ -372,6 +441,26 @@ class RecipeCrawlerQueueFailureTests(unittest.TestCase):
         )
         store.recipes.insert_one.assert_not_called()
 
+    def test_save_recipe_rejects_payload_missing_required_nutrition_fields(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+
+        payload = make_recipe_payload('Nutrition Bowl')
+        del payload['ingredients'][0]['nutrition']['calories']
+
+        with self.assertRaises(RecipePayloadValidationError) as exc_info:
+            RecipeStore.save_recipe(
+                store,
+                payload,
+                'https://example.test/nutrition-bowl',
+            )
+
+        self.assertEqual(
+            str(exc_info.exception),
+            'Invalid recipe payload: ingredients[0].nutrition.calories.',
+        )
+        store.recipes.insert_one.assert_not_called()
+
     def test_save_recipe_rejects_incomplete_payload_with_typed_error(self):
         store = RecipeStore.__new__(RecipeStore)
         store.recipes = mock.Mock()
@@ -393,6 +482,42 @@ class RecipeCrawlerQueueFailureTests(unittest.TestCase):
             str(exc_info.exception),
             'Invalid recipe payload: ingredients, prepTime.',
         )
+        store.recipes.insert_one.assert_not_called()
+
+    def test_save_recipe_rejects_payload_with_incomplete_nutrition_and_skips_insert(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+
+        with self.assertRaises(RecipePayloadValidationError) as exc_info:
+            RecipeStore.save_recipe(
+                store,
+                {
+                    'recipeName': 'Incomplete Nutrition Bowl',
+                    'ingredients': [
+                        {
+                            'name': 'Rice',
+                            'quantity': 2,
+                            'unit': 'cup',
+                            'nutrition': {
+                                'calories': 200,
+                                'protein': 4,
+                            },
+                        },
+                    ],
+                    'instructions': VALID_INSTRUCTIONS,
+                    'servings': 2,
+                    'prepTime': 10,
+                    'nutritionPerServing': {
+                        'calories': 100,
+                        'protein': 2,
+                    },
+                    'sourceDetails': VALID_SOURCE_DETAILS,
+                },
+                'https://example.test/incomplete-nutrition-bowl',
+            )
+
+        self.assertIn('nutritionPerServing.fat', str(exc_info.exception))
+        self.assertIn('ingredients[0].nutrition.fat', str(exc_info.exception))
         store.recipes.insert_one.assert_not_called()
 
     def test_enqueue_urls_rolls_back_partial_writes_on_dependency_failure(self):

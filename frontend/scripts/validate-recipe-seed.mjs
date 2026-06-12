@@ -36,6 +36,15 @@ function validateNutritionTotals(recipe) {
     }
 }
 
+function normalizeInstructionStep(step) {
+    return step
+        .replace(/^\s*[\-\*•]\s*/, '')
+        .replace(/^\s*(?:step\s+\d+\s*[\.\):\-]?|\d+[\.\):\-])\s*/i, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+}
+
 function validateInstructionParaphraseQuality(recipe) {
     assert(
         typeof recipe.instructions === 'string' && recipe.instructions.trim(),
@@ -46,7 +55,7 @@ function validateInstructionParaphraseQuality(recipe) {
         .split('\n')
         .map((step) => step.trim())
         .filter(Boolean);
-    const normalizedSteps = instructionSteps.map((step) => step.replace(/\s+/g, ' ').toLowerCase());
+    const normalizedSteps = instructionSteps.map((step) => normalizeInstructionStep(step));
 
     assert(
         instructionSteps.length >= 4 && instructionSteps.length <= 8,

@@ -18,10 +18,13 @@ Fine Dining recipes are MongoDB `Recipe` documents used by recipe browsing, cook
 Agents may extract factual recipe data, but must not copy expressive source content.
 
 - Keep source URLs and provenance in `source` and `sourceDetails`.
+- `sourceDetails.copyrightReviewStatus` may be `ORIGINAL` for recipes authored from verified ingredient and nutrition data, or one of `FACTS_ONLY_PARAPHRASE`, `PERMISSIONED`, `PUBLIC_DOMAIN`, `REJECTED`, or `UNKNOWN` for imported content.
 - `sourceDetails` must carry the provenance fields the crawler validates: `siteName`, `extractionMethod`, `copyrightReviewStatus`, `transformationNotes`, `nutritionSource`, and `pricingSource`. Include `authorName` when visible, and carry `originalUrl` / `canonicalUrl` through when known.
+- `npm run recipes:validate` enforces the same provenance fields across the full 100-recipe seed pack before import.
 - Prefer pages with visible recipe metadata and permissive access. Respect robots, terms, rate limits, and paywalls.
 - Do not copy headnotes, stories, author commentary, photos, or distinctive instruction prose.
-- Ingredient lists and basic cooking facts may be normalized, but instructions must be rewritten into concise original operational steps.
+- Ingredient lists and basic cooking facts may be normalized, but instructions must be rewritten into 4-8 concise original operational steps with no duplicated steps.
+- Common list prefixes such as numbered steps or bullets are normalized away before duplicate-step checks, so numbering is not a substitute for genuinely distinct instructions.
 - If the source page blocks crawling, requires a login, or has restrictive terms, mark the candidate rejected and do not ingest it.
 - Licensed/generated images only. Leave `images` empty when rights are unclear.
 
@@ -53,7 +56,7 @@ Every recipe must include:
 
 - `recipeName`: clear full-meal name, max 200 chars.
 - `ingredients`: at least 6 structured ingredient rows for full meals.
-- `instructions`: one string, 4-8 concise original steps separated by newlines.
+- `instructions`: one string, 4-8 concise original steps separated by newlines, with no duplicated steps.
 - `servings`, `servingSize`, `prepTime`, `cookTime`, `totalTime`.
 - `nutritionPerServing`: all fields from `FullNutrition`.
 - `mealTypes`: one or more of `BREAKFAST`, `LUNCH`, `DINNER`, `SNACK`, `DESSERT`, `SIDE`.

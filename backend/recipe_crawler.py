@@ -209,12 +209,25 @@ ALLOWED_COPYRIGHT_REVIEW_STATUSES = {
     'UNKNOWN',
 }
 
+INSTRUCTION_NUMBERED_PREFIX_PATTERN = re.compile(
+    r'^\s*(?:step\s+\d+\s*[\.\):\-]?|\d+[\.\):\-])\s*',
+    re.IGNORECASE,
+)
+INSTRUCTION_BULLET_PREFIX_PATTERN = re.compile(r'^\s*[\-\*•]\s*')
+
+
+def _normalize_instruction_step(step: str) -> str:
+    stripped_step = INSTRUCTION_BULLET_PREFIX_PATTERN.sub('', step)
+    stripped_step = INSTRUCTION_NUMBERED_PREFIX_PATTERN.sub('', stripped_step)
+    return re.sub(r'\s+', ' ', stripped_step).strip()
+
 
 def _normalize_instruction_steps(instructions: Optional[str]) -> List[str]:
     if not isinstance(instructions, str):
         return []
+
     return [
-        re.sub(r'\s+', ' ', step).strip()
+        _normalize_instruction_step(step)
         for step in instructions.splitlines()
         if step.strip()
     ]

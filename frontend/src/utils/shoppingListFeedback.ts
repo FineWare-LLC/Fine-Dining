@@ -2,6 +2,31 @@
 
 const GROCERY_LIST_EXPORT_FEEDBACK_MIN_HEIGHT = 56;
 const GROCERY_LIST_EXPORT_FAILURE_MESSAGE = 'We could not build your grocery list. Please refresh the planner.';
+const GROCERY_LIST_EXPORT_LOADING_TITLE = 'Preparing your grocery list export...';
+const GROCERY_LIST_EXPORT_LOADING_MESSAGE = 'Checking selected meals and export formats.';
+const GROCERY_LIST_EXPORT_EMPTY_TITLE = 'No meals selected yet.';
+const GROCERY_LIST_EXPORT_EMPTY_MESSAGE = 'Add meals to your plan before exporting a grocery list.';
+const GROCERY_LIST_EXPORT_READY_TITLE = 'Export ready.';
+const GROCERY_LIST_EXPORT_COMPLETE_TITLE = 'Export complete.';
+const GROCERY_LIST_EXPORT_ERROR_TITLE = 'Export unavailable.';
+const GROCERY_LIST_EXPORT_SURFACE_STYLES = {
+    loading: {
+        backgroundColor: 'rgba(255, 255, 255, 0.04)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+    },
+    empty: {
+        backgroundColor: 'transparent',
+        border: '1px solid transparent',
+    },
+    success: {
+        backgroundColor: 'rgba(76, 175, 80, 0.08)',
+        border: '1px solid rgba(76, 175, 80, 0.2)',
+    },
+    error: {
+        backgroundColor: 'rgba(244, 67, 54, 0.08)',
+        border: '1px solid rgba(244, 67, 54, 0.2)',
+    },
+};
 
 const GROCERY_LIST_AGGREGATION_FEEDBACK_MIN_HEIGHT = 56;
 const GROCERY_LIST_AGGREGATION_LOADING_MESSAGE = 'Building your grocery list...';
@@ -45,6 +70,37 @@ const isUserSafeError = (error) => (
         && error.message.trim(),
     )
 );
+
+const normalizeGroceryListExportCount = (value) => {
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue) || numericValue < 0) {
+        return 0;
+    }
+
+    return Math.floor(numericValue);
+};
+
+const createGroceryListExportFeedbackState = ({
+    state,
+    title = null,
+    message = null,
+    role = 'status',
+    ariaLive = 'polite',
+    ariaBusy = 'false',
+    showSpinner = false,
+    severity = 'info',
+}) => ({
+    state,
+    title,
+    message,
+    role,
+    ariaLive,
+    ariaBusy,
+    minHeight: GROCERY_LIST_EXPORT_FEEDBACK_MIN_HEIGHT,
+    showSpinner,
+    severity,
+});
 
 const createGroceryListAggregationFeedbackState = ({
     state,
@@ -106,6 +162,34 @@ const createPantryAwareGroceryListFeedbackState = ({
     error,
 });
 
+export function buildPantryAwareGroceryListFeedbackContainerStyles(state) {
+    if (state === 'error') {
+        return {
+            backgroundColor: 'rgba(244, 67, 54, 0.08)',
+            border: '1px solid rgba(244, 67, 54, 0.2)',
+        };
+    }
+
+    if (state === 'success') {
+        return {
+            backgroundColor: 'rgba(76, 175, 80, 0.08)',
+            border: '1px solid rgba(76, 175, 80, 0.2)',
+        };
+    }
+
+    if (state === 'blocked') {
+        return {
+            backgroundColor: 'rgba(243, 199, 103, 0.08)',
+            border: '1px solid rgba(243, 199, 103, 0.18)',
+        };
+    }
+
+    return {
+        backgroundColor: 'transparent',
+        border: '1px solid transparent',
+    };
+}
+
 const getPantryAwareItemCount = (pantryAwareState) => (
     Array.isArray(pantryAwareState?.items) ? pantryAwareState.items.length : 0
 );
@@ -126,21 +210,94 @@ const getPantryAwareErrorMessage = (error) => (
         : PANTRY_AWARE_GROCERY_LIST_ERROR_MESSAGE
 );
 
-export function buildGroceryListExportFeedbackState({ error = null } = {}) {
-    if (!error) {
-        return null;
+export function buildGroceryListExportFeedbackState({
+    isLoading = false,
+    selectedMealCount = 0,
+    exportedItemCount = null,
+    error = null,
+} = {}) {
+    const resolvedSelectedMealCount = normalizeGroceryListExportCount(selectedMealCount);
+    const resolvedExportedItemCount = exportedItemCount === null || exportedItemCount === undefined
+        ? null
+        : normalizeGroceryListExportCount(exportedItemCount);
+
+    if (isLoading) {
+        return createGroceryListExportFeedbackState({
+            state: 'loading',
+            title: GROCERY_LIST_EXPORT_LOADING_TITLE,
+            message: GROCERY_LIST_EXPORT_LOADING_MESSAGE,
+            ariaBusy: 'true',
+            showSpinner: true,
+            severity: 'info',
+        });
     }
 
-    return {
-        state: 'error',
-        message: isUserSafeError(error)
-            ? error.message.trim()
-            : GROCERY_LIST_EXPORT_FAILURE_MESSAGE,
-        role: 'alert',
-        ariaLive: 'assertive',
-        minHeight: GROCERY_LIST_EXPORT_FEEDBACK_MIN_HEIGHT,
-        showSpinner: false,
-    };
+    if (error) {
+        return createGroceryListExportFeedbackState({
+            state: 'error',
+            title: GROCERY_LIST_EXPORT_ERROR_TITLE,
+            message: isUserSafeError(error)
+                ? error.message.trim()
+                : GROCERY_LIST_EXPORT_FAILURE_MESSAGE,
+            role: 'alert',
+            ariaLive: 'assertive',
+            severity: 'error',
+        });
+    }
+
+    if (resolvedExportedItemCount !== null) {
+        if (resolvedExportedItemCount === 0) {
+            return createGroceryListExportFeedbackState({
+                state: 'empty',
+                title: GROCERY_LIST_EXPORT_EMPTY_TITLE,
+                message: GROCERY_LIST_EXPORT_EMPTY_MESSAGE,
+                severity: 'info',
+            });
+        }
+
+        return createGroceryListExportFeedbackState({
+            state: 'success',
+            title: GROCERY_LIST_EXPORT_COMPLETE_TITLE,
+            message: resolvedExportedItemCount === 1
+                ? 'Your grocery list includes 1 ingredient.'
+                : `Your grocery list includes ${resolvedExportedItemCount} ingredients.`,
+            severity: 'success',
+        });
+    }
+
+    if (resolvedSelectedMealCount === 0) {
+        return createGroceryListExportFeedbackState({
+            state: 'empty',
+            title: GROCERY_LIST_EXPORT_EMPTY_TITLE,
+            message: GROCERY_LIST_EXPORT_EMPTY_MESSAGE,
+            severity: 'info',
+        });
+    }
+
+    return createGroceryListExportFeedbackState({
+        state: 'success',
+        title: GROCERY_LIST_EXPORT_READY_TITLE,
+        message: resolvedSelectedMealCount === 1
+            ? 'Ready to export 1 planned meal.'
+            : `Ready to export ${resolvedSelectedMealCount} planned meals.`,
+        severity: 'success',
+    });
+}
+
+export function buildGroceryListExportFeedbackContainerStyles(state = 'empty') {
+    if (state === 'loading') {
+        return GROCERY_LIST_EXPORT_SURFACE_STYLES.loading;
+    }
+
+    if (state === 'success') {
+        return GROCERY_LIST_EXPORT_SURFACE_STYLES.success;
+    }
+
+    if (state === 'error') {
+        return GROCERY_LIST_EXPORT_SURFACE_STYLES.error;
+    }
+
+    return GROCERY_LIST_EXPORT_SURFACE_STYLES.empty;
 }
 
 export function buildGroceryListAggregationFeedbackState({

@@ -244,6 +244,34 @@ def _normalize_instruction_steps(instructions: Optional[str]) -> List[str]:
     ]
 
 
+def _normalize_duplicate_ingredient_token(value):
+    if isinstance(value, str):
+        return ' '.join(value.split()).strip().lower()
+
+    if isinstance(value, bool):
+        return 'true' if value else 'false'
+
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        if isfinite(value):
+            return format(float(value), 'g')
+        return ''
+
+    if value is None:
+        return ''
+
+    return str(value).strip().lower()
+
+
+def _ingredient_row_signature(ingredient: Dict) -> str:
+    return json.dumps([
+        _normalize_duplicate_ingredient_token(ingredient.get('name')),
+        _normalize_duplicate_ingredient_token(ingredient.get('quantity')),
+        _normalize_duplicate_ingredient_token(ingredient.get('unit')),
+        _normalize_duplicate_ingredient_token(ingredient.get('gramWeight')),
+        _normalize_duplicate_ingredient_token(ingredient.get('optional', False)),
+    ], separators=(',', ':'))
+
+
 class RecipeStore:
     """Thin wrapper around the recipes collection in MongoDB."""
 
@@ -389,6 +417,16 @@ class RecipeStore:
                     f'ingredients[{index}].nutrition',
                 )
 
+            seen_signatures = {}
+            for index, ingredient in enumerate(ingredients):
+                signature = _ingredient_row_signature(ingredient)
+                previous_index = seen_signatures.get(signature)
+                if previous_index is not None:
+                    raise RecipePayloadValidationError(
+                        f'Invalid recipe payload: duplicate ingredient row at ingredients[{previous_index}] and ingredients[{index}].',
+                    )
+                seen_signatures[signature] = index
+
         instructions = data.get('instructions')
         if not isinstance(instructions, str) or not instructions.strip():
             issues.append('instructions')
@@ -512,7 +550,7 @@ class RecipeStore:
         source_details = data.get('sourceDetails', {})
 
         return {
-            'recipeName': str(data.get('recipeName', 'Untitled'))[:200],
+            'recipeName': normalize_text(data.get('recipeName', 'Untitled'), 'Untitled')[:200],
             'ingredients': ingredients,
             'instructions': '\n'.join(_normalize_instruction_steps(data.get('instructions', ''))),
             'servings': servings,
@@ -532,7 +570,7 @@ class RecipeStore:
             'estimatedCost': estimated_cost,
             'costPerServing': cost_per_serving,
             'author': None,
-            'source': source_url,
+            'source': normalize_text(source_url, source_url),
             'sourceDetails': {
                 'originalUrl': normalize_text(source_details.get('originalUrl'), source_url),
                 'canonicalUrl': normalize_text(source_details.get('canonicalUrl'), source_url),

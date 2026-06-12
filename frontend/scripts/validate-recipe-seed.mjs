@@ -72,6 +72,82 @@ function validateIngredientNormalization(recipe) {
     });
 }
 
+function normalizeDuplicateIngredientToken(value) {
+    if (typeof value === 'string') {
+        return value.trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        return String(value);
+    }
+
+    if (typeof value === 'boolean') {
+        return value ? 'true' : 'false';
+    }
+
+    return '';
+}
+
+function normalizeDuplicateRecipeToken(value) {
+    if (typeof value === 'string') {
+        return value.trim().replace(/\s+/g, ' ');
+    }
+
+    return '';
+}
+
+function buildIngredientRowSignature(ingredient) {
+    return [
+        normalizeDuplicateIngredientToken(ingredient?.name),
+        normalizeDuplicateIngredientToken(ingredient?.quantity),
+        normalizeDuplicateIngredientToken(ingredient?.unit),
+        normalizeDuplicateIngredientToken(ingredient?.gramWeight),
+        normalizeDuplicateIngredientToken(ingredient?.optional),
+    ].join('|');
+}
+
+function buildRecipeDuplicateRowSignatures(recipe) {
+    return Array.isArray(recipe?.ingredients)
+        ? recipe.ingredients.map((ingredient) => buildIngredientRowSignature(ingredient))
+        : [];
+}
+
+function validateIngredientRowUniqueness(recipe) {
+    const seenSignatures = new Map();
+
+    recipe.ingredients.forEach((ingredient, index) => {
+        const signature = buildIngredientRowSignature(ingredient);
+        const previousIndex = seenSignatures.get(signature);
+
+        if (previousIndex !== undefined) {
+            assert(
+                false,
+                `${recipe.recipeName}: duplicate ingredient row at ingredients[${previousIndex}] and ingredients[${index}].`,
+            );
+        }
+
+        seenSignatures.set(signature, index);
+    });
+}
+
+export function validateRecipeDuplicatePersistenceConsistency(recipe, model = new RecipeModel(recipe), hydratedRecipe) {
+    const recipeLabel = recipe?.recipeName || 'Recipe';
+    const snapshot = hydratedRecipe ?? hydrateRecipeSnapshot(model);
+
+    assert(
+        Array.isArray(snapshot?.ingredients),
+        `${recipeLabel}: missing ingredients after model hydration.`,
+    );
+    assert(
+        snapshot.ingredients.length === recipe.ingredients.length,
+        `${recipeLabel}: ingredient count changed during model hydration.`,
+    );
+    assert(
+        JSON.stringify(buildRecipeDuplicateRowSignatures(snapshot)) === JSON.stringify(buildRecipeDuplicateRowSignatures(recipe)),
+        `${recipeLabel}: duplicate row signature changed during model hydration.`,
+    );
+}
+
 export function validateFullMealCompleteness(recipe) {
     const recipeLabel = recipe?.recipeName || 'Recipe';
 
@@ -286,7 +362,7 @@ export function validateRecipeSources(recipes) {
         const recipeName = typeof recipe?.recipeName === 'string' && recipe.recipeName.trim()
             ? recipe.recipeName.trim()
             : 'Recipe';
-        const source = typeof recipe?.source === 'string' ? recipe.source.trim() : '';
+        const source = normalizeDuplicateRecipeToken(recipe?.source);
 
         assert(source, `${recipeName}: missing source`);
         assert(!sources.has(source), `Duplicate recipe source: ${source}`);
@@ -315,9 +391,11 @@ export async function validateRecipeSeedPayload(payload, options = {}) {
     let ingredientLines = 0;
 
     for (const [index, recipe] of payload.recipes.entries()) {
-        assert(recipe.recipeName, 'Recipe missing recipeName');
-        assert(!names.has(recipe.recipeName), `Duplicate recipeName: ${recipe.recipeName}`);
-        names.add(recipe.recipeName);
+        const recipeName = normalizeDuplicateRecipeToken(recipe?.recipeName);
+        assert(recipeName, 'Recipe missing recipeName');
+        assert(!names.has(recipeName), `Duplicate recipeName: ${recipe.recipeName}`);
+        names.add(recipeName);
+
         validateFullMealCompleteness(recipe);
         validateInstructionParaphraseQuality(recipe);
         assert(recipe.servings >= 1, `${recipe.recipeName}: invalid servings`);
@@ -326,6 +404,7 @@ export async function validateRecipeSeedPayload(payload, options = {}) {
         validateRecipeSourceDetails(recipe, index);
 
         validateIngredientNormalization(recipe);
+        validateIngredientRowUniqueness(recipe);
         validatePurchaseOptions(recipe);
         validateNutritionCompleteness(recipe);
         validateNutritionTotals(recipe);
@@ -333,6 +412,7 @@ export async function validateRecipeSeedPayload(payload, options = {}) {
         const model = new RecipeModel(recipe);
         await model.validate();
         const hydratedRecipe = hydrateRecipeSnapshot(model);
+        validateRecipeDuplicatePersistenceConsistency(recipe, model, hydratedRecipe);
         validateRecipeFullMealPersistenceConsistency(recipe, model, hydratedRecipe);
         validateRecipeIngredientPersistenceConsistency(recipe, model, hydratedRecipe);
         validateRecipeNutritionPersistenceConsistency(recipe, model, hydratedRecipe);

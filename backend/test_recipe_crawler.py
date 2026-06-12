@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import sys
 import unittest
 from pathlib import Path
@@ -193,6 +194,25 @@ class RecipeCrawlerQueueFailureTests(unittest.TestCase):
         doc = store.recipes.insert_one.call_args.args[0]
         self.assertEqual(doc['instructions'], VALID_INSTRUCTIONS)
 
+    def test_save_recipe_trims_recipe_name_and_source_before_persistence(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+        store.recipes.insert_one.return_value = object()
+
+        payload = make_recipe_payload('  Canonical Bowl  ')
+
+        inserted = RecipeStore.save_recipe(
+            store,
+            payload,
+            '  https://example.test/canonical-bowl  ',
+        )
+
+        self.assertTrue(inserted)
+        store.recipes.insert_one.assert_called_once()
+        doc = store.recipes.insert_one.call_args.args[0]
+        self.assertEqual(doc['recipeName'], 'Canonical Bowl')
+        self.assertEqual(doc['source'], 'https://example.test/canonical-bowl')
+
     def test_save_recipe_rejects_numbered_duplicate_instruction_paraphrases(self):
         store = RecipeStore.__new__(RecipeStore)
         store.recipes = mock.Mock()
@@ -378,6 +398,26 @@ class RecipeCrawlerQueueFailureTests(unittest.TestCase):
         self.assertEqual(
             str(exc_info.exception),
             'Invalid recipe payload: ingredients[0].gramWeight.',
+        )
+        store.recipes.insert_one.assert_not_called()
+
+    def test_save_recipe_rejects_duplicate_ingredient_rows_with_user_safe_error(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+
+        payload = make_recipe_payload('Duplicate Ingredients Bowl')
+        payload['ingredients'][1] = copy.deepcopy(payload['ingredients'][0])
+
+        with self.assertRaises(RecipePayloadValidationError) as exc_info:
+            RecipeStore.save_recipe(
+                store,
+                payload,
+                'https://example.test/duplicate-ingredients-bowl',
+            )
+
+        self.assertEqual(
+            str(exc_info.exception),
+            'Invalid recipe payload: duplicate ingredient row at ingredients[0] and ingredients[1].',
         )
         store.recipes.insert_one.assert_not_called()
 

@@ -77,6 +77,30 @@ export function validateRecipeSourceProvenance(recipe) {
     }
 }
 
+export function normalizeRecipeSeedRecipe(recipe) {
+    validateRecipeSourceProvenance(recipe);
+
+    const sourceDetails = recipe?.sourceDetails ?? {};
+
+    return {
+        ...recipe,
+        recipeName: normalizeSeedText(recipe?.recipeName),
+        source: normalizeSeedText(recipe?.source),
+        sourceDetails: {
+            ...sourceDetails,
+            originalUrl: normalizeSeedText(sourceDetails.originalUrl),
+            canonicalUrl: normalizeSeedText(sourceDetails.canonicalUrl),
+            siteName: normalizeSeedText(sourceDetails.siteName),
+            authorName: normalizeSeedText(sourceDetails.authorName),
+            extractionMethod: normalizeSeedText(sourceDetails.extractionMethod),
+            copyrightReviewStatus: normalizeSeedText(sourceDetails.copyrightReviewStatus),
+            transformationNotes: normalizeSeedText(sourceDetails.transformationNotes),
+            nutritionSource: normalizeSeedText(sourceDetails.nutritionSource),
+            pricingSource: normalizeSeedText(sourceDetails.pricingSource),
+        },
+    };
+}
+
 function withAffiliateLinks(recipe) {
     return {
         ...recipe,
@@ -133,7 +157,7 @@ export async function seedRecipes(seedFile = seedPath, options = {}) {
 
     payload.recipes.forEach(validateRecipeSourceProvenance);
 
-    const recipes = payload.recipes.map(withAffiliateLinks);
+    const recipes = payload.recipes.map((recipe) => normalizeRecipeSeedRecipe(withAffiliateLinks(recipe)));
     const linkedPurchaseOptions = countLinkedPurchaseOptions(recipes);
 
     if (shouldDryRun) {

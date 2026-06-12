@@ -142,6 +142,81 @@ function hasValidEstimatedCost(value) {
     return Number.isFinite(numericValue) && numericValue >= 0;
 }
 
+const RECIPE_TAG_ERROR_MESSAGE = 'We could not read this recipe tag payload. Please refresh the recipe editor.';
+
+const normalizeRecipeTagText = (value) => {
+    if (typeof value !== 'string') {
+        return '';
+    }
+
+    return value.trim().replace(/\s+/g, ' ');
+};
+
+const normalizeRecipeTags = (input) => {
+    if (input === undefined || input === null) {
+        return [];
+    }
+
+    if (!Array.isArray(input)) {
+        return null;
+    }
+
+    const seenTags = new Set();
+    const normalizedTags = [];
+
+    for (const tag of input) {
+        const normalizedTag = normalizeRecipeTagText(tag);
+        if (!normalizedTag) {
+            return null;
+        }
+
+        const dedupeKey = normalizedTag.toLowerCase();
+        if (!seenTags.has(dedupeKey)) {
+            seenTags.add(dedupeKey);
+            normalizedTags.push(normalizedTag);
+        }
+    }
+
+    return normalizedTags;
+};
+
+export class RecipeTagValidationError extends Error {
+    constructor(message = RECIPE_TAG_ERROR_MESSAGE) {
+        super(message);
+        this.name = 'RecipeTagValidationError';
+        this.code = 'invalidPayload';
+        this.isUserSafe = true;
+    }
+
+    toJSON() {
+        return {
+            name: this.name,
+            code: this.code,
+            message: this.message,
+            isUserSafe: this.isUserSafe,
+        };
+    }
+}
+
+const createRecipeTagValidationError = () => new RecipeTagValidationError();
+
+export function validateRecipeTagsInput(input) {
+    const normalizedTags = normalizeRecipeTags(input);
+    if (normalizedTags === null) {
+        return {
+            valid: false,
+            input: null,
+            error: createRecipeTagValidationError(),
+        };
+    }
+
+    return {
+        valid: true,
+        input: normalizedTags,
+        error: null,
+    };
+}
+
 const recipeSchema = new Schema(
     {
         recipeName: {
@@ -240,6 +315,25 @@ const recipeSchema = new Schema(
     },
     { timestamps: true },
 );
+
+recipeSchema.pre('validate', function normalizeRecipeTagsHook(next) {
+    const validatedTags = validateRecipeTagsInput(this.tags);
+    if (!validatedTags.valid) {
+        if (typeof next === 'function') {
+            return next(validatedTags.error);
+        }
+
+        throw validatedTags.error;
+    }
+
+    this.tags = validatedTags.input;
+
+    if (typeof next === 'function') {
+        return next();
+    }
+
+    return undefined;
+});
 
 /** Auto-compute totalTime and costPerServing before saving */
 recipeSchema.pre('save', function (next) {

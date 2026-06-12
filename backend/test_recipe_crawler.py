@@ -45,6 +45,46 @@ class DuplicateAwareQueue:
         raise DuplicateKeyError('duplicate key error collection: crawl_queue')
 
 
+class AggregatedStatsQueue:
+    def __init__(self):
+        self.aggregate_calls = []
+        self.count_documents_calls = []
+
+    def aggregate(self, pipeline):
+        self.aggregate_calls.append(pipeline)
+        return iter(
+            [
+                {'_id': 'done', 'count': 50000},
+                {'_id': 'pending', 'count': 1250},
+                {'_id': 'failed', 'count': 7},
+                {'_id': 'processing', 'count': 12},
+                {'_id': 'archived', 'count': 99},
+            ],
+        )
+
+    def count_documents(self, query):
+        self.count_documents_calls.append(query)
+        raise AssertionError('RecipeStore.stats should aggregate queue counts in one pass')
+
+
+VALID_SOURCE_DETAILS = {
+    'siteName': 'Example Recipe Blog',
+    'authorName': 'Jane Reviewer',
+    'extractionMethod': 'json_ld',
+    'copyrightReviewStatus': 'FACTS_ONLY_PARAPHRASE',
+    'transformationNotes': 'Rewritten from structured recipe card facts.',
+    'nutritionSource': 'USDA FoodData Central',
+    'pricingSource': 'retailer search',
+}
+
+VALID_INSTRUCTIONS = '\n'.join([
+    'Warm the skillet over medium heat.',
+    'Cook the rice until heated through.',
+    'Fold in the vegetables and protein.',
+    'Season lightly and serve while hot.',
+])
+
+
 class DummyThread:
     def __init__(self, target=None, daemon=None):
         self.target = target
@@ -70,9 +110,10 @@ class RecipeCrawlerQueueFailureTests(unittest.TestCase):
                     'unit': 'cup',
                 },
             ],
-            'instructions': 'Cook and serve.',
+            'instructions': VALID_INSTRUCTIONS,
             'servings': 2,
             'prepTime': 10,
+            'sourceDetails': VALID_SOURCE_DETAILS,
         }
 
         inserted = RecipeStore.save_recipe(
@@ -86,9 +127,84 @@ class RecipeCrawlerQueueFailureTests(unittest.TestCase):
         doc = store.recipes.insert_one.call_args.args[0]
         self.assertEqual(doc['recipeName'], 'Valid Bowl')
         self.assertEqual(doc['source'], 'https://example.test/valid-bowl')
+        self.assertEqual(doc['sourceDetails']['siteName'], 'Example Recipe Blog')
+        self.assertEqual(doc['sourceDetails']['originalUrl'], 'https://example.test/valid-bowl')
+        self.assertEqual(doc['sourceDetails']['canonicalUrl'], 'https://example.test/valid-bowl')
+        self.assertEqual(doc['sourceDetails']['copyrightReviewStatus'], 'FACTS_ONLY_PARAPHRASE')
         self.assertEqual(doc['totalTime'], 10)
         self.assertEqual(doc['ingredients'][0]['name'], 'Rice')
         self.assertEqual(doc['ingredients'][0]['quantity'], 2)
+
+    def test_save_recipe_accepts_original_source_provenance_for_seeded_recipes(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+        store.recipes.insert_one.return_value = object()
+
+        payload = {
+            'recipeName': 'Original Bowl',
+            'ingredients': [
+                {
+                    'name': 'Rice',
+                    'quantity': 2,
+                    'unit': 'cup',
+                },
+            ],
+            'instructions': VALID_INSTRUCTIONS,
+            'servings': 2,
+            'prepTime': 10,
+            'sourceDetails': {
+                **VALID_SOURCE_DETAILS,
+                'copyrightReviewStatus': 'ORIGINAL',
+                'transformationNotes': 'Original recipe concept generated from verified ingredient data.',
+            },
+        }
+
+        inserted = RecipeStore.save_recipe(
+            store,
+            payload,
+            'https://example.test/original-bowl',
+        )
+
+        self.assertTrue(inserted)
+        store.recipes.insert_one.assert_called_once()
+        doc = store.recipes.insert_one.call_args.args[0]
+        self.assertEqual(doc['sourceDetails']['copyrightReviewStatus'], 'ORIGINAL')
+        self.assertEqual(doc['sourceDetails']['originalUrl'], 'https://example.test/original-bowl')
+        self.assertEqual(doc['sourceDetails']['canonicalUrl'], 'https://example.test/original-bowl')
+
+    def test_save_recipe_backfills_blank_source_provenance_urls_from_source_url(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+
+        payload = {
+            'recipeName': 'Canonical Bowl',
+            'ingredients': [
+                {
+                    'name': 'Rice',
+                    'quantity': 2,
+                    'unit': 'cup',
+                },
+            ],
+            'instructions': VALID_INSTRUCTIONS,
+            'servings': 2,
+            'prepTime': 10,
+            'sourceDetails': {
+                **VALID_SOURCE_DETAILS,
+                'originalUrl': '   ',
+                'canonicalUrl': None,
+            },
+        }
+
+        inserted = RecipeStore.save_recipe(
+            store,
+            payload,
+            'https://example.test/canonical-bowl',
+        )
+
+        self.assertTrue(inserted)
+        doc = store.recipes.insert_one.call_args.args[0]
+        self.assertEqual(doc['sourceDetails']['originalUrl'], 'https://example.test/canonical-bowl')
+        self.assertEqual(doc['sourceDetails']['canonicalUrl'], 'https://example.test/canonical-bowl')
 
     def test_save_recipe_treats_duplicate_recipe_inserts_as_idempotent(self):
         store = RecipeStore.__new__(RecipeStore)
@@ -99,24 +215,122 @@ class RecipeCrawlerQueueFailureTests(unittest.TestCase):
 
         inserted = RecipeStore.save_recipe(
             store,
-            {
-                'recipeName': 'Valid Bowl',
-                'ingredients': [
-                    {
-                        'name': 'Rice',
-                        'quantity': 2,
-                        'unit': 'cup',
-                    },
-                ],
-                'instructions': 'Cook and serve.',
-                'servings': 2,
-                'prepTime': 10,
-            },
-            'https://example.test/valid-bowl',
-        )
+                {
+                    'recipeName': 'Valid Bowl',
+                    'ingredients': [
+                        {
+                            'name': 'Rice',
+                            'quantity': 2,
+                            'unit': 'cup',
+                        },
+                    ],
+                    'instructions': VALID_INSTRUCTIONS,
+                    'servings': 2,
+                    'prepTime': 10,
+                    'sourceDetails': VALID_SOURCE_DETAILS,
+                },
+                'https://example.test/valid-bowl',
+            )
 
         self.assertFalse(inserted)
         store.recipes.insert_one.assert_called_once()
+
+    def test_save_recipe_rejects_payload_missing_source_provenance_fields(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+
+        with self.assertRaises(RecipePayloadValidationError) as exc_info:
+            RecipeStore.save_recipe(
+                store,
+                {
+                    'recipeName': 'Provenance Bowl',
+                    'ingredients': [
+                        {
+                            'name': 'Rice',
+                            'quantity': 2,
+                            'unit': 'cup',
+                        },
+                    ],
+                    'instructions': VALID_INSTRUCTIONS,
+                    'servings': 2,
+                    'prepTime': 10,
+                    'sourceDetails': {
+                        key: value
+                        for key, value in VALID_SOURCE_DETAILS.items()
+                        if key != 'siteName'
+                    },
+                },
+                'https://example.test/provenance-bowl',
+            )
+
+        self.assertEqual(
+            str(exc_info.exception),
+            'Invalid recipe payload: sourceDetails.siteName.',
+        )
+        store.recipes.insert_one.assert_not_called()
+
+    def test_save_recipe_rejects_unknown_copyright_review_status(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+
+        with self.assertRaises(RecipePayloadValidationError) as exc_info:
+            RecipeStore.save_recipe(
+                store,
+                {
+                    'recipeName': 'Invalid Bowl',
+                    'ingredients': [
+                        {
+                            'name': 'Rice',
+                            'quantity': 2,
+                            'unit': 'cup',
+                        },
+                    ],
+                    'instructions': VALID_INSTRUCTIONS,
+                    'servings': 2,
+                    'prepTime': 10,
+                    'sourceDetails': {
+                        **VALID_SOURCE_DETAILS,
+                        'copyrightReviewStatus': 'IMPROVISED',
+                    },
+                },
+                'https://example.test/invalid-bowl',
+            )
+
+        self.assertEqual(
+            str(exc_info.exception),
+            'Invalid recipe payload: sourceDetails.copyrightReviewStatus.',
+        )
+        store.recipes.insert_one.assert_not_called()
+
+    def test_save_recipe_rejects_thin_instruction_paraphrases_with_user_safe_error(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+
+        with self.assertRaises(RecipePayloadValidationError) as exc_info:
+            RecipeStore.save_recipe(
+                store,
+                {
+                    'recipeName': 'Thin Bowl',
+                    'ingredients': [
+                        {
+                            'name': 'Rice',
+                            'quantity': 2,
+                            'unit': 'cup',
+                        },
+                    ],
+                    'instructions': 'Cook and serve.',
+                    'servings': 2,
+                    'prepTime': 10,
+                    'sourceDetails': VALID_SOURCE_DETAILS,
+                },
+                'https://example.test/thin-bowl',
+            )
+
+        self.assertEqual(
+            str(exc_info.exception),
+            'Invalid recipe payload: instructions.paraphraseQuality.',
+        )
+        store.recipes.insert_one.assert_not_called()
 
     def test_save_recipe_rejects_incomplete_payload_with_typed_error(self):
         store = RecipeStore.__new__(RecipeStore)
@@ -128,8 +342,9 @@ class RecipeCrawlerQueueFailureTests(unittest.TestCase):
                 {
                     'recipeName': 'Broken Bowl',
                     'ingredients': [],
-                    'instructions': 'Stir and serve.',
+                    'instructions': VALID_INSTRUCTIONS,
                     'servings': 2,
+                    'sourceDetails': VALID_SOURCE_DETAILS,
                 },
                 'https://example.test/broken-bowl',
             )
@@ -166,6 +381,28 @@ class RecipeCrawlerQueueFailureTests(unittest.TestCase):
 
         self.assertEqual(added, 0)
         self.assertEqual(queue.calls, ['https://example.test/dup'])
+
+    def test_stats_aggregates_queue_counts_in_one_pass_for_a_large_queue(self):
+        store = RecipeStore.__new__(RecipeStore)
+        store.recipes = mock.Mock()
+        store.recipes.count_documents.return_value = 9801
+        queue = AggregatedStatsQueue()
+        store.crawl_queue = queue
+
+        stats = RecipeStore.stats(store)
+
+        self.assertEqual(
+            stats,
+            {
+                'total_recipes': 9801,
+                'queue_pending': 1250,
+                'queue_processing': 12,
+                'queue_done': 50000,
+                'queue_failed': 7,
+            },
+        )
+        self.assertEqual(queue.aggregate_calls, [[{'$group': {'_id': '$status', 'count': {'$sum': 1}}}]])
+        self.assertEqual(queue.count_documents_calls, [])
 
     def test_crawler_start_returns_user_safe_error_when_queue_is_unavailable(self):
         fake_crawler = mock.Mock()

@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0325 completed: create cookbook now returns the canonical populated snapshot that matches a refresh query.
 - story-0324 completed: cookbook failure path now surfaces recoverable loading, empty, and error states and keeps add-to-cookbook retries open.
 - story-0323 completed: saved recipe state now canonicalizes cookbook entry payloads, rejects malformed saved-recipe inputs, and populates entry recipes in cookbook queries.
 - story-0322 completed: unavailable item handling now normalizes hydrated substitution candidates into plain alternatives and rejects malformed payloads with typed user-safe errors.
@@ -30,6 +31,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0325: Saved recipe state persistence consistency is done.
 - `story-0322`: Unavailable item handling: contract coverage is done.
 - `story-0320`: Export formats: operator feedback is done.
 

@@ -31,7 +31,7 @@ export const createCookbook = withErrorHandling(async (_, { userId, input }, con
 
     await User.findByIdAndUpdate(userId, { $push: { cookbooks: cookbook._id } });
 
-    return cookbook;
+    return await cookbook.populate('entries.recipe meals recipes restaurants');
 });
 
 export const updateCookbook = withErrorHandling(async (_, { id, input }, context) => {

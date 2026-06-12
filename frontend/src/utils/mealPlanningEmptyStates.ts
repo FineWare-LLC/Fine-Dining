@@ -31,6 +31,32 @@ export class MealPlanningEmptyStateValidationError extends Error {
 const normalizeArray = (value) => (Array.isArray(value) ? value : null);
 const normalizeString = (value) => (typeof value === 'string' ? value.trim() : '');
 
+const normalizeWarnings = (warnings) => {
+    if (!Array.isArray(warnings)) {
+        return [];
+    }
+
+    const seen = new Set();
+    const normalized = [];
+
+    warnings.forEach((warning) => {
+        const message = typeof warning === 'string' ? warning.trim() : '';
+        if (!message) {
+            return;
+        }
+
+        const key = message.toLowerCase();
+        if (seen.has(key)) {
+            return;
+        }
+
+        seen.add(key);
+        normalized.push(message);
+    });
+
+    return normalized;
+};
+
 const normalizeOptimizedMealPlan = (value) => {
     if (typeof value === 'undefined' || value === null) {
         return { status: 'empty' };
@@ -239,6 +265,7 @@ export function buildMealPlanOptimizerFeedbackState({
     optimizationError = null,
     selectedMeals,
     optimizedMealPlan,
+    optimizationWarnings = null,
 } = {}) {
     const displayState = resolveMealPlanOptimizerDisplayState({
         selectedMeals,
@@ -248,6 +275,11 @@ export function buildMealPlanOptimizerFeedbackState({
     const optimizationErrorMessage = typeof optimizationError === 'string'
         ? optimizationError.trim()
         : optimizationError?.message?.trim?.() || '';
+    const warnings = normalizeWarnings(
+        optimizationWarnings
+        ?? optimizedMealPlan?.warnings
+        ?? optimizedMealPlan?.diagnostics?.warnings,
+    );
 
     if (isLoading) {
         return {
@@ -287,7 +319,7 @@ export function buildMealPlanOptimizerFeedbackState({
     }
 
     if (displayState.shouldRenderOptimizedMealPlan) {
-        return {
+        const successState = {
             kind: 'success',
             role: 'status',
             ariaLive: 'polite',
@@ -296,6 +328,12 @@ export function buildMealPlanOptimizerFeedbackState({
             showSpinner: false,
             displayState,
         };
+
+        if (warnings.length > 0) {
+            successState.warnings = warnings;
+        }
+
+        return successState;
     }
 
     return {

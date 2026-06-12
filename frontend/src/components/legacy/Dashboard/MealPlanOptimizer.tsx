@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { Box, Button, Tabs, Tab, CircularProgress, Typography, Alert } from '@mui/material';
+import { Box, Button, Tabs, Tab, CircularProgress, Typography, Alert, Stack } from '@mui/material';
 import React from 'react';
 import MealCatalog from './MealCatalog';
 import NutritionRequirementsForm from './NutritionRequirementsForm';
@@ -152,6 +152,21 @@ const MealPlanOptimizer = ({
                             textAlign: 'left',
                         }}
                     >
+                        {(mealPlanOptimizerFeedbackState.warnings || []).length > 0 && (
+                            <Stack spacing={1} sx={{ width: '100%', mb: 2 }}>
+                                {mealPlanOptimizerFeedbackState.warnings.map((warning) => (
+                                    <Alert
+                                        key={warning}
+                                        severity="warning"
+                                        role="status"
+                                        aria-live="polite"
+                                        aria-atomic="true"
+                                    >
+                                        {warning}
+                                    </Alert>
+                                ))}
+                            </Stack>
+                        )}
                         <OptimizedMealPlanDisplay mealPlan={optimizedMealPlan} />
                     </Box>
                 ) : (

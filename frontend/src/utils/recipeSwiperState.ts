@@ -4,6 +4,7 @@ export type RecipeSwiperCard = {
 };
 
 const RECIPE_SWIPER_WINDOW_ERROR_MESSAGE = 'We could not read this recipe swipe state. Please refresh the recipes page.';
+export const RECIPE_SWIPER_FAILURE_MESSAGE = 'We could not save that swipe. Please try again.';
 
 export class RecipeSwiperWindowValidationError extends Error {
     code: string;
@@ -64,6 +65,81 @@ export type RecipeSwiperWindowValidationResult = (
 const createRecipeSwiperWindowValidationError = (code: string = 'invalidPayload') => (
     new RecipeSwiperWindowValidationError(code, RECIPE_SWIPER_WINDOW_ERROR_MESSAGE)
 );
+
+const isUserSafeError = (error: unknown) => (
+    Boolean(
+        error
+        && typeof error === 'object'
+        && (error as { isUserSafe?: unknown }).isUserSafe === true
+        && typeof (error as { message?: unknown }).message === 'string'
+        && (error as { message?: string }).message?.trim(),
+    )
+);
+
+const normalizeRecipeSwiperDecisionState = (state: {
+    currentIndex?: unknown;
+    swipedRecipeIds?: unknown;
+} = {}) => {
+    const currentIndex = Number((state as { currentIndex?: unknown }).currentIndex);
+    const swipedRecipeIds = (state as { swipedRecipeIds?: unknown }).swipedRecipeIds;
+
+    return {
+        currentIndex: Number.isFinite(currentIndex) && currentIndex > 0
+            ? Math.floor(currentIndex)
+            : 0,
+        swipedRecipeIds: swipedRecipeIds instanceof Set
+            ? new Set(swipedRecipeIds)
+            : new Set<string>(),
+    };
+};
+
+export function applyRecipeSwiperDecision(
+    state: {
+        currentIndex?: number;
+        swipedRecipeIds?: Set<string>;
+    } = {},
+    recipeId?: string,
+) {
+    const normalizedState = normalizeRecipeSwiperDecisionState(state);
+    const nextSwipedRecipeIds = new Set(normalizedState.swipedRecipeIds);
+
+    if (typeof recipeId === 'string' && recipeId.trim()) {
+        nextSwipedRecipeIds.add(recipeId);
+    }
+
+    return {
+        currentIndex: normalizedState.currentIndex + 1,
+        swipedRecipeIds: nextSwipedRecipeIds,
+    };
+}
+
+export function rollbackRecipeSwiperDecision(
+    state: {
+        currentIndex?: number;
+        swipedRecipeIds?: Set<string>;
+    } = {},
+    recipeId?: string,
+) {
+    const normalizedState = normalizeRecipeSwiperDecisionState(state);
+    const nextSwipedRecipeIds = new Set(normalizedState.swipedRecipeIds);
+
+    if (typeof recipeId === 'string' && recipeId.trim()) {
+        nextSwipedRecipeIds.delete(recipeId);
+    }
+
+    return {
+        currentIndex: Math.max(0, normalizedState.currentIndex - 1),
+        swipedRecipeIds: nextSwipedRecipeIds,
+    };
+}
+
+export function buildRecipeSwiperFailureMessage(error: unknown = null) {
+    if (isUserSafeError(error)) {
+        return (error as { message: string }).message.trim();
+    }
+
+    return RECIPE_SWIPER_FAILURE_MESSAGE;
+}
 
 export function validateRecipeSwiperWindowInput(
     input: ResolveRecipeSwiperWindowArgs | null | undefined = {},

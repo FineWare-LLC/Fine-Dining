@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T02:36:05Z
+Generated: 2026-06-13T03:05:16Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0344 completed: swipe decisions now rollback optimistic state and surface a recoverable failure banner when save or reject mutations fail.
 - story-0343 completed: swipe decisions now validate canonical payloads, reject malformed state with a typed user-safe error, and fail shut on malformed swipe windows.
 - story-0342 completed: recipe search now keeps expanded indexed fields and a deterministic sort on large result sets.
 - story-0340 completed: recipe search now persists canonical filters across refresh and keeps zero prep time visible.
@@ -49,6 +50,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0344: Swipe decisions failure path is done.
 - story-0343: Swipe decisions contract coverage is done.
 - story-0342: Recipe search scale boundary is done.
 - story-0340: Recipe search persistence consistency is done.

@@ -6,7 +6,12 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import SwipeCard from './SwipeCard';
 import { SAVE_RECIPE_MUTATION, REJECT_RECIPE_MUTATION } from '@/graphql/mutations';
 import { GET_MEALS_WITH_FILTERS } from '@/graphql/queries';
-import { resolveRecipeSwiperWindow } from '@/utils/recipeSwiperState';
+import {
+  applyRecipeSwiperDecision,
+  buildRecipeSwiperFailureMessage,
+  rollbackRecipeSwiperDecision,
+  resolveRecipeSwiperWindow,
+} from '@/utils/recipeSwiperState';
 
 const RecipeSwiper = ({ 
   initialFilters = {}, 
@@ -14,8 +19,11 @@ const RecipeSwiper = ({
   onRecipeRejected,
   className = ""
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [swipedRecipes, setSwipedRecipes] = useState(new Set());
+  const [swipeState, setSwipeState] = useState({
+    currentIndex: 0,
+    swipedRecipeIds: new Set(),
+  });
+  const [swipeError, setSwipeError] = useState(null);
   const [filters, setFilters] = useState({
     page: 1,
     limit: 10,
@@ -61,11 +69,11 @@ const RecipeSwiper = ({
   const visibleCards = useMemo(() => {
     return resolveRecipeSwiperWindow({
       recipes: availableRecipes,
-      currentIndex,
-      swipedRecipeIds: swipedRecipes,
+      currentIndex: swipeState.currentIndex,
+      swipedRecipeIds: swipeState.swipedRecipeIds,
       windowSize: 3,
     });
-  }, [availableRecipes, currentIndex, swipedRecipes]);
+  }, [availableRecipes, swipeState.currentIndex, swipeState.swipedRecipeIds]);
 
   // Handle swipe actions
   const handleSwipe = useCallback(async (recipeId, action) => {
@@ -73,11 +81,9 @@ const RecipeSwiper = ({
     if (!recipe) return;
 
     // Add to swiped set immediately for UI responsiveness
-    setSwipedRecipes(prev => new Set(prev).add(recipeId));
+    setSwipeError(null);
+    setSwipeState(prev => applyRecipeSwiperDecision(prev, recipeId));
     
-    // Move to next card
-    setCurrentIndex(prev => prev + 1);
-
     // Execute the appropriate mutation
     try {
       if (action === 'like') {
@@ -91,18 +97,14 @@ const RecipeSwiper = ({
       }
     } catch (error) {
       // Revert the swipe if the mutation fails
-      setSwipedRecipes(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(recipeId);
-        return newSet;
-      });
-      setCurrentIndex(prev => prev - 1);
+      setSwipeState(prev => rollbackRecipeSwiperDecision(prev, recipeId));
+      setSwipeError(buildRecipeSwiperFailureMessage(error));
     }
   }, [availableRecipes, saveRecipe, rejectRecipe]);
 
   // Load more recipes when running low
   useEffect(() => {
-    const remainingCards = availableRecipes.length - currentIndex;
+    const remainingCards = availableRecipes.length - swipeState.currentIndex;
     const shouldLoadMore = remainingCards <= 3 && data?.getMealsWithFilters?.hasNextPage;
 
     if (shouldLoadMore && !loading) {
@@ -128,25 +130,31 @@ const RecipeSwiper = ({
 
       setFilters(prev => ({ ...prev, page: prev.page + 1 }));
     }
-  }, [currentIndex, availableRecipes.length, data?.getMealsWithFilters?.hasNextPage, loading, fetchMore, filters]);
+  }, [swipeState.currentIndex, availableRecipes.length, data?.getMealsWithFilters?.hasNextPage, loading, fetchMore, filters]);
 
   // Handle refresh
   const handleRefresh = useCallback(() => {
-    setCurrentIndex(0);
-    setSwipedRecipes(new Set());
+    setSwipeError(null);
+    setSwipeState({
+      currentIndex: 0,
+      swipedRecipeIds: new Set(),
+    });
     setFilters(prev => ({ ...prev, page: 1 }));
     refetch();
   }, [refetch]);
 
   // Handle filter updates
   const updateFilters = useCallback((newFilters) => {
+    setSwipeError(null);
     setFilters(prev => ({
       ...prev,
       ...newFilters,
       page: 1
     }));
-    setCurrentIndex(0);
-    setSwipedRecipes(new Set());
+    setSwipeState({
+      currentIndex: 0,
+      swipedRecipeIds: new Set(),
+    });
   }, []);
 
   if (loading && !data) {
@@ -201,6 +209,25 @@ const RecipeSwiper = ({
 
   return (
     <div className={`relative h-96 ${className}`}>
+      {swipeError && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="absolute left-4 right-4 top-16 z-20 rounded-xl border border-red-200 bg-red-50 px-4 py-3 shadow-lg"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-sm text-red-800">{swipeError}</p>
+            <button
+              type="button"
+              onClick={() => setSwipeError(null)}
+              className="text-sm font-medium text-red-700 hover:text-red-900"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Card Stack */}
       <AnimatePresence mode="popLayout">
         {visibleCards.map((recipe, index) => (
@@ -226,7 +253,7 @@ const RecipeSwiper = ({
       {/* Stats */}
       <div className="absolute top-4 left-4 bg-white rounded-lg px-3 py-2 shadow-lg">
         <p className="text-sm text-gray-600">
-          {currentIndex + 1} of {availableRecipes.length}
+          {swipeState.currentIndex + 1} of {availableRecipes.length}
         </p>
       </div>
 

@@ -1,12 +1,11 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T19:39:32Z
+Generated: 2026-06-13T19:38:30Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
-- story-0404 completed: notification preferences contract coverage now validates canonical defaults, rejects malformed preference payloads with a typed user-safe error, and keeps household notification snapshots aligned for refresh reads.
 - story-0400 completed: shopping ownership failure path now rolls back failed household saves and keeps the canonical household snapshot intact.
 - story-0399 completed: shopping ownership contract coverage now validates shopping ownership metadata on household updates and refresh reads while keeping the household snapshot canonical.
 - story-0398 completed: plan approval scale boundary now skips copying member and guest collections during update snapshots while keeping the large fixture deterministic.
@@ -106,7 +105,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
-- story-0404 completed: notification preferences contract coverage now validates canonical defaults, rejects malformed preference payloads with a typed user-safe error, and keeps household notification snapshots aligned for refresh reads.
+- story-0399: Shopping ownership contract coverage is done.
 - story-0396: Plan approval persistence consistency is done.
 - story-0395: Plan approval failure path is done.
 - story-0392: Child restrictions operator feedback is done.

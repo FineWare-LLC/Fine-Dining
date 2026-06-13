@@ -282,6 +282,11 @@ export default function CookbookPage() {
                                                                 {Math.round(entry.recipe.nutritionPerServing.calories)} cal · {Math.round(entry.recipe.nutritionPerServing.protein)}g protein
                                                             </Typography>
                                                         )}
+                                                        {entry.notes ? (
+                                                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                                                Notes: {entry.notes}
+                                                            </Typography>
+                                                        ) : null}
                                                     </CardContent>
                                                     <CardActions>
                                                         <IconButton size="small" onClick={() => setEditEntry({ ...entry, cookbookId: cb.id })}><EditIcon fontSize="small" /></IconButton>

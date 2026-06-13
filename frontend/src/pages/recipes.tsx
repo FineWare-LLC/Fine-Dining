@@ -64,7 +64,7 @@ const SEARCH_RECIPES = gql`
 
 const GET_COOKBOOKS = gql`
     query GetCookbooksByUser($userId: ID!) {
-        getCookbooksByUser(userId: $userId) { id name isPublic entries { recipe { id } } }
+        getCookbooksByUser(userId: $userId) { id name isPublic entries { recipe { id } notes } }
     }
 `;
 

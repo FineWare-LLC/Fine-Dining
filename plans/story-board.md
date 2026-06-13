@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0371 completed: invite refresh hydration now populates members and shared cookbook references the same way as other household reads.
 - story-0370 completed: household member invites now roll back created households and invite joins when user linking fails, so invite failures fail shut with a user-safe recovery error.
 - story-0368 completed: recipe library pagination now uses a sorted query and paginates deterministically at the admin list boundary.
 - story-0369 completed: household member invites now validate invite codes before lookup and preserve the canonical join flow.
@@ -75,6 +76,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0371: Member invites persistence consistency is done.
 - story-0370: Member invites failure path is done.
 - story-0367: Private collections scale boundary is done.
 - story-0366: Private collections operator feedback is done.

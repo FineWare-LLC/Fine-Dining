@@ -28,7 +28,9 @@ export const getHouseholdsByUser = async (_, { userId }, context) => {
 export const getHouseholdByInviteCode = async (_, { inviteCode }) => {
     const normalizedInviteCode = normalizeHouseholdInviteCode(inviteCode);
     const household = await Household.findOne({ inviteCode: normalizedInviteCode })
-        .populate('owner');
+        .populate('owner')
+        .populate('members.user')
+        .populate('sharedCookbook');
     if (!household) throw new Error('Invalid invite code');
     return household;
 };

@@ -1,12 +1,13 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T19:56:14Z
+Generated: 2026-06-13T20:06:08Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
 - story-0402 completed: shopping ownership operator feedback now exposes accessible loading, empty, success, and error states with stable layout shells.
+- story-0403 completed: shopping ownership scale boundary now keeps the large rollback snapshot from reading member or guest collections while preserving deterministic update behavior.
 - story-0401 completed: shopping ownership persistence consistency now keeps assignedAt canonical across update and refresh reads while preserving the canonical household snapshot.
 - story-0404 completed: notification preferences contract coverage now validates canonical defaults, rejects malformed preference payloads with a typed user-safe error, and keeps household notification snapshots aligned for refresh reads.
 - story-0400 completed: shopping ownership failure path now rolls back failed household saves and keeps the canonical household snapshot intact.

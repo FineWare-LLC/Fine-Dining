@@ -68,12 +68,6 @@ const snapshotHouseholdState = (household, { includeCollections = true } = {}) =
     name: household?.name,
     type: household?.type,
     owner: household?.owner,
-    members: includeCollections && Array.isArray(household?.members)
-        ? [...household.members]
-        : household?.members,
-    guests: includeCollections && Array.isArray(household?.guests)
-        ? [...household.guests]
-        : household?.guests,
     sharedCookbook: household?.sharedCookbook,
     planningDefaults: snapshotPlanningDefaults(household?.planningDefaults),
     planApproval: snapshotPlanApproval(household?.planApproval),
@@ -81,6 +75,16 @@ const snapshotHouseholdState = (household, { includeCollections = true } = {}) =
     headcount: household?.headcount,
     inviteCode: household?.inviteCode,
     updatedAt: household?.updatedAt,
+    ...(includeCollections
+        ? {
+            members: Array.isArray(household?.members)
+                ? [...household.members]
+                : household?.members,
+            guests: Array.isArray(household?.guests)
+                ? [...household.guests]
+                : household?.guests,
+        }
+        : {}),
 });
 
 const restoreHouseholdState = (household, originalState) => {

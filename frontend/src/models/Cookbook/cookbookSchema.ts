@@ -6,6 +6,7 @@ const { Schema } = mongoose;
 const ALLOWED_MEAL_TYPES = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK', 'DESSERT', 'SIDE'];
 const ALLOWED_MEAL_TYPE_INDEX = new Map(ALLOWED_MEAL_TYPES.map((mealType, index) => [mealType, index]));
 export const COOKBOOK_ENTRY_LIMIT = 10000;
+const COOKBOOK_ENTRY_NOTES_MAX_LENGTH = 500;
 const COOKBOOK_ENTRY_ERROR_MESSAGES = {
     invalidPayload: 'We could not read this saved recipe entry. Please refresh the cookbook.',
     invalidRecipeId: 'Please choose a valid recipe to add to the cookbook.',
@@ -156,7 +157,7 @@ export function validateCookbookEntryInput(input) {
             ? input.notes.trim()
             : null;
 
-    if (notes === null) {
+    if (notes === null || notes.length > COOKBOOK_ENTRY_NOTES_MAX_LENGTH) {
         return {
             valid: false,
             input: null,
@@ -243,7 +244,7 @@ const cookbookEntrySchema = new Schema(
         notes: {
             type: String,
             default: '',
-            maxlength: [500, 'Notes cannot exceed 500 characters'],
+            maxlength: [COOKBOOK_ENTRY_NOTES_MAX_LENGTH, 'Notes cannot exceed 500 characters'],
         },
         addedAt: {
             type: Date,

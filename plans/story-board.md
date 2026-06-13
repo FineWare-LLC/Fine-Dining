@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0378 completed: preference conflicts scale boundary now proves a large conflicting meal-slots payload fails fast without touching the tail entry.
 - story-0377 completed: household planning preferences operator feedback now keeps loading, empty, success, and error states accessible with stable height.
 - story-0375 completed: household planning preference conflicts now fail before mutating a household, while households without planning defaults still save cleanly.
 - story-0376 completed: household planning preferences now keep canonical planning defaults stable across refresh even when the source payload mutates.
@@ -82,6 +83,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0378: Preference conflicts scale boundary is done.
 - story-0377: Preference conflicts operator feedback is done.
 - story-0375: Preference conflicts failure path is done.
 - story-0376: Preference conflicts persistence consistency is done.

@@ -81,6 +81,7 @@ export default function CookbookPage() {
     const [editEntry, setEditEntry] = useState(null);
     const [newName, setNewName] = useState('');
     const [newDesc, setNewDesc] = useState('');
+    const [isUpdatingEntry, setIsUpdatingEntry] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
     const { data, loading, error, refetch } = useQuery(GET_COOKBOOKS, {
@@ -132,7 +133,8 @@ export default function CookbookPage() {
     };
 
     const handleUpdateEntry = async () => {
-        if (!editEntry) return;
+        if (!editEntry || isUpdatingEntry) return;
+        setIsUpdatingEntry(true);
         try {
             await updateCookbookEntryAndRefresh({
                 updateCookbookMutation: updateEntry,
@@ -146,11 +148,16 @@ export default function CookbookPage() {
                     minTimesPerWeek: editEntry.minTimesPerWeek,
                     allowedMealTypes: editEntry.allowedMealTypes,
                     preferenceScore: editEntry.preferenceScore,
+                    notes: editEntry.notes ?? '',
                 },
             });
             setSnackbar({ open: true, message: 'Entry updated', severity: 'success' });
             setEditEntry(null);
-        } catch (err) { setSnackbar({ open: true, message: err.message, severity: 'error' }); }
+        } catch (err) {
+            setSnackbar({ open: true, message: err.message, severity: 'error' });
+        } finally {
+            setIsUpdatingEntry(false);
+        }
     };
 
     return (
@@ -339,10 +346,51 @@ export default function CookbookPage() {
                             {MEAL_TYPES.map((m) => <MenuItem key={m} value={m}>{m}</MenuItem>)}
                         </Select>
                     </FormControl>
+                    <TextField
+                        fullWidth
+                        label="Notes"
+                        multiline
+                        rows={3}
+                        sx={{ mt: 2 }}
+                        value={editEntry?.notes ?? ''}
+                        onChange={(e) => setEditEntry({ ...editEntry, notes: e.target.value })}
+                        helperText={isUpdatingEntry
+                            ? 'Saving personal notes...'
+                            : (editEntry?.notes?.trim()
+                                ? 'This note stays attached to the recipe.'
+                                : 'No personal notes yet.')}
+                        disabled={isUpdatingEntry}
+                    />
+                    <Box
+                        role="status"
+                        aria-live="polite"
+                        aria-atomic="true"
+                        sx={{
+                            mt: 1,
+                            minHeight: 24,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            color: 'text.secondary',
+                        }}
+                    >
+                        {isUpdatingEntry ? (
+                            <>
+                                <CircularProgress size={16} />
+                                <Typography variant="caption">Saving personal notes...</Typography>
+                            </>
+                        ) : (
+                            <Typography variant="caption">
+                                {editEntry?.notes?.trim() ? 'This note stays attached to the recipe.' : 'No personal notes yet.'}
+                            </Typography>
+                        )}
+                    </Box>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setEditEntry(null)}>Cancel</Button>
-                    <Button variant="contained" onClick={handleUpdateEntry}>Save</Button>
+                    <Button onClick={() => setEditEntry(null)} disabled={isUpdatingEntry}>Cancel</Button>
+                    <Button variant="contained" onClick={handleUpdateEntry} disabled={isUpdatingEntry}>
+                        {isUpdatingEntry ? 'Saving...' : 'Save'}
+                    </Button>
                 </DialogActions>
             </Dialog>
 

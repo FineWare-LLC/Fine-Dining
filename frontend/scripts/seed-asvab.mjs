@@ -38,6 +38,32 @@ const parseQuestions = async (questionsFile) => {
     }
 };
 
+const normalizeQuestionPayload = (question) => {
+    const {
+        questionText,
+        options,
+        correctAnswer,
+        explanation,
+        category,
+    } = question ?? {};
+
+    const normalizedQuestion = {
+        questionText,
+        options,
+        correctAnswer,
+    };
+
+    if (explanation !== undefined) {
+        normalizedQuestion.explanation = explanation;
+    }
+
+    if (category !== undefined) {
+        normalizedQuestion.category = category;
+    }
+
+    return normalizedQuestion;
+};
+
 const validateQuestionPayload = (questions) => {
     if (!Array.isArray(questions)) {
         throw createAsvabQuestionSeedValidationError('invalidQuestionPayload');
@@ -62,7 +88,9 @@ export async function seedAsvabQuestions(
     mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/fineDiningApp',
     questionsFile = DEFAULT_QUESTIONS_FILE,
 ) {
-    const questions = validateQuestionPayload(await parseQuestions(questionsFile));
+    const questions = validateQuestionPayload(
+        (await parseQuestions(questionsFile)).map(normalizeQuestionPayload),
+    );
     let session;
 
     try {

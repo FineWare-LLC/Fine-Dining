@@ -96,6 +96,7 @@ export default function CookbookPage() {
         isLoading: loading,
         error,
         cookbooks: data?.getCookbooksByUser,
+        loadingMessage: 'Loading your private cookbooks...',
     });
 
     const handleCookbookFeedbackAction = () => {

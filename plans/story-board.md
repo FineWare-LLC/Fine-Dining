@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T13:26:24Z
+Generated: 2026-06-13T13:36:57Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0366 completed: private collections operator feedback now names private cookbooks in the loading state while keeping the shared resolved announcement and stable feedback shells.
 - story-0364 completed: private cookbook creation now fails shut with a user-safe recovery error when the save step fails after defaulting visibility to private.
 - story-0365 completed: legacy private cookbook snapshots now stay private across refreshes instead of erroring when the visibility flag is absent.
 - story-0362 completed: personal notes now stay canonical across a large cookbook snapshot without rereading untouched entries.
@@ -70,6 +71,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0366: Private collections operator feedback is done.
 - story-0364: Private collections failure path is done.
 - story-0365: Private collections persistence consistency is done.
 - story-0362: Personal notes scale boundary is done.

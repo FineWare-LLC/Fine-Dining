@@ -106,6 +106,15 @@ export const typeDefs = gql`
     }
 
     """
+    Household plan approval status enumeration.
+    Draft plans stay pending until a household owner approves them.
+    """
+    enum HouseholdPlanApprovalStatus {
+        DRAFT
+        APPROVED
+    }
+
+    """
     Restaurant price range enumeration.
     Provides a controlled vocabulary for price classification.
     """
@@ -1015,6 +1024,14 @@ export const typeDefs = gql`
     }
 
     """
+    Approval state for a household's shared meal plan.
+    """
+    type HouseholdPlanApproval {
+        status: HouseholdPlanApprovalStatus!
+        approvedAt: Date
+    }
+
+    """
     Represents a household, family, or organization that shares meal planning.
     Scales from 1 person (individual) to millions (organization).
     """
@@ -1027,6 +1044,7 @@ export const typeDefs = gql`
         guests: [HouseholdGuest]
         sharedCookbook: Cookbook
         planningDefaults: PlanningDefaults
+        planApproval: HouseholdPlanApproval
         headcount: Int
         inviteCode: String
         createdAt: Date!
@@ -1064,6 +1082,7 @@ export const typeDefs = gql`
         type: String
         sharedCookbookId: ID
         planningDefaults: PlanningDefaultsInput
+        planApproval: HouseholdPlanApprovalInput
     }
 
     """
@@ -1075,7 +1094,13 @@ export const typeDefs = gql`
         type: String
         sharedCookbookId: ID
         planningDefaults: PlanningDefaultsInput
+        planApproval: HouseholdPlanApprovalInput
         expectedUpdatedAt: Date!
+    }
+
+    input HouseholdPlanApprovalInput {
+        status: HouseholdPlanApprovalStatus!
+        approvedAt: Date
     }
 
     """

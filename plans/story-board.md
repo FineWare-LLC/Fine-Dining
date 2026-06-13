@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T18:07:29Z
+Generated: 2026-06-13T18:21:51Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0394 completed: plan approval contract coverage now validates canonical draft and approved household plan snapshots with explicit approval timestamps.
 - story-0392 completed: child restrictions operator feedback now exposes accessible loading, empty, success, and error states with stable surface styles.
 - story-0391 completed: persisted gluten_free child restrictions now round-trip through session storage and exclude non-gluten-free meal swaps after refresh.
 - story-0390 completed: child restrictions failure path now rethrows malformed child-restriction payloads from meal replacement lookups instead of silently collapsing to an empty suggestions list.

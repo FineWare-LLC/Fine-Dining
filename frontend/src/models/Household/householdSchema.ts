@@ -1,6 +1,7 @@
 // @ts-nocheck
 import mongoose from 'mongoose';
 import { validateHouseholdPlanningPreferences } from '../../utils/householdPlanningPreferences';
+import { validateHouseholdPlanApproval } from '../../utils/householdPlanApproval';
 
 const { Schema } = mongoose;
 
@@ -126,6 +127,19 @@ const householdSchema = new Schema(
             }],
         },
 
+        /** Approval state for the household's shared meal plan */
+        planApproval: {
+            status: {
+                type: String,
+                enum: ['DRAFT', 'APPROVED'],
+                default: 'DRAFT',
+            },
+            approvedAt: {
+                type: Date,
+                default: null,
+            },
+        },
+
         /** Total headcount — auto-computed from effective member and guest servings for the LP solver */
         headcount: {
             type: Number,
@@ -175,6 +189,16 @@ householdSchema.pre('save', function (next) {
         }
 
         this.planningDefaults = planningDefaultsValidation.planningDefaults;
+    }
+
+    if (this.planApproval !== undefined) {
+        const planApprovalValidation = validateHouseholdPlanApproval(this.planApproval);
+        if (!planApprovalValidation.valid) {
+            next(planApprovalValidation.error);
+            return;
+        }
+
+        this.planApproval = planApprovalValidation.planApproval;
     }
 
     this.headcount = computeHouseholdHeadcount(this.members, this.guests);

@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { withErrorHandling } from './baseImports';
 import Household from '@/models/Household/householdSchema';
 import User from '@/models/User';
+import { validateHouseholdPlanApproval } from '@/utils/householdPlanApproval';
 import { validateHouseholdPlanningPreferences } from '@/utils/householdPlanningPreferences';
 import { normalizeHouseholdServingMultiplier } from '@/utils/householdMemberServings';
 import {
@@ -48,6 +49,19 @@ const snapshotPlanningDefaults = (planningDefaults) => {
     return snapshot;
 };
 
+const snapshotPlanApproval = (planApproval) => {
+    if (!planApproval) {
+        return planApproval;
+    }
+
+    return {
+        ...planApproval,
+        approvedAt: planApproval.approvedAt instanceof Date
+            ? new Date(planApproval.approvedAt.getTime())
+            : planApproval.approvedAt,
+    };
+};
+
 const snapshotHouseholdState = (household) => ({
     name: household?.name,
     type: household?.type,
@@ -60,6 +74,7 @@ const snapshotHouseholdState = (household) => ({
         : household?.guests,
     sharedCookbook: household?.sharedCookbook,
     planningDefaults: snapshotPlanningDefaults(household?.planningDefaults),
+    planApproval: snapshotPlanApproval(household?.planApproval),
     headcount: household?.headcount,
     inviteCode: household?.inviteCode,
     updatedAt: household?.updatedAt,
@@ -89,6 +104,19 @@ const normalizePlanningDefaultsInput = (planningDefaults) => {
     }
 
     return validation.planningDefaults;
+};
+
+const normalizePlanApprovalInput = (planApproval) => {
+    if (planApproval === undefined) {
+        return undefined;
+    }
+
+    const validation = validateHouseholdPlanApproval(planApproval);
+    if (!validation.valid) {
+        throw validation.error;
+    }
+
+    return validation.planApproval;
 };
 
 const HOUSEHOLD_REVISION_ERROR_MESSAGES = {
@@ -225,14 +253,18 @@ export const updateHousehold = withErrorHandling(async (_, { id, input }, contex
         throw new Error('Household not found or unauthorized');
     }
 
-    const { planningDefaults, expectedUpdatedAt, ...updateFields } = input;
+    const { planningDefaults, planApproval, expectedUpdatedAt, ...updateFields } = input;
     assertMatchingHouseholdRevision(expectedUpdatedAt, household.updatedAt);
     const originalHouseholdState = snapshotHouseholdState(household);
     const normalizedPlanningDefaults = normalizePlanningDefaultsInput(planningDefaults);
+    const normalizedPlanApproval = normalizePlanApprovalInput(planApproval);
 
     Object.assign(household, updateFields);
     if (normalizedPlanningDefaults !== undefined) {
         household.planningDefaults = normalizedPlanningDefaults;
+    }
+    if (normalizedPlanApproval !== undefined) {
+        household.planApproval = normalizedPlanApproval;
     }
 
     try {

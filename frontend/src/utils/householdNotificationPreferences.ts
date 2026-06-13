@@ -137,6 +137,10 @@ const normalizeHouseholdNotificationPreferencesUserSnapshot = (user) => {
         return user;
     }
 
+    if (!Object.prototype.hasOwnProperty.call(user, 'preferences') || user.preferences === undefined || user.preferences === null) {
+        return user;
+    }
+
     const validation = validateHouseholdNotificationPreferences(user.preferences);
     if (!validation.valid) {
         throw validation.error;
@@ -152,20 +156,17 @@ export function normalizeHouseholdNotificationPreferencesSnapshot(household) {
     }
 
     if (household.owner !== undefined) {
-        household.owner = normalizeHouseholdNotificationPreferencesUserSnapshot(household.owner);
+        normalizeHouseholdNotificationPreferencesUserSnapshot(household.owner);
     }
 
     if (Array.isArray(household.members)) {
-        household.members = household.members.map((member) => {
+        for (const member of household.members) {
             if (!member || typeof member !== 'object' || Array.isArray(member)) {
-                return member;
+                continue;
             }
 
-            return {
-                ...member,
-                user: normalizeHouseholdNotificationPreferencesUserSnapshot(member.user),
-            };
-        });
+            normalizeHouseholdNotificationPreferencesUserSnapshot(member.user);
+        }
     }
 
     return household;

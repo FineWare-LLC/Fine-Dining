@@ -1,6 +1,7 @@
 // @ts-nocheck
 import Household from '@/models/Household/householdSchema';
 import { normalizeHouseholdPlanApproval } from '@/utils/householdPlanApproval';
+import { normalizeHouseholdNotificationPreferencesSnapshot } from '@/utils/householdNotificationPreferences';
 import { normalizeHouseholdShoppingOwnership } from '@/utils/householdShoppingOwnership';
 import { normalizeHouseholdInviteCode } from '../householdInvite';
 
@@ -20,6 +21,14 @@ const normalizeHouseholdShoppingOwnershipSnapshot = (household) => {
     return household;
 };
 
+const normalizeHouseholdReadSnapshot = (household) => (
+    normalizeHouseholdNotificationPreferencesSnapshot(
+        normalizeHouseholdShoppingOwnershipSnapshot(
+            normalizeHouseholdPlanApprovalSnapshot(household),
+        ),
+    )
+);
+
 export const getHousehold = async (_, { id }, context) => {
     if (!context.user?.userId) throw new Error('Authentication required');
     const household = await Household.findById(id)
@@ -27,7 +36,7 @@ export const getHousehold = async (_, { id }, context) => {
         .populate('members.user')
         .populate('sharedCookbook');
     if (!household) throw new Error('Household not found');
-    return normalizeHouseholdShoppingOwnershipSnapshot(normalizeHouseholdPlanApprovalSnapshot(household));
+    return normalizeHouseholdReadSnapshot(household);
 };
 
 export const getHouseholdsByUser = async (_, { userId }, context) => {
@@ -44,11 +53,11 @@ export const getHouseholdsByUser = async (_, { userId }, context) => {
 
     if (Array.isArray(households)) {
         return households.map((household) => (
-            normalizeHouseholdShoppingOwnershipSnapshot(normalizeHouseholdPlanApprovalSnapshot(household))
+            normalizeHouseholdReadSnapshot(household)
         ));
     }
 
-    return normalizeHouseholdShoppingOwnershipSnapshot(normalizeHouseholdPlanApprovalSnapshot(households));
+    return normalizeHouseholdReadSnapshot(households);
 };
 
 export const getHouseholdByInviteCode = async (_, { inviteCode }) => {
@@ -58,5 +67,5 @@ export const getHouseholdByInviteCode = async (_, { inviteCode }) => {
         .populate('members.user')
         .populate('sharedCookbook');
     if (!household) throw new Error('Invalid invite code');
-    return normalizeHouseholdShoppingOwnershipSnapshot(normalizeHouseholdPlanApprovalSnapshot(household));
+    return normalizeHouseholdReadSnapshot(household);
 };

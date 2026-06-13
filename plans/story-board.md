@@ -10,6 +10,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 - story-0403 completed: shopping ownership scale boundary now keeps the large rollback snapshot from reading member or guest collections while preserving deterministic update behavior.
 - story-0401 completed: shopping ownership persistence consistency now keeps assignedAt canonical across update and refresh reads while preserving the canonical household snapshot.
 - story-0404 completed: notification preferences contract coverage now validates canonical defaults, rejects malformed preference payloads with a typed user-safe error, and keeps household notification snapshots aligned for refresh reads.
+- story-0405 completed: notification preferences failure path now fails shut on malformed nested preferences at the household read boundary without changing the existing snapshot shape.
 - story-0400 completed: shopping ownership failure path now rolls back failed household saves and keeps the canonical household snapshot intact.
 - story-0399 completed: shopping ownership contract coverage now validates shopping ownership metadata on household updates and refresh reads while keeping the household snapshot canonical.
 - story-0398 completed: plan approval scale boundary now skips copying member and guest collections during update snapshots while keeping the large fixture deterministic.

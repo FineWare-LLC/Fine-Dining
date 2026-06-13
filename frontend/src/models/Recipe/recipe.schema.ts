@@ -343,20 +343,20 @@ recipeSchema.pre('save', function (next) {
         return next(createRecipePriceEstimationError('estimatedCost'));
     }
 
-    this.totalTime = (this.prepTime || 0) + (this.cookTime || 0);
-    const servings = Number(this.servings) || 0;
-    const estimatedCost = this.estimatedCost === undefined || this.estimatedCost === null
-        ? 0
-        : Number(this.estimatedCost);
-
-    this.costPerServing = servings > 0 && estimatedCost > 0
-        ? +(estimatedCost / servings).toFixed(2)
-        : 0;
+    this.totalTime = resolveRecipeTotalTime(this);
+    this.costPerServing = resolveRecipeCostPerServing(this);
     next();
 });
 
-/** Text index for full-text search across name, tags, cuisine */
-recipeSchema.index({ recipeName: 'text', cuisine: 'text', tags: 'text' });
+/** Text index for full-text search across recipe, ingredient, and diet fields */
+recipeSchema.index({
+    recipeName: 'text',
+    cuisine: 'text',
+    tags: 'text',
+    dietaryTags: 'text',
+    'ingredients.name': 'text',
+    'ingredients.canonicalName': 'text',
+});
 recipeSchema.index({ 'allergens': 1 });
 recipeSchema.index({ 'dietaryTags': 1 });
 recipeSchema.index({ 'mealTypes': 1 });

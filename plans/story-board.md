@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T01:31:40Z
+Generated: 2026-06-13T02:04:18Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0342 completed: recipe search now keeps expanded indexed fields and a deterministic sort on large result sets.
 - story-0340 completed: recipe search now persists canonical filters across refresh and keeps zero prep time visible.
 - story-0341 completed: recipe search operator feedback now keeps loading, empty, success, and error shells accessible without layout shift.
 - story-0339 completed: recipe search now fails shut with a user-safe recovery error when catalog lookup fails.
@@ -47,6 +48,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0342: Recipe search scale boundary is done.
 - story-0340: Recipe search persistence consistency is done.
 - story-0341: Recipe search operator feedback is done.
 - story-0339: Recipe search failure path is done.

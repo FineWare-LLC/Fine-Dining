@@ -45,5 +45,6 @@ export const searchRecipes = withErrorHandling(async (_parent, { keyword }, cont
         throw validatedKeyword.error;
     }
 
-    return RecipeModel.find(validatedKeyword.input.filter);
+    return RecipeModel.find(validatedKeyword.input.filter)
+        .sort({ recipeName: 1, _id: 1 });
 });

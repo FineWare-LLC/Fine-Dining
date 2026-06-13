@@ -75,9 +75,15 @@ test('validateRecipeSearchInput rejects malformed search payloads with a typed, 
 
 test('searchRecipes forwards the normalized recipe search filter to RecipeModel.find', async () => {
     let capturedFilter = null;
+    let capturedSort = null;
     const findMock = mock.method(RecipeModel, 'find', (filter) => {
         capturedFilter = filter;
-        return [];
+        return {
+            sort: (sortSpec) => {
+                capturedSort = sortSpec;
+                return [];
+            },
+        };
     });
 
     try {
@@ -85,6 +91,7 @@ test('searchRecipes forwards the normalized recipe search filter to RecipeModel.
 
         assert.deepEqual(recipes, []);
         assert.deepEqual(capturedFilter, validateRecipeSearchInput('lentil').input.filter);
+        assert.deepEqual(capturedSort, { recipeName: 1, _id: 1 });
     } finally {
         restoreMock(findMock);
     }

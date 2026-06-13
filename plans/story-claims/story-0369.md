@@ -1,0 +1,32 @@
+# story-0369
+- title: Member invites: contract coverage
+- owner: fine-dining-monitor
+- claimedAt: 2026-06-13T14:02:55Z
+- branch: codex/story-0369-member-invites-contract-coverage
+- model: GPT-5
+- reasoning effort: high
+- intended test plan:
+  - `npm --prefix frontend run test:unit`
+  - `npm --prefix frontend run typecheck`
+- files expected to change:
+  - `frontend/src/graphql/resolvers/mutations/householdMutations.ts`
+  - `frontend/src/graphql/resolvers/queries/householdQueries.ts`
+  - `frontend/src/tests/unit/household-planning.member-invites.contract-coverage.test.ts`
+  - `plans/story-board.jsonl`
+  - `plans/story-board.md`
+- note: validate household invite codes once, share the check across lookup and join, and keep failures user-safe.
+
+## Outcome
+- status: done
+- verification:
+  - `NODE_OPTIONS=--import=./src/utils/serverOptimizerAliasRegister.mjs npm exec -- tsx --test src/tests/unit/household-planning.member-invites.contract-coverage.test.ts`
+  - `npm --prefix frontend run test:unit`
+  - `npm --prefix frontend run typecheck`
+- changed files:
+  - `frontend/src/graphql/resolvers/householdInvite.ts`
+  - `frontend/src/graphql/resolvers/mutations/householdMutations.ts`
+  - `frontend/src/graphql/resolvers/queries/householdQueries.ts`
+  - `frontend/src/tests/unit/household-planning.member-invites.contract-coverage.test.ts`
+  - `plans/story-board.jsonl`
+  - `plans/story-board.md`
+- follow-up stories added: none

@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0379 completed: shared plan editing contract coverage now requires a matching `expectedUpdatedAt` token before household saves proceed.
 - story-0378 completed: preference conflicts scale boundary now proves a large conflicting meal-slots payload fails fast without touching the tail entry.
 - story-0377 completed: household planning preferences operator feedback now keeps loading, empty, success, and error states accessible with stable height.
 - story-0375 completed: household planning preference conflicts now fail before mutating a household, while households without planning defaults still save cleanly.
@@ -83,6 +84,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0379: Shared plan editing contract coverage is done.
 - story-0378: Preference conflicts scale boundary is done.
 - story-0377: Preference conflicts operator feedback is done.
 - story-0375: Preference conflicts failure path is done.

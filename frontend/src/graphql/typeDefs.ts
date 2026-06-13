@@ -1064,11 +1064,16 @@ export const typeDefs = gql`
         planningDefaults: PlanningDefaultsInput
     }
 
+    """
+    Update input that must carry the household's last seen updatedAt value so
+    concurrent edits fail safe instead of overwriting a newer save.
+    """
     input UpdateHouseholdInput {
         name: String
         type: String
         sharedCookbookId: ID
         planningDefaults: PlanningDefaultsInput
+        expectedUpdatedAt: Date!
     }
 
     """

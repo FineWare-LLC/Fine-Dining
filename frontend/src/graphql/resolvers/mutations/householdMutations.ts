@@ -40,6 +40,64 @@ const normalizePlanningDefaultsInput = (planningDefaults) => {
     return validation.planningDefaults;
 };
 
+const HOUSEHOLD_REVISION_ERROR_MESSAGES = {
+    invalidPayload: 'We could not read the latest household plan. Please refresh and try again.',
+    staleHouseholdRevision: 'This household was updated by someone else. Please refresh and try again.',
+};
+
+export class HouseholdRevisionValidationError extends Error {
+    constructor(code, message = HOUSEHOLD_REVISION_ERROR_MESSAGES.invalidPayload) {
+        super(message);
+        this.name = 'HouseholdRevisionValidationError';
+        this.code = code;
+        this.isUserSafe = true;
+    }
+
+    toJSON() {
+        return {
+            name: this.name,
+            code: this.code,
+            message: this.message,
+            isUserSafe: this.isUserSafe,
+        };
+    }
+}
+
+const createHouseholdRevisionValidationError = (code) => (
+    new HouseholdRevisionValidationError(
+        code,
+        HOUSEHOLD_REVISION_ERROR_MESSAGES[code]
+            || HOUSEHOLD_REVISION_ERROR_MESSAGES.invalidPayload,
+    )
+);
+
+const normalizeHouseholdRevisionTimestamp = (value) => {
+    if (value instanceof Date) {
+        const timestamp = value.getTime();
+        return Number.isNaN(timestamp) ? null : new Date(timestamp);
+    }
+
+    if (typeof value === 'string' || typeof value === 'number') {
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    return null;
+};
+
+const assertMatchingHouseholdRevision = (expectedUpdatedAt, currentUpdatedAt) => {
+    const normalizedExpectedUpdatedAt = normalizeHouseholdRevisionTimestamp(expectedUpdatedAt);
+    const normalizedCurrentUpdatedAt = normalizeHouseholdRevisionTimestamp(currentUpdatedAt);
+
+    if (!normalizedExpectedUpdatedAt || !normalizedCurrentUpdatedAt) {
+        throw createHouseholdRevisionValidationError('invalidPayload');
+    }
+
+    if (normalizedExpectedUpdatedAt.getTime() !== normalizedCurrentUpdatedAt.getTime()) {
+        throw createHouseholdRevisionValidationError('staleHouseholdRevision');
+    }
+};
+
 export const createHousehold = withErrorHandling(async (_, { input }, context) => {
     if (!context.user?.userId) throw new Error('Authentication required');
     const {userId} = context.user;
@@ -84,7 +142,8 @@ export const updateHousehold = withErrorHandling(async (_, { id, input }, contex
         throw new Error('Household not found or unauthorized');
     }
 
-    const { planningDefaults, ...updateFields } = input;
+    const { planningDefaults, expectedUpdatedAt, ...updateFields } = input;
+    assertMatchingHouseholdRevision(expectedUpdatedAt, household.updatedAt);
     const normalizedPlanningDefaults = normalizePlanningDefaultsInput(planningDefaults);
 
     Object.assign(household, updateFields);

@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0338 completed: recipe search now broadens library search across ingredient, diet, and time fields with typed validation.
 - story-0337 completed: tag management now caches tag array length during validation, keeping large recipe tag payloads deterministic at the scale boundary.
 - story-0336 completed: tag management operator feedback now gives recipe search loading, empty, success, and error states accessible announcements without layout shift.
 - story-0335 completed: tag management now normalizes recipe tags during validation so saved and refreshed cookbook snapshots stay canonical.

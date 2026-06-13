@@ -4,6 +4,7 @@ import { withErrorHandling } from './baseImports';
 import Household from '@/models/Household/householdSchema';
 import User from '@/models/User';
 import { validateHouseholdPlanningPreferences } from '@/utils/householdPlanningPreferences';
+import { normalizeHouseholdServingMultiplier } from '@/utils/householdMemberServings';
 import {
     HouseholdInvitePersistenceError,
     normalizeHouseholdInviteCode,
@@ -293,7 +294,7 @@ export const addHouseholdMember = withErrorHandling(async (_, { householdId, mem
     household.members.push({
         user: member.userId,
         role: member.role || 'MEMBER',
-        servingMultiplier: member.servingMultiplier || 1,
+        servingMultiplier: normalizeHouseholdServingMultiplier(member.servingMultiplier),
         includeInPlanning: member.includeInPlanning !== false,
     });
     await household.save();
@@ -326,7 +327,10 @@ export const addHouseholdGuest = withErrorHandling(async (_, { householdId, gues
     const isMember = household.members.some((m) => m.user.toString() === context.user.userId);
     if (!isMember) throw new Error('Only household members can add guests');
 
-    household.guests.push(guest);
+    household.guests.push({
+        ...guest,
+        servingMultiplier: normalizeHouseholdServingMultiplier(guest.servingMultiplier),
+    });
     await household.save();
     return household.populate('owner members.user sharedCookbook');
 });

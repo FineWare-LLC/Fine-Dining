@@ -1,0 +1,23 @@
+# Story Claim
+
+- storyId: story-0425
+- title: User support lookup: contract coverage
+- owner: fine-dining-monitor
+- claimedAt: 2026-06-13T22:55:50Z
+- completedAt: 2026-06-13T22:59:16Z
+- branch: codex/story-0425-user-support-lookup-contract-coverage
+- model: GPT-5
+- reasoningEffort: standard
+- outcome: done
+- intendedTestPlan: add a focused unit contract test for safe user search input and run frontend unit tests plus typecheck
+- verification:
+  - npx tsx --test src/tests/unit/admin-operations.user-support-lookup.contract-coverage.test.ts
+  - npm run test:unit
+  - npm run typecheck
+- changedFiles:
+  - frontend/src/utils/userSearch.ts
+  - frontend/src/models/User/user.statics.ts
+  - frontend/src/models/User/userSchema.ts
+  - frontend/src/graphql/resolvers/queries/userQueries.ts
+  - frontend/src/tests/unit/admin-operations.user-support-lookup.contract-coverage.test.ts
+- followUpStories: none

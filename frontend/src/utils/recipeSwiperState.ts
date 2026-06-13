@@ -32,7 +32,7 @@ export type ResolveRecipeSwiperWindowArgs = {
     currentIndex?: number;
     swipedRecipeIds?: {
         has: (recipeId: string) => boolean;
-    };
+    } | Set<string> | string[];
     windowSize?: number;
 };
 
@@ -76,6 +76,26 @@ const isUserSafeError = (error: unknown) => (
     )
 );
 
+const normalizeRecipeSwiperDecisionIdSet = (value: unknown) => {
+    if (value instanceof Set || Array.isArray(value)) {
+        return new Set(value);
+    }
+
+    return new Set<string>();
+};
+
+const normalizeRecipeSwiperWindowIdCollection = (value: unknown) => {
+    if (value instanceof Set || Array.isArray(value)) {
+        return new Set(value);
+    }
+
+    if (value != null && typeof (value as { has?: unknown }).has === 'function') {
+        return value as { has: (recipeId: string) => boolean };
+    }
+
+    return new Set<string>();
+};
+
 const normalizeRecipeSwiperDecisionState = (state: {
     currentIndex?: unknown;
     swipedRecipeIds?: unknown;
@@ -87,16 +107,14 @@ const normalizeRecipeSwiperDecisionState = (state: {
         currentIndex: Number.isFinite(currentIndex) && currentIndex > 0
             ? Math.floor(currentIndex)
             : 0,
-        swipedRecipeIds: swipedRecipeIds instanceof Set
-            ? new Set(swipedRecipeIds)
-            : new Set<string>(),
+        swipedRecipeIds: normalizeRecipeSwiperDecisionIdSet(swipedRecipeIds),
     };
 };
 
 export function applyRecipeSwiperDecision(
     state: {
         currentIndex?: number;
-        swipedRecipeIds?: Set<string>;
+        swipedRecipeIds?: Set<string> | string[];
     } = {},
     recipeId?: string,
 ) {
@@ -116,7 +134,7 @@ export function applyRecipeSwiperDecision(
 export function rollbackRecipeSwiperDecision(
     state: {
         currentIndex?: number;
-        swipedRecipeIds?: Set<string>;
+        swipedRecipeIds?: Set<string> | string[];
     } = {},
     recipeId?: string,
 ) {
@@ -175,7 +193,11 @@ export function validateRecipeSwiperWindowInput(
         };
     }
 
-    if (swipedRecipeIds != null && typeof swipedRecipeIds.has !== 'function') {
+    if (
+        swipedRecipeIds != null
+        && !Array.isArray(swipedRecipeIds)
+        && typeof swipedRecipeIds.has !== 'function'
+    ) {
         return {
             valid: false,
             input: null,
@@ -188,7 +210,7 @@ export function validateRecipeSwiperWindowInput(
         input: {
             recipes,
             currentIndex: Math.floor(currentIndex),
-            swipedRecipeIds,
+            swipedRecipeIds: normalizeRecipeSwiperWindowIdCollection(swipedRecipeIds),
             windowSize: Math.floor(windowSize),
         },
         error: null,

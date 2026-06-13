@@ -37,6 +37,9 @@ import {
     normalizeRecipeSearchFilters,
     persistRecipeSearchFilters,
 } from '@/utils/recipeSearchState';
+import {
+    addRecipeToCookbookAndRefresh,
+} from '@/utils/cookbookImport';
 import storage from '@/utils/storage';
 
 const SEARCH_RECIPES = gql`
@@ -173,11 +176,11 @@ export default function RecipesPage() {
 
     const handleAddToCookbook = async (cookbookId) => {
         try {
-            await addRecipeMutation({
-                variables: {
-                    cookbookId,
-                    entry: { recipeId: selectedRecipe.id, desiredServings: 1, preferenceScore: 5 },
-                },
+            await addRecipeToCookbookAndRefresh({
+                addRecipeMutation,
+                refetchCookbooks,
+                cookbookId,
+                recipeId: selectedRecipe.id,
             });
             setSnackbar({ open: true, message: 'Recipe added to cookbook!', severity: 'success' });
             setAddDialogOpen(false);

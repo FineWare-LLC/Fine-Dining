@@ -7,6 +7,7 @@ import {
     normalizeHouseholdPlanApproval,
     validateHouseholdPlanApproval,
 } from '@/utils/householdPlanApproval';
+import { deferHouseholdGuestSnapshotNormalization } from '@/utils/householdGuest';
 import { validateHouseholdNotificationPreferences } from '@/utils/householdNotificationPreferences';
 import { validateHouseholdPlanningPreferences } from '@/utils/householdPlanningPreferences';
 import { normalizeHouseholdServingMultiplier } from '@/utils/householdMemberServings';
@@ -378,6 +379,7 @@ export const updateHousehold = withErrorHandling(async (_, { id, input }, contex
         await household.populate('owner');
         await household.populate('members.user');
         await household.populate('sharedCookbook');
+        deferHouseholdGuestSnapshotNormalization(household);
         return normalizeHouseholdOwnerNotificationPreferencesSnapshot(household);
     } catch (error) {
         if (typeof household.depopulate === 'function') {

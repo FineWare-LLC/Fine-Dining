@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T21:04:24Z
+Generated: 2026-06-13T21:20:15Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0411 completed: guest meals persistence consistency now returns canonical guest snapshots from the update response without eager guest traversal, while refresh reads stay canonical and the scale-boundary tests remain green.
 - story-0410 completed: guest meals failure path now rolls back failed populate writes and surfaces a typed persistence error while keeping temporary guests canonical.
 - story-0409 completed: guest meals contract coverage now canonicalizes temporary guest payloads on add and read paths while rejecting malformed guest constraints with a typed user-safe error.
 - story-0408 completed: notification preferences scale boundary now caches the household members collection during normalization so large households stay deterministic without rereading the members getter.

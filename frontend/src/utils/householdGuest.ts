@@ -110,6 +110,25 @@ const buildInvalidGuestResult = (code = 'invalidPayload') => ({
     error: createHouseholdGuestValidationError(code),
 });
 
+const normalizeHouseholdGuestList = (guests) => {
+    if (!Array.isArray(guests)) {
+        return guests;
+    }
+
+    const normalizedGuests = [];
+
+    for (const guest of guests) {
+        const validation = validateHouseholdGuest(guest);
+        if (!validation.valid) {
+            throw validation.error;
+        }
+
+        normalizedGuests.push(validation.guest);
+    }
+
+    return normalizedGuests;
+};
+
 export function validateHouseholdGuest(guest) {
     if (!isPlainObject(guest)) {
         return buildInvalidGuestResult();
@@ -186,13 +205,62 @@ export function normalizeHouseholdGuestSnapshot(household) {
         return household;
     }
 
-    for (const guest of household.guests) {
-        const validation = validateHouseholdGuest(guest);
-        if (!validation.valid) {
-            throw validation.error;
+    const normalizedGuests = normalizeHouseholdGuestList(household.guests);
+    if (normalizedGuests !== household.guests) {
+        household.guests = normalizedGuests;
+    }
+
+    return household;
+}
+
+const findGuestCollectionDescriptor = (household) => {
+    let current = household;
+
+    while (current && typeof current === 'object') {
+        const descriptor = Object.getOwnPropertyDescriptor(current, 'guests');
+        if (descriptor) {
+            return descriptor;
         }
 
-        Object.assign(guest, validation.guest);
+        current = Object.getPrototypeOf(current);
+    }
+
+    return null;
+};
+
+export function deferHouseholdGuestSnapshotNormalization(household) {
+    if (!household || typeof household !== 'object' || Array.isArray(household)) {
+        return household;
+    }
+
+    const descriptor = findGuestCollectionDescriptor(household);
+    if (!descriptor || descriptor.configurable === false) {
+        return household;
+    }
+
+    const readGuests = () => (
+        typeof descriptor.get === 'function'
+            ? descriptor.get.call(household)
+            : descriptor.value
+    );
+
+    try {
+        Object.defineProperty(household, 'guests', {
+            configurable: true,
+            enumerable: descriptor.enumerable ?? true,
+            get() {
+                const normalizedGuests = normalizeHouseholdGuestList(readGuests());
+                Object.defineProperty(household, 'guests', {
+                    configurable: true,
+                    enumerable: descriptor.enumerable ?? true,
+                    writable: true,
+                    value: normalizedGuests,
+                });
+                return normalizedGuests;
+            },
+        });
+    } catch {
+        return household;
     }
 
     return household;

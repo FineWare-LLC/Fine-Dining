@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0364 completed: private cookbook creation now fails shut with a user-safe recovery error when the save step fails after defaulting visibility to private.
 - story-0362 completed: personal notes now stay canonical across a large cookbook snapshot without rereading untouched entries.
 - story-0361 completed: personal notes now expose editor save-state feedback and note editing in the cookbook dialog.
 - story-0360 completed: personal notes now stay attached across refresh and render on cookbook cards.
@@ -68,6 +69,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0364: Private collections failure path is done.
 - story-0362: Personal notes scale boundary is done.
 - story-0361: Personal notes operator feedback is done.
 - story-0360: Personal notes persistence consistency is done.

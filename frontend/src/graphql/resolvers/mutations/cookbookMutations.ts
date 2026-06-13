@@ -35,6 +35,7 @@ const restoreCookbookEntryState = (entry, snapshot) => {
 };
 
 const COOKBOOK_IMPORT_PERSISTENCE_ERROR_MESSAGE = 'We could not save this recipe to your cookbook. Please try again.';
+const COOKBOOK_CREATION_PERSISTENCE_ERROR_MESSAGE = 'We could not save your cookbook. Please try again.';
 const COOKBOOK_ENTRY_PERSISTENCE_ERROR_MESSAGE = 'We could not save this recipe revision. Please try again.';
 const COOKBOOK_IMPORT_SIZE_LIMIT_ERROR_MESSAGE = (
     `This cookbook already has the maximum of ${COOKBOOK_ENTRY_LIMIT.toLocaleString('en-US')} recipes. Remove one before importing another.`
@@ -133,6 +134,36 @@ export class CookbookImportPersistenceError extends Error {
     }
 }
 
+export class CookbookCreationPersistenceError extends Error {
+    constructor(reason, cause = null) {
+        super(COOKBOOK_CREATION_PERSISTENCE_ERROR_MESSAGE);
+        this.name = 'CookbookCreationPersistenceError';
+        this.code = 'cookbookCreationPersistenceFailed';
+        this.reason = reason;
+        this.isUserSafe = true;
+
+        if (cause) {
+            this.cause = cause;
+        }
+    }
+
+    toJSON() {
+        const serialized = {
+            name: this.name,
+            code: this.code,
+            message: this.message,
+            reason: this.reason,
+            isUserSafe: this.isUserSafe,
+        };
+
+        if (Object.prototype.hasOwnProperty.call(this, 'cause')) {
+            serialized.cause = this.cause;
+        }
+
+        return serialized;
+    }
+}
+
 export class CookbookEntryPersistenceError extends Error {
     constructor(reason, cause = null) {
         super(COOKBOOK_ENTRY_PERSISTENCE_ERROR_MESSAGE);
@@ -206,7 +237,15 @@ export const createCookbook = withErrorHandling(async (_, { userId, input }, con
         user: userId,
         ...validatedInput.input,
     });
-    await cookbook.save();
+    try {
+        await cookbook.save();
+    } catch (error) {
+        if (error?.isUserSafe) {
+            throw error;
+        }
+
+        throw new CookbookCreationPersistenceError('save', error);
+    }
 
     try {
         await User.findByIdAndUpdate(userId, { $push: { cookbooks: cookbook._id } });

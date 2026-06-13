@@ -12,6 +12,50 @@ const resolvePatchValue = (nextValue, currentValue) => (
 );
 
 const resolveRecipeId = (recipe) => recipe?._id?.toString?.() || recipe?.id || recipe?.toString?.() || '';
+const COOKBOOK_IMPORT_PERSISTENCE_ERROR_MESSAGE = 'We could not save this recipe to your cookbook. Please try again.';
+
+const restoreCookbookEntries = (cookbook, originalEntries) => {
+    if (!cookbook || !Array.isArray(originalEntries)) {
+        return;
+    }
+
+    if (Array.isArray(cookbook.entries) && typeof cookbook.entries.splice === 'function') {
+        cookbook.entries.splice(0, cookbook.entries.length, ...originalEntries);
+        return;
+    }
+
+    cookbook.entries = [...originalEntries];
+};
+
+export class CookbookImportPersistenceError extends Error {
+    constructor(reason, cause = null) {
+        super(COOKBOOK_IMPORT_PERSISTENCE_ERROR_MESSAGE);
+        this.name = 'CookbookImportPersistenceError';
+        this.code = 'cookbookImportPersistenceFailed';
+        this.reason = reason;
+        this.isUserSafe = true;
+
+        if (cause) {
+            this.cause = cause;
+        }
+    }
+
+    toJSON() {
+        const serialized = {
+            name: this.name,
+            code: this.code,
+            message: this.message,
+            reason: this.reason,
+            isUserSafe: this.isUserSafe,
+        };
+
+        if (Object.prototype.hasOwnProperty.call(this, 'cause')) {
+            serialized.cause = this.cause;
+        }
+
+        return serialized;
+    }
+}
 
 export const createCookbook = withErrorHandling(async (_, { userId, input }, context) => {
     if (!context.user?.userId || context.user.userId !== userId) {
@@ -65,6 +109,7 @@ export const addRecipeToCookbook = withErrorHandling(async (_, { cookbookId, ent
     const validatedEntry = validateCookbookImportEntryInput(entry);
     if (!validatedEntry.valid) throw validatedEntry.error;
 
+    const originalEntries = cookbook.entries.slice();
     const alreadyExists = cookbook.entries.some(
         (e) => e.recipe.toString() === validatedEntry.input.recipeId,
     );
@@ -79,7 +124,17 @@ export const addRecipeToCookbook = withErrorHandling(async (_, { cookbookId, ent
         preferenceScore: validatedEntry.input.preferenceScore,
         notes: validatedEntry.input.notes,
     });
-    await cookbook.save();
+    try {
+        await cookbook.save();
+    } catch (error) {
+        restoreCookbookEntries(cookbook, originalEntries);
+
+        if (error?.isUserSafe) {
+            throw error;
+        }
+
+        throw new CookbookImportPersistenceError('save', error);
+    }
     return cookbook.populate('entries.recipe meals recipes restaurants');
 });
 

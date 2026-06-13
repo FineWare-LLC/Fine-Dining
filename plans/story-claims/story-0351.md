@@ -1,0 +1,21 @@
+# story-0351
+
+- title: Collection import: operator feedback
+- owner: fine-dining-monitor
+- claimedAt: 2026-06-13T06:29:08Z
+- completedAt: 2026-06-13T06:31:42Z
+- branch: codex/story-0351-collection-import-operator-feedback
+- model: GPT-5
+- reasoning: medium
+- outcome: done
+- intendedTestPlan: `npm --prefix frontend run test:unit` then `npm --prefix frontend run typecheck`
+- verification:
+  - `npx tsx --test src/tests/unit/cookbook-library.collection-import.operator-feedback.test.ts`
+  - `npm --prefix frontend run test:unit`
+  - `npm --prefix frontend run typecheck`
+- changedFiles:
+  - `frontend/src/tests/unit/cookbook-library.collection-import.operator-feedback.test.ts`
+  - `plans/story-board.jsonl`
+  - `plans/story-board.md`
+- followUpStories: none
+- notes: Verified the collection import feedback shells and kept layout stable.

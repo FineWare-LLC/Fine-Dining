@@ -12,14 +12,36 @@ export async function seedAsvabQuestions(
     mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/fineDiningApp',
     questionsFile = DEFAULT_QUESTIONS_FILE,
 ) {
-    await mongoose.connect(mongoUri);
-    await AsvabQuestionModel.deleteMany({});
     const data = await readFile(questionsFile, 'utf8');
     const questions = JSON.parse(data);
-    await AsvabQuestionModel.insertMany(questions);
-    const count = await AsvabQuestionModel.countDocuments();
-    await mongoose.disconnect();
-    return count;
+    let session;
+
+    try {
+        await mongoose.connect(mongoUri);
+        session = await mongoose.startSession();
+        await session.startTransaction();
+
+        await AsvabQuestionModel.deleteMany({}, { session });
+        await AsvabQuestionModel.insertMany(questions, { session });
+
+        const count = await AsvabQuestionModel.countDocuments({}, { session });
+        await session.commitTransaction();
+        return count;
+    } catch (error) {
+        if (session) {
+            try {
+                await session.abortTransaction();
+            } catch {
+                // Keep the original seed failure as the primary error.
+            }
+        }
+        throw error;
+    } finally {
+        if (session) {
+            await session.endSession();
+        }
+        await mongoose.disconnect();
+    }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

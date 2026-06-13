@@ -1,0 +1,28 @@
+# story-0331
+
+- storyId: story-0331
+- title: Cookbook sharing: operator feedback
+- owner: fine-dining-monitor
+- claimedAt: 2026-06-12T20:27:37Z
+- branch: codex/story-0331-cookbook-sharing-operator-feedback
+- intendedTestPlan: `npm --prefix frontend run test:unit` then `npm --prefix frontend run typecheck`
+- expectedFiles:
+  - `frontend/src/pages/recipes.tsx`
+  - `frontend/src/components/RecipeSwiper/RecipeSwiper.tsx`
+  - `frontend/src/pages/cookbook.tsx`
+  - `frontend/src/models/Cookbook/cookbookSchema.ts`
+  - `frontend/src/tests/unit/cookbook-library.cookbook-sharing.operator-feedback.test.ts`
+- completedAt: 2026-06-12T20:39:23Z
+- outcome: done
+- verification:
+  - `cd frontend && NODE_OPTIONS=--import=./src/utils/serverOptimizerAliasRegister.mjs npx tsx --test src/tests/unit/cookbook-library.cookbook-sharing.operator-feedback.test.ts`
+  - `npm --prefix frontend run test:unit`
+  - `npm --prefix frontend run typecheck`
+- changedFiles:
+  - `frontend/src/utils/cookbookFeedback.ts`
+  - `frontend/src/pages/cookbook.tsx`
+  - `frontend/src/pages/recipes.tsx`
+  - `frontend/src/tests/unit/cookbook-library.cookbook-sharing.operator-feedback.test.ts`
+  - `plans/story-board.jsonl`
+  - `plans/story-board.md`
+- followUpStories: none

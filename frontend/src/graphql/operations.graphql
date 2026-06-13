@@ -585,6 +585,7 @@ query FindNearbyRestaurants(
       vicinity
       rating
       userRatingsTotal
+      categories
       location {
         latitude
         longitude

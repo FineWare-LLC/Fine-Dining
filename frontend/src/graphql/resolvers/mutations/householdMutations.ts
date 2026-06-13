@@ -7,6 +7,7 @@ import {
     normalizeHouseholdPlanApproval,
     validateHouseholdPlanApproval,
 } from '@/utils/householdPlanApproval';
+import { validateHouseholdNotificationPreferences } from '@/utils/householdNotificationPreferences';
 import { validateHouseholdPlanningPreferences } from '@/utils/householdPlanningPreferences';
 import { normalizeHouseholdServingMultiplier } from '@/utils/householdMemberServings';
 import {
@@ -62,6 +63,37 @@ const snapshotPlanApproval = (planApproval) => {
     }
 
     return normalizeHouseholdPlanApproval(planApproval);
+};
+
+const normalizeHouseholdOwnerNotificationPreferencesSnapshot = (household) => {
+    if (!household || typeof household !== 'object' || Array.isArray(household)) {
+        return household;
+    }
+
+    if (
+        household.owner === undefined
+        || household.owner === null
+        || typeof household.owner !== 'object'
+        || Array.isArray(household.owner)
+    ) {
+        return household;
+    }
+
+    if (
+        !Object.prototype.hasOwnProperty.call(household.owner, 'preferences')
+        || household.owner.preferences === undefined
+        || household.owner.preferences === null
+    ) {
+        return household;
+    }
+
+    const validation = validateHouseholdNotificationPreferences(household.owner.preferences);
+    if (!validation.valid) {
+        throw validation.error;
+    }
+
+    household.owner.preferences = validation.preferences;
+    return household;
 };
 
 const snapshotHouseholdState = (household, { includeCollections = true } = {}) => ({
@@ -312,7 +344,8 @@ export const updateHousehold = withErrorHandling(async (_, { id, input }, contex
     try {
         await household.populate('owner');
         await household.populate('members.user');
-        return await household.populate('sharedCookbook');
+        await household.populate('sharedCookbook');
+        return normalizeHouseholdOwnerNotificationPreferencesSnapshot(household);
     } catch (error) {
         if (typeof household.depopulate === 'function') {
             household.depopulate('owner members.user sharedCookbook');

@@ -1,6 +1,9 @@
 // @ts-nocheck
 import { withErrorHandling } from './baseImports';
-import Cookbook, { validateCookbookEntryInput } from '@/models/Cookbook/cookbookSchema';
+import Cookbook, {
+    validateCookbookEntryInput,
+    validateCookbookImportEntryInput,
+} from '@/models/Cookbook/cookbookSchema';
 import User from '@/models/User';
 import { assertResourceLimit } from '@/services/usageLimits';
 
@@ -59,7 +62,7 @@ export const addRecipeToCookbook = withErrorHandling(async (_, { cookbookId, ent
         throw new Error('Cookbook not found or unauthorized');
     }
 
-    const validatedEntry = validateCookbookEntryInput(entry);
+    const validatedEntry = validateCookbookImportEntryInput(entry);
     if (!validatedEntry.valid) throw validatedEntry.error;
 
     const alreadyExists = cookbook.entries.some(

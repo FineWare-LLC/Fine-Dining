@@ -7,6 +7,7 @@ const ALLOWED_MEAL_TYPES = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK', 'DESSERT', 
 const ALLOWED_MEAL_TYPE_INDEX = new Map(ALLOWED_MEAL_TYPES.map((mealType, index) => [mealType, index]));
 const COOKBOOK_ENTRY_ERROR_MESSAGES = {
     invalidPayload: 'We could not read this saved recipe entry. Please refresh the cookbook.',
+    invalidRecipeId: 'Please choose a valid recipe to add to the cookbook.',
     missingRecipeId: 'Please choose a recipe to save.',
     invalidDesiredServings: 'Please enter a valid serving amount.',
     invalidMaxTimesPerWeek: 'Please enter a valid weekly limit.',
@@ -175,6 +176,24 @@ export function validateCookbookEntryInput(input) {
         },
         error: null,
     };
+}
+
+export function validateCookbookImportEntryInput(input) {
+    const validatedEntry = validateCookbookEntryInput(input);
+
+    if (!validatedEntry.valid) {
+        return validatedEntry;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(validatedEntry.input.recipeId)) {
+        return {
+            valid: false,
+            input: null,
+            error: createCookbookEntryValidationError('invalidRecipeId'),
+        };
+    }
+
+    return validatedEntry;
 }
 
 /**

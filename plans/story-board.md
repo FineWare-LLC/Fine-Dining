@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0418 completed: catalog review queue feedback now exposes stable loading, empty, success, and error shells in the crawler control panel, with a focused admin unit test and a passing crawler persistence browser check.
 - story-0425 completed: user support lookup now validates safe search identifiers, escapes regex metacharacters, and sorts results deterministically through the shared User search static.
 - story-0423 completed: crawler control panel operator feedback now exposes stable loading, empty, success, and error states with matching accessibility shells and a focused admin test.
 - story-0417 completed: catalog review queue persistence consistency now hydrates and rehydrates the crawler draft through localStorage on the live `/admin/crawler` rewrite, keeping refresh reads canonical and the import request aligned.

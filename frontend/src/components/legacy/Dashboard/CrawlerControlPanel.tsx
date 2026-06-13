@@ -26,6 +26,10 @@ import {
     buildCrawlerQueueFeedbackContainerStyles,
     buildCrawlerQueueFeedbackState,
 } from '@/utils/crawlerQueueFeedback';
+import {
+    buildCatalogReviewQueueFeedbackContainerStyles,
+    buildCatalogReviewQueueFeedbackState,
+} from '@/utils/catalogReviewQueueFeedback';
 import { getCrawlerApiBaseUrl } from '@/utils/crawlerApi';
 import {
     loadRestaurantCrawlerRunDraft,
@@ -296,6 +300,14 @@ export default function CrawlerControlPanel() {
         errorMessage: fetchError,
     });
     const recipeFeedbackStyles = buildCrawlerQueueFeedbackContainerStyles(recipeFeedback.state);
+    const catalogReviewQueueFeedback = buildCatalogReviewQueueFeedbackState({
+        isLoading: loading,
+        sources,
+        errorMessage: fetchError,
+    });
+    const catalogReviewQueueFeedbackStyles = buildCatalogReviewQueueFeedbackContainerStyles(
+        catalogReviewQueueFeedback.state,
+    );
 
     return (
         <ProtectedRoute allowedRoles={['ADMIN']}>
@@ -446,6 +458,41 @@ export default function CrawlerControlPanel() {
                                         fontWeight: 700,
                                     }}
                                 />
+                            </Box>
+                            <Box
+                                id="catalog-review-queue-feedback"
+                                role={catalogReviewQueueFeedback.role}
+                                aria-live={catalogReviewQueueFeedback.ariaLive}
+                                aria-atomic="true"
+                                aria-busy={catalogReviewQueueFeedback.ariaBusy}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    minHeight: catalogReviewQueueFeedback.minHeight,
+                                    mb: 2,
+                                    px: 2,
+                                    py: 1.5,
+                                    borderRadius: 1.5,
+                                    ...catalogReviewQueueFeedbackStyles,
+                                }}
+                            >
+                                {catalogReviewQueueFeedback.showSpinner && (
+                                    <CircularProgress size={16} sx={{ color: '#2E7D32' }} />
+                                )}
+                                <Typography
+                                    variant="body2"
+                                    sx={{
+                                        color: catalogReviewQueueFeedback.state === 'error'
+                                            ? '#B3261E'
+                                            : catalogReviewQueueFeedback.state === 'success'
+                                                ? '#1B5E20'
+                                                : '#5A675D',
+                                        fontWeight: 700,
+                                    }}
+                                >
+                                    {catalogReviewQueueFeedback.message}
+                                </Typography>
                             </Box>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 2.5 }}>
                                 {statCard('Sources', restaurantStatus?.sourcesProcessed, '#2E7D32')}

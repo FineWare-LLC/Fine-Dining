@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T17:07:07Z
+Generated: 2026-06-13T17:20:45Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0976 completed: ASVAB seed contract coverage now rejects malformed question payloads with a typed user-safe error before any Mongo session starts.
 - story-0387 completed: per-member servings feedback now exposes accessible loading, empty, success, and error states with stable surface styles.
 - story-0386 completed: per-member servings now compute headcount from effective serving multipliers and keep refresh snapshots aligned after add-member writes.
 - story-0385 completed: per-member serving failures now roll back failed household member linkage and surface a recoverable household membership error.
@@ -92,6 +93,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0976: ASVAB seed contract coverage is done.
 - story-0386: Per-member servings persistence consistency is done.
 - story-0385: Per-member servings failure path is done.
 - story-0384: Per-member servings contract coverage is done.

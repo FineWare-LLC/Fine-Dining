@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0339 completed: recipe search now fails shut with a user-safe recovery error when catalog lookup fails.
 - story-0338 completed: recipe search now broadens library search across ingredient, diet, and time fields with typed validation.
 - story-0337 completed: tag management now caches tag array length during validation, keeping large recipe tag payloads deterministic at the scale boundary.
 - story-0336 completed: tag management operator feedback now gives recipe search loading, empty, success, and error states accessible announcements without layout shift.
@@ -44,6 +45,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0339: Recipe search failure path is done.
 - story-0337: Tag management scale boundary is done.
 - story-0336: Tag management operator feedback is done.
 - story-0335: Tag management persistence consistency is done.

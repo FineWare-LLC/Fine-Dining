@@ -131,8 +131,8 @@ export default function CrawlerControlPanel() {
             dryRun,
             includeAggregators,
             limitPerSource,
-        });
-    }, [draftHydrated, dryRun, includeAggregators, limitPerSource, selectedSourceIds]);
+        }, sources);
+    }, [draftHydrated, dryRun, includeAggregators, limitPerSource, selectedSourceIds, sources]);
 
     const fetchAll = useCallback(async () => {
         setFetchError('');

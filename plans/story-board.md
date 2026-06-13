@@ -7,6 +7,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 ## Recent Completion
 
 - story-0419 completed: catalog review queue scale boundary now counts large source catalogs in a single pass without allocating a filtered clone, with the focused scale-boundary test and typecheck passing while the broader unit suite still hits an unrelated household-planning failure and Playwright is blocked by existing report-directory permissions.
+- story-0422 completed: crawler control panel persistence consistency now re-persists the canonical source catalog against the live admin crawler draft on refresh, with the focused persistence test, typecheck, and crawler persistence browser spec passing while the broader unit suite still fails on the pre-existing household-planning.preference-conflicts.failure-path.test.ts.
 - story-0420 completed: crawler control panel contract coverage now uses the typed restaurant crawler response parser in the live panel, with contract coverage for valid and invalid payloads plus a passing crawler persistence browser check.
 - story-0418 completed: catalog review queue feedback now exposes stable loading, empty, success, and error shells in the crawler control panel, with a focused admin unit test and a passing crawler persistence browser check.
 - story-0425 completed: user support lookup now validates safe search identifiers, escapes regex metacharacters, and sorts results deterministically through the shared User search static.

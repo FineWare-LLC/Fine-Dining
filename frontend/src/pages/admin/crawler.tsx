@@ -122,8 +122,8 @@ export default function CrawlerAdmin() {
             dryRun,
             includeAggregators,
             limitPerSource,
-        });
-    }, [draftHydrated, dryRun, includeAggregators, limitPerSource, selectedSourceIds]);
+        }, sources);
+    }, [draftHydrated, dryRun, includeAggregators, limitPerSource, selectedSourceIds, sources]);
 
     const fetchAll = useCallback(async () => {
         try {

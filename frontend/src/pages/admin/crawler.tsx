@@ -24,8 +24,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { getCrawlerApiBaseUrl } from '@/utils/crawlerApi';
 import {
+    loadRestaurantCrawlerRunDraft,
+    persistRestaurantCrawlerRunDraft,
     RestaurantCrawlerRunResponseError,
     readRestaurantCrawlerRunResponse,
+    resolveRestaurantCrawlerRunDraft,
     validateRestaurantCrawlerRunRequest,
 } from '@/utils/restaurantCrawlerRun';
 import storage from '@/utils/storage';
@@ -70,6 +73,14 @@ function statCard(label, value, tone = '#2E7D32') {
     );
 }
 
+function areStringArraysEqual(left = [], right = []) {
+    if (left.length !== right.length) {
+        return false;
+    }
+
+    return left.every((value, index) => value === right[index]);
+}
+
 export default function CrawlerAdmin() {
     const router = useRouter();
     const crawlerApi = getCrawlerApiBaseUrl();
@@ -82,6 +93,7 @@ export default function CrawlerAdmin() {
     const [dryRun, setDryRun] = useState(true);
     const [includeAggregators, setIncludeAggregators] = useState(true);
     const [limitPerSource, setLimitPerSource] = useState(40);
+    const [draftHydrated, setDraftHydrated] = useState(false);
     const [urlInput, setUrlInput] = useState('');
     const [message, setMessage] = useState('');
     const [restaurantResult, setRestaurantResult] = useState(null);
@@ -90,6 +102,28 @@ export default function CrawlerAdmin() {
         () => selectedSources.filter(Boolean),
         [selectedSources],
     );
+
+    useEffect(() => {
+        const draft = loadRestaurantCrawlerRunDraft();
+        setSelectedSources(draft.selectedSourceIds);
+        setDryRun(draft.dryRun);
+        setIncludeAggregators(draft.includeAggregators);
+        setLimitPerSource(draft.limitPerSource);
+        setDraftHydrated(true);
+    }, []);
+
+    useEffect(() => {
+        if (!draftHydrated) {
+            return;
+        }
+
+        persistRestaurantCrawlerRunDraft(storage.localStorage, {
+            selectedSourceIds,
+            dryRun,
+            includeAggregators,
+            limitPerSource,
+        });
+    }, [draftHydrated, dryRun, includeAggregators, limitPerSource, selectedSourceIds]);
 
     const fetchAll = useCallback(async () => {
         try {
@@ -103,14 +137,18 @@ export default function CrawlerAdmin() {
             if (restaurantStatusRes.ok) setRestaurantStatus(await restaurantStatusRes.json());
             if (sourceRes.ok) {
                 const data = await sourceRes.json();
-                setSources(data.sources || []);
-                if (selectedSources.length === 0 && Array.isArray(data.sources)) {
-                    setSelectedSources(
-                        data.sources
-                            .filter(source => source.source_type === 'official')
-                            .map(source => source.id),
-                    );
-                }
+                const sourceCatalog = Array.isArray(data.sources) ? data.sources : [];
+                setSources(sourceCatalog);
+                setSelectedSources(currentSelection => {
+                    const nextSelection = resolveRestaurantCrawlerRunDraft(
+                        { selectedSourceIds: currentSelection },
+                        sourceCatalog,
+                    ).selectedSourceIds;
+
+                    return areStringArraysEqual(currentSelection, nextSelection)
+                        ? currentSelection
+                        : nextSelection;
+                });
             }
         } catch {
             setRecipeStatus(null);
@@ -122,10 +160,14 @@ export default function CrawlerAdmin() {
     }, [crawlerApi, includeAggregators, selectedSources.length]);
 
     useEffect(() => {
+        if (!draftHydrated) {
+            return;
+        }
+
         fetchAll();
         const interval = setInterval(fetchAll, 5000);
         return () => clearInterval(interval);
-    }, [fetchAll]);
+    }, [draftHydrated, fetchAll]);
 
     const startRecipeCrawler = async () => {
         setActing(true);

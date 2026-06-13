@@ -27,7 +27,12 @@ import {
     buildCrawlerQueueFeedbackState,
 } from '@/utils/crawlerQueueFeedback';
 import { getCrawlerApiBaseUrl } from '@/utils/crawlerApi';
-import { validateRestaurantCrawlerRunRequest } from '@/utils/restaurantCrawlerRun';
+import {
+    loadRestaurantCrawlerRunDraft,
+    persistRestaurantCrawlerRunDraft,
+    resolveRestaurantCrawlerRunDraft,
+    validateRestaurantCrawlerRunRequest,
+} from '@/utils/restaurantCrawlerRun';
 import storage from '@/utils/storage';
 
 function authHeaders() {
@@ -70,6 +75,14 @@ function statCard(label, value, tone = '#2E7D32') {
     );
 }
 
+function areStringArraysEqual(left = [], right = []) {
+    if (left.length !== right.length) {
+        return false;
+    }
+
+    return left.every((value, index) => value === right[index]);
+}
+
 export default function CrawlerControlPanel() {
     const router = useRouter();
     const crawlerApi = getCrawlerApiBaseUrl();
@@ -82,6 +95,7 @@ export default function CrawlerControlPanel() {
     const [dryRun, setDryRun] = useState(true);
     const [includeAggregators, setIncludeAggregators] = useState(true);
     const [limitPerSource, setLimitPerSource] = useState(40);
+    const [draftHydrated, setDraftHydrated] = useState(false);
     const [urlInput, setUrlInput] = useState('');
     const [message, setMessage] = useState('');
     const [restaurantResult, setRestaurantResult] = useState(null);
@@ -91,6 +105,28 @@ export default function CrawlerControlPanel() {
         () => selectedSources.filter(Boolean),
         [selectedSources],
     );
+
+    useEffect(() => {
+        const draft = loadRestaurantCrawlerRunDraft();
+        setSelectedSources(draft.selectedSourceIds);
+        setDryRun(draft.dryRun);
+        setIncludeAggregators(draft.includeAggregators);
+        setLimitPerSource(draft.limitPerSource);
+        setDraftHydrated(true);
+    }, []);
+
+    useEffect(() => {
+        if (!draftHydrated) {
+            return;
+        }
+
+        persistRestaurantCrawlerRunDraft(storage.localStorage, {
+            selectedSourceIds,
+            dryRun,
+            includeAggregators,
+            limitPerSource,
+        });
+    }, [draftHydrated, dryRun, includeAggregators, limitPerSource, selectedSourceIds]);
 
     const fetchAll = useCallback(async () => {
         setFetchError('');
@@ -115,14 +151,18 @@ export default function CrawlerControlPanel() {
 
             if (sourceRes.ok) {
                 const data = await sourceRes.json();
-                setSources(data.sources || []);
-                if (selectedSources.length === 0 && Array.isArray(data.sources)) {
-                    setSelectedSources(
-                        data.sources
-                            .filter(source => source.source_type === 'official')
-                            .map(source => source.id),
-                    );
-                }
+                const sourceCatalog = Array.isArray(data.sources) ? data.sources : [];
+                setSources(sourceCatalog);
+                setSelectedSources(currentSelection => {
+                    const nextSelection = resolveRestaurantCrawlerRunDraft(
+                        { selectedSourceIds: currentSelection },
+                        sourceCatalog,
+                    ).selectedSourceIds;
+
+                    return areStringArraysEqual(currentSelection, nextSelection)
+                        ? currentSelection
+                        : nextSelection;
+                });
             } else {
                 setSources([]);
             }
@@ -134,13 +174,17 @@ export default function CrawlerControlPanel() {
         } finally {
             setLoading(false);
         }
-    }, [crawlerApi, includeAggregators, selectedSources.length]);
+    }, [crawlerApi, includeAggregators]);
 
     useEffect(() => {
+        if (!draftHydrated) {
+            return;
+        }
+
         fetchAll();
         const interval = setInterval(fetchAll, 5000);
         return () => clearInterval(interval);
-    }, [fetchAll]);
+    }, [draftHydrated, fetchAll]);
 
     const startRecipeCrawler = async () => {
         setActing(true);

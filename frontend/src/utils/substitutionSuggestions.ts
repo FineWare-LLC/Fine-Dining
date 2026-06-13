@@ -151,7 +151,7 @@ const collectCandidateAllergens = (candidate) => {
     return allergens;
 };
 
-const collectCandidateDietaryTags = (candidate) => {
+export const collectCandidateDietaryTags = (candidate) => {
     const tags = [];
     const sources = [candidate?.dietaryTags, candidate?.recipe?.tags, candidate?.tags];
 
@@ -454,14 +454,16 @@ export const candidateHasIngredientConflict = (candidate, disallowedIngredients)
 export const candidateMatchesDietaryPattern = (
     candidate,
     dietaryPattern,
-    { failClosedOnMissingTags = false } = {},
+    { failClosedOnMissingTags = false, candidateDietaryTags = null } = {},
 ) => {
     const normalizedPattern = normalizeDietaryPattern(dietaryPattern);
     if (!normalizedPattern) {
         return true;
     }
 
-    const tags = collectCandidateDietaryTags(candidate);
+    const tags = Array.isArray(candidateDietaryTags)
+        ? candidateDietaryTags
+        : collectCandidateDietaryTags(candidate);
     if (tags.length === 0) {
         return !failClosedOnMissingTags;
     }

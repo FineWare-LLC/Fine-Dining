@@ -14,6 +14,7 @@ import {
     candidateHasIngredientConflict,
     candidateMatchesDietaryPattern,
     collectCanonicalDisallowedIngredients,
+    collectCandidateDietaryTags,
 } from '../utils/substitutionSuggestions';
 
 // GraphQL query to get user profile with dietary preferences
@@ -231,15 +232,22 @@ function filterMealsByDiet(meals, user) {
             return false;
         }
 
+        const mealDietaryTags = collectCandidateDietaryTags(meal);
+
         // Check hard dietary restrictions before applying softer preferences.
         if (hardRestrictions.length > 0 && !hardRestrictions.every((restriction) => (
-            candidateMatchesDietaryPattern(meal, restriction, { failClosedOnMissingTags: true })
+            candidateMatchesDietaryPattern(meal, restriction, {
+                failClosedOnMissingTags: true,
+                candidateDietaryTags: mealDietaryTags,
+            })
         ))) {
             return false;
         }
         
         // Check dietary pattern
-        if (!candidateMatchesDietaryPattern(meal, dietaryPattern)) {
+        if (!candidateMatchesDietaryPattern(meal, dietaryPattern, {
+            candidateDietaryTags: mealDietaryTags,
+        })) {
             return false;
         }
         

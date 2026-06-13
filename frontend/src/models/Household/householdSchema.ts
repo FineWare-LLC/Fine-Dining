@@ -1,5 +1,6 @@
 // @ts-nocheck
 import mongoose from 'mongoose';
+import { validateHouseholdPlanningPreferences } from '../../utils/householdPlanningPreferences';
 
 const { Schema } = mongoose;
 
@@ -144,6 +145,14 @@ const householdSchema = new Schema(
 
 /** Auto-compute headcount before saving */
 householdSchema.pre('save', function (next) {
+    const planningDefaultsValidation = validateHouseholdPlanningPreferences(this.planningDefaults);
+    if (!planningDefaultsValidation.valid) {
+        next(planningDefaultsValidation.error);
+        return;
+    }
+
+    this.planningDefaults = planningDefaultsValidation.planningDefaults;
+
     let activeMembers = 0;
     for (const member of this.members) {
         if (member.includeInPlanning) {

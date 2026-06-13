@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T14:46:49Z
+Generated: 2026-06-13T14:58:15Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0374 completed: household planning preferences now reject conflicting daily and weekly budgets with a typed user-safe validation error before household saves.
 - story-0373 completed: household invite scale boundary now counts large member fixtures without copying the member array in the pre-save hook.
 - story-0372 completed: household invite operator feedback now exposes accessible loading, empty, success, and error shells with stable spacing.
 - story-0371 completed: invite refresh hydration now populates members and shared cookbook references the same way as other household reads.
@@ -78,6 +79,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0374: Preference conflicts contract coverage is done.
 - story-0373: Member invites scale boundary is done.
 - story-0372: Member invites operator feedback is done.
 - story-0371: Member invites persistence consistency is done.

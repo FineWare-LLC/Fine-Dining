@@ -84,6 +84,10 @@ const normalizeRecipeSwiperDecisionIdSet = (value: unknown) => {
     return new Set<string>();
 };
 
+const normalizeRecipeSwiperDecisionRecipeId = (value: unknown) => (
+    typeof value === 'string' ? value.trim() : ''
+);
+
 const normalizeRecipeSwiperWindowIdCollection = (value: unknown) => {
     if (value instanceof Set || Array.isArray(value)) {
         return new Set(value);
@@ -120,9 +124,17 @@ export function applyRecipeSwiperDecision(
 ) {
     const normalizedState = normalizeRecipeSwiperDecisionState(state);
     const nextSwipedRecipeIds = new Set(normalizedState.swipedRecipeIds);
+    const normalizedRecipeId = normalizeRecipeSwiperDecisionRecipeId(recipeId);
 
-    if (typeof recipeId === 'string' && recipeId.trim()) {
-        nextSwipedRecipeIds.add(recipeId);
+    if (normalizedRecipeId) {
+        if (nextSwipedRecipeIds.has(normalizedRecipeId)) {
+            return {
+                currentIndex: normalizedState.currentIndex,
+                swipedRecipeIds: nextSwipedRecipeIds,
+            };
+        }
+
+        nextSwipedRecipeIds.add(normalizedRecipeId);
     }
 
     return {
@@ -140,9 +152,17 @@ export function rollbackRecipeSwiperDecision(
 ) {
     const normalizedState = normalizeRecipeSwiperDecisionState(state);
     const nextSwipedRecipeIds = new Set(normalizedState.swipedRecipeIds);
+    const normalizedRecipeId = normalizeRecipeSwiperDecisionRecipeId(recipeId);
 
-    if (typeof recipeId === 'string' && recipeId.trim()) {
-        nextSwipedRecipeIds.delete(recipeId);
+    if (normalizedRecipeId) {
+        if (!nextSwipedRecipeIds.has(normalizedRecipeId)) {
+            return {
+                currentIndex: normalizedState.currentIndex,
+                swipedRecipeIds: nextSwipedRecipeIds,
+            };
+        }
+
+        nextSwipedRecipeIds.delete(normalizedRecipeId);
     }
 
     return {

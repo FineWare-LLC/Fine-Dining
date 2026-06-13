@@ -60,14 +60,14 @@ const snapshotPlanApproval = (planApproval) => {
     return normalizeHouseholdPlanApproval(planApproval);
 };
 
-const snapshotHouseholdState = (household) => ({
+const snapshotHouseholdState = (household, { includeCollections = true } = {}) => ({
     name: household?.name,
     type: household?.type,
     owner: household?.owner,
-    members: Array.isArray(household?.members)
+    members: includeCollections && Array.isArray(household?.members)
         ? [...household.members]
         : household?.members,
-    guests: Array.isArray(household?.guests)
+    guests: includeCollections && Array.isArray(household?.guests)
         ? [...household.guests]
         : household?.guests,
     sharedCookbook: household?.sharedCookbook,
@@ -253,7 +253,7 @@ export const updateHousehold = withErrorHandling(async (_, { id, input }, contex
 
     const { planningDefaults, planApproval, expectedUpdatedAt, ...updateFields } = input;
     assertMatchingHouseholdRevision(expectedUpdatedAt, household.updatedAt);
-    const originalHouseholdState = snapshotHouseholdState(household);
+    const originalHouseholdState = snapshotHouseholdState(household, { includeCollections: false });
     const normalizedPlanningDefaults = normalizePlanningDefaultsInput(planningDefaults);
     const normalizedPlanApproval = normalizePlanApprovalInput(planApproval);
 
@@ -282,6 +282,9 @@ export const updateHousehold = withErrorHandling(async (_, { id, input }, contex
         await household.populate('members.user');
         return await household.populate('sharedCookbook');
     } catch (error) {
+        if (typeof household.depopulate === 'function') {
+            household.depopulate('owner members.user sharedCookbook');
+        }
         restoreHouseholdState(household, originalHouseholdState);
 
         try {

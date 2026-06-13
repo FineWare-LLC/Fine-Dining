@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T16:59:10Z
+Generated: 2026-06-13T17:07:07Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0387 completed: per-member servings feedback now exposes accessible loading, empty, success, and error states with stable surface styles.
 - story-0386 completed: per-member servings now compute headcount from effective serving multipliers and keep refresh snapshots aligned after add-member writes.
 - story-0385 completed: per-member serving failures now roll back failed household member linkage and surface a recoverable household membership error.
 - story-0384 completed: per-member serving multipliers now fail fast with a typed user-safe error on malformed household member inputs while valid fractional values persist canonically.

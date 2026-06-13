@@ -89,6 +89,16 @@ function areStringArraysEqual(left = [], right = []) {
     return left.every((value, index) => value === right[index]);
 }
 
+async function readJsonSafely(response) {
+    try {
+        return await response.json();
+    } catch {
+        return null;
+    }
+}
+
+const CRAWLER_REFRESH_ERROR_MESSAGE = 'Crawler data refresh failed. Some sections may be unavailable.';
+
 export default function CrawlerControlPanel() {
     const router = useRouter();
     const crawlerApi = getCrawlerApiBaseUrl();
@@ -143,37 +153,60 @@ export default function CrawlerControlPanel() {
                 fetch(`${crawlerApi}/restaurant-crawler/sources?include_aggregators=${includeAggregators}`),
             ]);
 
+            let nextFetchError = '';
+
             if (recipeRes.ok) {
-                setRecipeStatus(await recipeRes.json());
+                const nextRecipeStatus = await readJsonSafely(recipeRes);
+                setRecipeStatus(nextRecipeStatus);
+
+                if (!nextRecipeStatus) {
+                    nextFetchError = CRAWLER_REFRESH_ERROR_MESSAGE;
+                }
             } else {
                 setRecipeStatus(null);
+                nextFetchError = CRAWLER_REFRESH_ERROR_MESSAGE;
             }
 
             if (restaurantStatusRes.ok) {
-                setRestaurantStatus(await restaurantStatusRes.json());
+                const nextRestaurantStatus = await readJsonSafely(restaurantStatusRes);
+                setRestaurantStatus(nextRestaurantStatus);
+
+                if (!nextRestaurantStatus) {
+                    nextFetchError = CRAWLER_REFRESH_ERROR_MESSAGE;
+                }
             } else {
                 setRestaurantStatus(null);
+                nextFetchError = CRAWLER_REFRESH_ERROR_MESSAGE;
             }
 
             if (sourceRes.ok) {
-                const data = await sourceRes.json();
-                const sourceCatalog = Array.isArray(data.sources) ? data.sources : [];
-                setSources(sourceCatalog);
-                setSelectedSources(currentSelection => {
-                    const nextSelection = resolveRestaurantCrawlerRunDraft(
-                        { selectedSourceIds: currentSelection },
-                        sourceCatalog,
-                    ).selectedSourceIds;
+                const data = await readJsonSafely(sourceRes);
+                const sourceCatalog = data && Array.isArray(data.sources) ? data.sources : null;
 
-                    return areStringArraysEqual(currentSelection, nextSelection)
-                        ? currentSelection
-                        : nextSelection;
-                });
+                if (sourceCatalog) {
+                    setSources(sourceCatalog);
+                    setSelectedSources(currentSelection => {
+                        const nextSelection = resolveRestaurantCrawlerRunDraft(
+                            { selectedSourceIds: currentSelection },
+                            sourceCatalog,
+                        ).selectedSourceIds;
+
+                        return areStringArraysEqual(currentSelection, nextSelection)
+                            ? currentSelection
+                            : nextSelection;
+                    });
+                } else {
+                    setSources([]);
+                    nextFetchError = CRAWLER_REFRESH_ERROR_MESSAGE;
+                }
             } else {
                 setSources([]);
+                nextFetchError = CRAWLER_REFRESH_ERROR_MESSAGE;
             }
+
+            setFetchError(nextFetchError);
         } catch {
-            setFetchError(`Crawler API is not reachable at ${crawlerApi}.`);
+            setFetchError(CRAWLER_REFRESH_ERROR_MESSAGE);
             setRecipeStatus(null);
             setRestaurantStatus(null);
             setSources([]);

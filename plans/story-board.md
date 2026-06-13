@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0421 completed: crawler control panel failure path now keeps the successful crawler panels visible when one dependency fails, while exposing the refresh error state in the existing feedback shells; targeted Playwright, unit, and typecheck verification passed, and the standard Playwright wrapper is still blocked by root-owned report directories.
 - story-0419 completed: catalog review queue scale boundary now counts large source catalogs in a single pass without allocating a filtered clone, with the focused scale-boundary test and typecheck passing while the broader unit suite still hits an unrelated household-planning failure and Playwright is blocked by existing report-directory permissions.
 - story-0420 completed: crawler control panel contract coverage now uses the typed restaurant crawler response parser in the live panel, with contract coverage for valid and invalid payloads plus a passing crawler persistence browser check.
 - story-0418 completed: catalog review queue feedback now exposes stable loading, empty, success, and error shells in the crawler control panel, with a focused admin unit test and a passing crawler persistence browser check.

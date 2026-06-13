@@ -49,6 +49,9 @@ const planningPreferencesResult = (planningDefaults) => ({
     valid: true,
     planningDefaults: {
         ...planningDefaults,
+        mealSlots: Array.isArray(planningDefaults.mealSlots)
+            ? [...planningDefaults.mealSlots]
+            : planningDefaults.mealSlots,
     },
     error: null,
 });

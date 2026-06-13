@@ -7,6 +7,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 ## Recent Completion
 
 - story-0375 completed: household planning preference conflicts now fail before mutating a household, while households without planning defaults still save cleanly.
+- story-0376 completed: household planning preferences now keep canonical planning defaults stable across refresh even when the source payload mutates.
 - story-0374 completed: household planning preferences now reject conflicting daily and weekly budgets with a typed user-safe validation error before household saves.
 - story-0373 completed: household invite scale boundary now counts large member fixtures without copying the member array in the pre-save hook.
 - story-0372 completed: household invite operator feedback now exposes accessible loading, empty, success, and error shells with stable spacing.
@@ -81,6 +82,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 ## Recent Completions
 
 - story-0375: Preference conflicts failure path is done.
+- story-0376: Preference conflicts persistence consistency is done.
 - story-0374: Preference conflicts contract coverage is done.
 - story-0373: Member invites scale boundary is done.
 - story-0372: Member invites operator feedback is done.

@@ -3,7 +3,28 @@ import crypto from 'crypto';
 import { withErrorHandling } from './baseImports';
 import Household from '@/models/Household/householdSchema';
 import User from '@/models/User';
-import { normalizeHouseholdInviteCode } from '../householdInvite';
+import {
+    HouseholdInvitePersistenceError,
+    normalizeHouseholdInviteCode,
+} from '../householdInvite';
+
+const deleteCreatedHousehold = async (householdId) => {
+    if (!householdId) {
+        return;
+    }
+
+    await Household.findByIdAndDelete(householdId).catch((rollbackError) => {
+        console.error('Household invite rollback failed:', rollbackError);
+    });
+};
+
+const restoreHouseholdMembers = (household, originalMembers) => {
+    if (!household || !Array.isArray(originalMembers)) {
+        return;
+    }
+
+    household.members = originalMembers;
+};
 
 export const createHousehold = withErrorHandling(async (_, { input }, context) => {
     if (!context.user?.userId) throw new Error('Authentication required');
@@ -17,9 +38,27 @@ export const createHousehold = withErrorHandling(async (_, { input }, context) =
         members: [{ user: userId, role: 'OWNER' }],
         inviteCode,
     });
-    await household.save();
+    try {
+        await household.save();
+    } catch (error) {
+        if (error?.isUserSafe) {
+            throw error;
+        }
 
-    await User.findByIdAndUpdate(userId, { activeHousehold: household._id });
+        throw new HouseholdInvitePersistenceError('save', error);
+    }
+
+    try {
+        await User.findByIdAndUpdate(userId, { activeHousehold: household._id });
+    } catch (error) {
+        await deleteCreatedHousehold(household._id);
+
+        if (error?.isUserSafe) {
+            throw error;
+        }
+
+        throw new HouseholdInvitePersistenceError('linkUser', error);
+    }
 
     return household.populate('owner members.user');
 });
@@ -119,13 +158,37 @@ export const joinHouseholdByInvite = withErrorHandling(async (_, { inviteCode },
     const alreadyMember = household.members.some((m) => m.user.toString() === context.user.userId);
     if (alreadyMember) throw new Error('Already a member of this household');
 
+    const originalMembers = household.members.slice();
     household.members.push({
         user: context.user.userId,
         role: 'MEMBER',
     });
-    await household.save();
+    try {
+        await household.save();
+    } catch (error) {
+        restoreHouseholdMembers(household, originalMembers);
 
-    await User.findByIdAndUpdate(context.user.userId, { activeHousehold: household._id });
+        if (error?.isUserSafe) {
+            throw error;
+        }
+
+        throw new HouseholdInvitePersistenceError('save', error);
+    }
+
+    try {
+        await User.findByIdAndUpdate(context.user.userId, { activeHousehold: household._id });
+    } catch (error) {
+        restoreHouseholdMembers(household, originalMembers);
+        await household.save().catch((rollbackError) => {
+            console.error('Household invite rollback failed:', rollbackError);
+        });
+
+        if (error?.isUserSafe) {
+            throw error;
+        }
+
+        throw new HouseholdInvitePersistenceError('linkUser', error);
+    }
 
     return household.populate('owner members.user sharedCookbook');
 });

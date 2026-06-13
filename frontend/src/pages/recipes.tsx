@@ -16,7 +16,7 @@ import {
 import { gql } from 'graphql-tag';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
@@ -31,6 +31,13 @@ import {
     buildRecipeSearchFeedbackState,
     RECIPE_SEARCH_RESOLVED_MESSAGE,
 } from '@/utils/recipeSearchFeedback';
+import {
+    DEFAULT_RECIPE_SEARCH_FILTERS,
+    loadRecipeSearchFilters,
+    normalizeRecipeSearchFilters,
+    persistRecipeSearchFilters,
+} from '@/utils/recipeSearchState';
+import storage from '@/utils/storage';
 
 const SEARCH_RECIPES = gql`
     query SearchRecipesByDiet(
@@ -83,17 +90,29 @@ export default function RecipesPage() {
     const { logout, user } = useAuth();
     const router = useRouter();
 
-    const [filters, setFilters] = useState({
-        diets: [], allergenExclusions: [], cuisines: [],
-        mealTypes: [], maxPrepTime: null, maxDifficulty: null,
-    });
+    const [filters, setFilters] = useState(() => normalizeRecipeSearchFilters(DEFAULT_RECIPE_SEARCH_FILTERS));
+    const [filtersHydrated, setFiltersHydrated] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [addDialogOpen, setAddDialogOpen] = useState(false);
     const [selectedRecipe, setSelectedRecipe] = useState(null);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
+    useEffect(() => {
+        setFilters(loadRecipeSearchFilters(storage.localStorage));
+        setFiltersHydrated(true);
+    }, []);
+
+    useEffect(() => {
+        if (!filtersHydrated) {
+            return;
+        }
+
+        persistRecipeSearchFilters(storage.localStorage, filters);
+    }, [filters, filtersHydrated]);
+
     const { data, loading, error, refetch } = useQuery(SEARCH_RECIPES, {
         variables: { ...filters, page: 1, limit: 30 },
+        skip: !filtersHydrated,
     });
     const {
         data: cookbooksData,
@@ -108,7 +127,7 @@ export default function RecipesPage() {
 
     const recipes = data?.searchRecipesByDiet || [];
     const recipeSearchFeedback = buildRecipeSearchFeedbackState({
-        isLoading: loading,
+        isLoading: !filtersHydrated || loading,
         recipes,
         error,
     });
@@ -208,14 +227,17 @@ export default function RecipesPage() {
                     />
                 </Box>
 
-                {showFilters && (
+                    {showFilters && (
                         <Box sx={{ mb: 3, p: 2, bgcolor: 'background.paper', borderRadius: 2 }}>
                             <Grid container spacing={2}>
                                 <Grid item xs={12} sm={6}>
                                     <FormControl fullWidth size="small">
                                         <InputLabel>Dietary Filters</InputLabel>
                                         <Select multiple value={filters.diets}
-                                            onChange={(e) => setFilters({ ...filters, diets: e.target.value })}
+                                            onChange={(e) => setFilters((current) => normalizeRecipeSearchFilters({
+                                                ...current,
+                                                diets: e.target.value,
+                                            }))}
                                             input={<OutlinedInput label="Dietary Filters" />}
                                             renderValue={(sel) => sel.map((s) => <Chip key={s} label={s} size="small" sx={{ mr: 0.5 }} />)}
                                         >
@@ -227,7 +249,10 @@ export default function RecipesPage() {
                                     <FormControl fullWidth size="small">
                                         <InputLabel>Exclude Allergens</InputLabel>
                                         <Select multiple value={filters.allergenExclusions}
-                                            onChange={(e) => setFilters({ ...filters, allergenExclusions: e.target.value })}
+                                            onChange={(e) => setFilters((current) => normalizeRecipeSearchFilters({
+                                                ...current,
+                                                allergenExclusions: e.target.value,
+                                            }))}
                                             input={<OutlinedInput label="Exclude Allergens" />}
                                             renderValue={(sel) => sel.map((s) => <Chip key={s} label={s} size="small" color="error" sx={{ mr: 0.5 }} />)}
                                         >
@@ -239,7 +264,10 @@ export default function RecipesPage() {
                                     <FormControl fullWidth size="small">
                                         <InputLabel>Meal Type</InputLabel>
                                         <Select multiple value={filters.mealTypes}
-                                            onChange={(e) => setFilters({ ...filters, mealTypes: e.target.value })}
+                                            onChange={(e) => setFilters((current) => normalizeRecipeSearchFilters({
+                                                ...current,
+                                                mealTypes: e.target.value,
+                                            }))}
                                             input={<OutlinedInput label="Meal Type" />}
                                         >
                                             {MEAL_TYPES.map((m) => <MenuItem key={m} value={m}>{m}</MenuItem>)}
@@ -248,15 +276,21 @@ export default function RecipesPage() {
                                 </Grid>
                                 <Grid item xs={6} sm={4}>
                                     <TextField fullWidth size="small" label="Max Prep Time (min)" type="number"
-                                        value={filters.maxPrepTime || ''}
-                                        onChange={(e) => setFilters({ ...filters, maxPrepTime: e.target.value ? parseInt(e.target.value) : null })}
+                                        value={filters.maxPrepTime ?? ''}
+                                        onChange={(e) => setFilters((current) => normalizeRecipeSearchFilters({
+                                            ...current,
+                                            maxPrepTime: e.target.value ? parseInt(e.target.value, 10) : null,
+                                        }))}
                                     />
                                 </Grid>
                                 <Grid item xs={6} sm={4}>
                                     <FormControl fullWidth size="small">
                                         <InputLabel>Max Difficulty</InputLabel>
                                         <Select value={filters.maxDifficulty || ''}
-                                            onChange={(e) => setFilters({ ...filters, maxDifficulty: e.target.value || null })}
+                                            onChange={(e) => setFilters((current) => normalizeRecipeSearchFilters({
+                                                ...current,
+                                                maxDifficulty: e.target.value || null,
+                                            }))}
                                             label="Max Difficulty"
                                         >
                                             <MenuItem value="">Any</MenuItem>

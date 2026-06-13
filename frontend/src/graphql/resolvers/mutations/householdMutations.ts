@@ -27,6 +27,56 @@ const restoreHouseholdMembers = (household, originalMembers) => {
     household.members = originalMembers;
 };
 
+const snapshotPlanningDefaults = (planningDefaults) => {
+    if (!planningDefaults) {
+        return planningDefaults;
+    }
+
+    const snapshot = {
+        ...planningDefaults,
+    };
+
+    if (Array.isArray(planningDefaults.mealSlots)) {
+        snapshot.mealSlots = [...planningDefaults.mealSlots];
+    } else if (planningDefaults.mealSlots !== undefined) {
+        snapshot.mealSlots = planningDefaults.mealSlots;
+    } else {
+        delete snapshot.mealSlots;
+    }
+
+    return snapshot;
+};
+
+const snapshotHouseholdState = (household) => ({
+    name: household?.name,
+    type: household?.type,
+    owner: household?.owner,
+    members: Array.isArray(household?.members)
+        ? household.members.map((member) => ({ ...member }))
+        : household?.members,
+    guests: Array.isArray(household?.guests)
+        ? household.guests.map((guest) => ({ ...guest }))
+        : household?.guests,
+    sharedCookbook: household?.sharedCookbook,
+    planningDefaults: snapshotPlanningDefaults(household?.planningDefaults),
+    headcount: household?.headcount,
+    inviteCode: household?.inviteCode,
+    updatedAt: household?.updatedAt,
+});
+
+const restoreHouseholdState = (household, originalState) => {
+    if (!household || !originalState) {
+        return;
+    }
+
+    if (typeof household.set === 'function') {
+        household.set(originalState);
+        return;
+    }
+
+    Object.assign(household, originalState);
+};
+
 const normalizePlanningDefaultsInput = (planningDefaults) => {
     if (planningDefaults === undefined) {
         return undefined;
@@ -45,6 +95,9 @@ const HOUSEHOLD_REVISION_ERROR_MESSAGES = {
     staleHouseholdRevision: 'This household was updated by someone else. Please refresh and try again.',
 };
 
+const HOUSEHOLD_PLAN_PERSISTENCE_ERROR_MESSAGE =
+    'We could not save your household plan. Please try again.';
+
 export class HouseholdRevisionValidationError extends Error {
     constructor(code, message = HOUSEHOLD_REVISION_ERROR_MESSAGES.invalidPayload) {
         super(message);
@@ -60,6 +113,35 @@ export class HouseholdRevisionValidationError extends Error {
             message: this.message,
             isUserSafe: this.isUserSafe,
         };
+    }
+}
+
+export class HouseholdPlanPersistenceError extends Error {
+    constructor(reason, cause = null) {
+        super(HOUSEHOLD_PLAN_PERSISTENCE_ERROR_MESSAGE);
+        this.name = 'HouseholdPlanPersistenceError';
+        this.code = 'householdPlanPersistenceFailed';
+        this.reason = reason;
+        this.isUserSafe = true;
+        if (cause) {
+            this.cause = cause;
+        }
+    }
+
+    toJSON() {
+        const serialized = {
+            name: this.name,
+            code: this.code,
+            message: this.message,
+            reason: this.reason,
+            isUserSafe: this.isUserSafe,
+        };
+
+        if (Object.prototype.hasOwnProperty.call(this, 'cause')) {
+            serialized.cause = this.cause;
+        }
+
+        return serialized;
     }
 }
 
@@ -143,6 +225,7 @@ export const updateHousehold = withErrorHandling(async (_, { id, input }, contex
     }
 
     const { planningDefaults, expectedUpdatedAt, ...updateFields } = input;
+    const originalHouseholdState = snapshotHouseholdState(household);
     assertMatchingHouseholdRevision(expectedUpdatedAt, household.updatedAt);
     const normalizedPlanningDefaults = normalizePlanningDefaultsInput(planningDefaults);
 
@@ -151,8 +234,35 @@ export const updateHousehold = withErrorHandling(async (_, { id, input }, contex
         household.planningDefaults = normalizedPlanningDefaults;
     }
 
-    await household.save();
-    return household.populate('owner members.user sharedCookbook');
+    try {
+        await household.save();
+    } catch (error) {
+        restoreHouseholdState(household, originalHouseholdState);
+
+        if (error?.isUserSafe) {
+            throw error;
+        }
+
+        throw new HouseholdPlanPersistenceError('save', error);
+    }
+
+    try {
+        return await household.populate('owner members.user sharedCookbook');
+    } catch (error) {
+        restoreHouseholdState(household, originalHouseholdState);
+
+        try {
+            await household.save();
+        } catch (rollbackError) {
+            console.error('Household plan rollback failed:', rollbackError);
+        }
+
+        if (error?.isUserSafe) {
+            throw error;
+        }
+
+        throw new HouseholdPlanPersistenceError('populate', error);
+    }
 });
 
 export const deleteHousehold = withErrorHandling(async (_, { id }, context) => {

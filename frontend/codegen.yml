@@ -1,7 +1,0 @@
-schema: "http://localhost:3000/api/graphql"
-documents: "src/graphql/operations.graphql"
-generates:
-  src/gql/:
-    preset: client
-    presetConfig:
-      useTypeImports: false

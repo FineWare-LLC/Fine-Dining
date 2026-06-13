@@ -1,7 +1,0 @@
-- story id: story-0003
-- timestamp: 2026-06-11T15:43:41Z
-- owner: fine-dining-monitor
-- model: GPT-5
-- reasoning effort: standard
-- planned test command: `npm --prefix frontend run test:unit`
-- expected files: `frontend/src/context/AuthContext.tsx`, `frontend/src/context/authUtils.ts`, `frontend/src/pages/login.tsx`, `frontend/src/pages/signup.tsx`, `frontend/src/tests/unit/auth-security.token-expiry-handling.persistence-consistency.test.ts`

@@ -145,13 +145,15 @@ const householdSchema = new Schema(
 
 /** Auto-compute headcount before saving */
 householdSchema.pre('save', function (next) {
-    const planningDefaultsValidation = validateHouseholdPlanningPreferences(this.planningDefaults);
-    if (!planningDefaultsValidation.valid) {
-        next(planningDefaultsValidation.error);
-        return;
-    }
+    if (this.planningDefaults !== undefined) {
+        const planningDefaultsValidation = validateHouseholdPlanningPreferences(this.planningDefaults);
+        if (!planningDefaultsValidation.valid) {
+            next(planningDefaultsValidation.error);
+            return;
+        }
 
-    this.planningDefaults = planningDefaultsValidation.planningDefaults;
+        this.planningDefaults = planningDefaultsValidation.planningDefaults;
+    }
 
     let activeMembers = 0;
     for (const member of this.members) {

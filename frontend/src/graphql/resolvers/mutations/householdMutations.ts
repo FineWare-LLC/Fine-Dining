@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { withErrorHandling } from './baseImports';
 import Household from '@/models/Household/householdSchema';
 import User from '@/models/User';
+import { validateHouseholdPlanningPreferences } from '@/utils/householdPlanningPreferences';
 import {
     HouseholdInvitePersistenceError,
     normalizeHouseholdInviteCode,
@@ -24,6 +25,19 @@ const restoreHouseholdMembers = (household, originalMembers) => {
     }
 
     household.members = originalMembers;
+};
+
+const normalizePlanningDefaultsInput = (planningDefaults) => {
+    if (planningDefaults === undefined) {
+        return undefined;
+    }
+
+    const validation = validateHouseholdPlanningPreferences(planningDefaults);
+    if (!validation.valid) {
+        throw validation.error;
+    }
+
+    return validation.planningDefaults;
 };
 
 export const createHousehold = withErrorHandling(async (_, { input }, context) => {
@@ -70,7 +84,14 @@ export const updateHousehold = withErrorHandling(async (_, { id, input }, contex
         throw new Error('Household not found or unauthorized');
     }
 
-    Object.assign(household, input);
+    const { planningDefaults, ...updateFields } = input;
+    const normalizedPlanningDefaults = normalizePlanningDefaultsInput(planningDefaults);
+
+    Object.assign(household, updateFields);
+    if (normalizedPlanningDefaults !== undefined) {
+        household.planningDefaults = normalizedPlanningDefaults;
+    }
+
     await household.save();
     return household.populate('owner members.user sharedCookbook');
 });

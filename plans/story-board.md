@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T20:37:10Z
+Generated: 2026-06-13T20:46:20Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0408 completed: notification preferences scale boundary now caches the household members collection during normalization so large households stay deterministic without rereading the members getter.
 - story-0407 completed: notification preferences operator feedback now exposes accessible loading, empty, success, and error states with stable layout shells.
 - story-0406 completed: notification preferences persistence consistency now keeps the update response owner snapshot aligned with refresh reads without scanning large member collections.
 - story-0402 completed: shopping ownership operator feedback now exposes accessible loading, empty, success, and error states with stable layout shells.

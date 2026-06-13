@@ -159,8 +159,9 @@ export function normalizeHouseholdNotificationPreferencesSnapshot(household) {
         normalizeHouseholdNotificationPreferencesUserSnapshot(household.owner);
     }
 
-    if (Array.isArray(household.members)) {
-        for (const member of household.members) {
+    const members = household.members;
+    if (Array.isArray(members)) {
+        for (const member of members) {
             if (!member || typeof member !== 'object' || Array.isArray(member)) {
                 continue;
             }

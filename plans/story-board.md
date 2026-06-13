@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T22:41:55Z
+Generated: 2026-06-13T22:52:27Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0423 completed: crawler control panel operator feedback now exposes stable loading, empty, success, and error states with matching accessibility shells and a focused admin test.
 - story-0417 completed: catalog review queue persistence consistency now hydrates and rehydrates the crawler draft through localStorage on the live `/admin/crawler` rewrite, keeping refresh reads canonical and the import request aligned.
 - story-0461 completed: plan gate definition contract coverage now fails shut on unknown usage limits with a typed user-safe error while preserving the tier-normalized usage increment flow.
 - story-0415 completed: catalog review queue contract coverage now validates restaurant crawler run payloads locally, keeps empty source selections explicit, and rejects out-of-range limits with a typed user-safe error before the fetch.

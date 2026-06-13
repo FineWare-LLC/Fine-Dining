@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { withErrorHandling } from './baseImports';
 import Cookbook, {
+    COOKBOOK_ENTRY_LIMIT,
     validateCookbookEntryInput,
     validateCookbookImportEntryInput,
 } from '@/models/Cookbook/cookbookSchema';
@@ -13,6 +14,9 @@ const resolvePatchValue = (nextValue, currentValue) => (
 
 const resolveRecipeId = (recipe) => recipe?._id?.toString?.() || recipe?.id || recipe?.toString?.() || '';
 const COOKBOOK_IMPORT_PERSISTENCE_ERROR_MESSAGE = 'We could not save this recipe to your cookbook. Please try again.';
+const COOKBOOK_IMPORT_SIZE_LIMIT_ERROR_MESSAGE = (
+    `This cookbook already has the maximum of ${COOKBOOK_ENTRY_LIMIT.toLocaleString('en-US')} recipes. Remove one before importing another.`
+);
 
 const restoreCookbookEntries = (cookbook, originalEntries) => {
     if (!cookbook || !Array.isArray(originalEntries)) {
@@ -54,6 +58,28 @@ export class CookbookImportPersistenceError extends Error {
         }
 
         return serialized;
+    }
+}
+
+export class CookbookImportSizeLimitError extends Error {
+    constructor(limit = COOKBOOK_ENTRY_LIMIT) {
+        super(COOKBOOK_IMPORT_SIZE_LIMIT_ERROR_MESSAGE);
+        this.name = 'CookbookImportSizeLimitError';
+        this.code = 'cookbookImportSizeLimitExceeded';
+        this.reason = 'sizeLimit';
+        this.limit = limit;
+        this.isUserSafe = true;
+    }
+
+    toJSON() {
+        return {
+            name: this.name,
+            code: this.code,
+            message: this.message,
+            reason: this.reason,
+            limit: this.limit,
+            isUserSafe: this.isUserSafe,
+        };
     }
 }
 
@@ -109,12 +135,17 @@ export const addRecipeToCookbook = withErrorHandling(async (_, { cookbookId, ent
     const validatedEntry = validateCookbookImportEntryInput(entry);
     if (!validatedEntry.valid) throw validatedEntry.error;
 
-    const originalEntries = cookbook.entries.slice();
     const alreadyExists = cookbook.entries.some(
         (e) => e.recipe.toString() === validatedEntry.input.recipeId,
     );
     if (alreadyExists) throw new Error('Recipe already in cookbook');
 
+    const cookbookEntryCount = Array.isArray(cookbook.entries) ? cookbook.entries.length : 0;
+    if (cookbookEntryCount >= COOKBOOK_ENTRY_LIMIT) {
+        throw new CookbookImportSizeLimitError();
+    }
+
+    const originalEntries = cookbook.entries.slice();
     cookbook.entries.push({
         recipe: validatedEntry.input.recipeId,
         desiredServings: validatedEntry.input.desiredServings,

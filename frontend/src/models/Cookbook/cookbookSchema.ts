@@ -5,6 +5,7 @@ const { Schema } = mongoose;
 
 const ALLOWED_MEAL_TYPES = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK', 'DESSERT', 'SIDE'];
 const ALLOWED_MEAL_TYPE_INDEX = new Map(ALLOWED_MEAL_TYPES.map((mealType, index) => [mealType, index]));
+export const COOKBOOK_ENTRY_LIMIT = 10000;
 const COOKBOOK_ENTRY_ERROR_MESSAGES = {
     invalidPayload: 'We could not read this saved recipe entry. Please refresh the cookbook.',
     invalidRecipeId: 'Please choose a valid recipe to add to the cookbook.',
@@ -306,7 +307,12 @@ export const cookbookSchema = new Schema(
 
 // Fail-Shut: Prevent cookbook from growing unreasonably large
 cookbookSchema.pre('validate', function (next) {
-    if (this.entries.length > 10000 || this.meals.length > 10000 || this.recipes.length > 10000 || this.restaurants.length > 10000) {
+    if (
+        this.entries.length > COOKBOOK_ENTRY_LIMIT
+        || this.meals.length > COOKBOOK_ENTRY_LIMIT
+        || this.recipes.length > COOKBOOK_ENTRY_LIMIT
+        || this.restaurants.length > COOKBOOK_ENTRY_LIMIT
+    ) {
         const error = new Error('FAIL-SHUT: Cookbook size limit exceeded. Operation aborted.');
         if (typeof next === 'function') {
             return next(error);

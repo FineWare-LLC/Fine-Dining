@@ -3,7 +3,10 @@ import crypto from 'crypto';
 import { withErrorHandling } from './baseImports';
 import Household from '@/models/Household/householdSchema';
 import User from '@/models/User';
-import { validateHouseholdPlanApproval } from '@/utils/householdPlanApproval';
+import {
+    normalizeHouseholdPlanApproval,
+    validateHouseholdPlanApproval,
+} from '@/utils/householdPlanApproval';
 import { validateHouseholdPlanningPreferences } from '@/utils/householdPlanningPreferences';
 import { normalizeHouseholdServingMultiplier } from '@/utils/householdMemberServings';
 import {
@@ -54,12 +57,7 @@ const snapshotPlanApproval = (planApproval) => {
         return planApproval;
     }
 
-    return {
-        ...planApproval,
-        approvedAt: planApproval.approvedAt instanceof Date
-            ? new Date(planApproval.approvedAt.getTime())
-            : planApproval.approvedAt,
-    };
+    return normalizeHouseholdPlanApproval(planApproval);
 };
 
 const snapshotHouseholdState = (household) => ({

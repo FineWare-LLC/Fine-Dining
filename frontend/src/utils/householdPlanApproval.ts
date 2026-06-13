@@ -115,3 +115,21 @@ export function validateHouseholdPlanApproval(planApproval) {
         error: null,
     };
 }
+
+export function normalizeHouseholdPlanApproval(planApproval) {
+    if (!isPlainObject(planApproval)) {
+        return planApproval;
+    }
+
+    const validation = validateHouseholdPlanApproval(planApproval);
+    if (validation.valid) {
+        return validation.planApproval;
+    }
+
+    return {
+        ...planApproval,
+        approvedAt: planApproval.approvedAt instanceof Date
+            ? new Date(planApproval.approvedAt.getTime())
+            : planApproval.approvedAt,
+    };
+}

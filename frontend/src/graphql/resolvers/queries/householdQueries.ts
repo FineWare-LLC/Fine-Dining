@@ -1,6 +1,7 @@
 // @ts-nocheck
 import Household from '@/models/Household/householdSchema';
 import { normalizeHouseholdPlanApproval } from '@/utils/householdPlanApproval';
+import { normalizeHouseholdGuestSnapshot } from '@/utils/householdGuest';
 import { normalizeHouseholdNotificationPreferencesSnapshot } from '@/utils/householdNotificationPreferences';
 import { normalizeHouseholdShoppingOwnership } from '@/utils/householdShoppingOwnership';
 import { normalizeHouseholdInviteCode } from '../householdInvite';
@@ -24,7 +25,9 @@ const normalizeHouseholdShoppingOwnershipSnapshot = (household) => {
 const normalizeHouseholdReadSnapshot = (household) => (
     normalizeHouseholdNotificationPreferencesSnapshot(
         normalizeHouseholdShoppingOwnershipSnapshot(
-            normalizeHouseholdPlanApprovalSnapshot(household),
+            normalizeHouseholdGuestSnapshot(
+                normalizeHouseholdPlanApprovalSnapshot(household),
+            ),
         ),
     )
 );

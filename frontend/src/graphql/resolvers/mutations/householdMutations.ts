@@ -10,6 +10,7 @@ import {
 import { validateHouseholdNotificationPreferences } from '@/utils/householdNotificationPreferences';
 import { validateHouseholdPlanningPreferences } from '@/utils/householdPlanningPreferences';
 import { normalizeHouseholdServingMultiplier } from '@/utils/householdMemberServings';
+import { validateHouseholdGuest } from '@/utils/householdGuest';
 import {
     normalizeHouseholdShoppingOwnership,
     validateHouseholdShoppingOwnership,
@@ -179,6 +180,9 @@ const HOUSEHOLD_REVISION_ERROR_MESSAGES = {
 const HOUSEHOLD_PLAN_PERSISTENCE_ERROR_MESSAGE =
     'We could not save your household plan. Please try again.';
 
+const HOUSEHOLD_GUEST_PERSISTENCE_ERROR_MESSAGE =
+    'We could not save your temporary guest. Please try again.';
+
 export class HouseholdRevisionValidationError extends Error {
     constructor(code, message = HOUSEHOLD_REVISION_ERROR_MESSAGES.invalidPayload) {
         super(message);
@@ -202,6 +206,35 @@ export class HouseholdPlanPersistenceError extends Error {
         super(HOUSEHOLD_PLAN_PERSISTENCE_ERROR_MESSAGE);
         this.name = 'HouseholdPlanPersistenceError';
         this.code = 'householdPlanPersistenceFailed';
+        this.reason = reason;
+        this.isUserSafe = true;
+        if (cause) {
+            this.cause = cause;
+        }
+    }
+
+    toJSON() {
+        const serialized = {
+            name: this.name,
+            code: this.code,
+            message: this.message,
+            reason: this.reason,
+            isUserSafe: this.isUserSafe,
+        };
+
+        if (Object.prototype.hasOwnProperty.call(this, 'cause')) {
+            serialized.cause = this.cause;
+        }
+
+        return serialized;
+    }
+}
+
+export class HouseholdGuestPersistenceError extends Error {
+    constructor(reason, cause = null) {
+        super(HOUSEHOLD_GUEST_PERSISTENCE_ERROR_MESSAGE);
+        this.name = 'HouseholdGuestPersistenceError';
+        this.code = 'householdGuestPersistenceFailed';
         this.reason = reason;
         this.isUserSafe = true;
         if (cause) {
@@ -451,12 +484,50 @@ export const addHouseholdGuest = withErrorHandling(async (_, { householdId, gues
     const isMember = household.members.some((m) => m.user.toString() === context.user.userId);
     if (!isMember) throw new Error('Only household members can add guests');
 
+    const validation = validateHouseholdGuest(guest);
+    if (!validation.valid) {
+        throw validation.error;
+    }
+
+    const originalHouseholdState = snapshotHouseholdState(household);
+
     household.guests.push({
-        ...guest,
-        servingMultiplier: normalizeHouseholdServingMultiplier(guest.servingMultiplier),
+        ...validation.guest,
     });
-    await household.save();
-    return household.populate('owner members.user sharedCookbook');
+
+    try {
+        await household.save();
+    } catch (error) {
+        restoreHouseholdState(household, originalHouseholdState);
+
+        if (error?.isUserSafe) {
+            throw error;
+        }
+
+        throw new HouseholdGuestPersistenceError('save', error);
+    }
+
+    try {
+        return await household.populate('owner members.user sharedCookbook');
+    } catch (error) {
+        if (typeof household.depopulate === 'function') {
+            household.depopulate('owner members.user sharedCookbook');
+        }
+
+        restoreHouseholdState(household, originalHouseholdState);
+
+        try {
+            await household.save();
+        } catch (rollbackError) {
+            console.error('Household guest rollback failed:', rollbackError);
+        }
+
+        if (error?.isUserSafe) {
+            throw error;
+        }
+
+        throw new HouseholdGuestPersistenceError('populate', error);
+    }
 });
 
 export const removeHouseholdGuest = withErrorHandling(async (_, { householdId, guestId }, context) => {

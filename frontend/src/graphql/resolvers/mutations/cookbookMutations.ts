@@ -39,6 +39,56 @@ const COOKBOOK_ENTRY_PERSISTENCE_ERROR_MESSAGE = 'We could not save this recipe 
 const COOKBOOK_IMPORT_SIZE_LIMIT_ERROR_MESSAGE = (
     `This cookbook already has the maximum of ${COOKBOOK_ENTRY_LIMIT.toLocaleString('en-US')} recipes. Remove one before importing another.`
 );
+const COOKBOOK_VISIBILITY_ERROR_MESSAGE = 'Please choose a valid cookbook sharing setting.';
+
+export class CookbookVisibilityValidationError extends Error {
+    constructor(code, message = COOKBOOK_VISIBILITY_ERROR_MESSAGE) {
+        super(message);
+        this.name = 'CookbookVisibilityValidationError';
+        this.code = code;
+        this.isUserSafe = true;
+    }
+
+    toJSON() {
+        return {
+            name: this.name,
+            code: this.code,
+            message: this.message,
+            isUserSafe: this.isUserSafe,
+        };
+    }
+}
+
+const createCookbookVisibilityValidationError = (code) => (
+    new CookbookVisibilityValidationError(code)
+);
+
+const validateCreateCookbookInput = (input) => {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) {
+        return {
+            valid: false,
+            input: null,
+            error: createCookbookVisibilityValidationError('invalidPayload'),
+        };
+    }
+
+    if (input.isPublic !== undefined && typeof input.isPublic !== 'boolean') {
+        return {
+            valid: false,
+            input: null,
+            error: createCookbookVisibilityValidationError('invalidIsPublic'),
+        };
+    }
+
+    return {
+        valid: true,
+        input: {
+            ...input,
+            isPublic: input.isPublic === undefined ? false : input.isPublic,
+        },
+        error: null,
+    };
+};
 
 const restoreCookbookEntries = (cookbook, originalEntries) => {
     if (!cookbook || !Array.isArray(originalEntries)) {
@@ -139,6 +189,10 @@ export const createCookbook = withErrorHandling(async (_, { userId, input }, con
     if (!context.user?.userId || context.user.userId !== userId) {
         throw new Error('Authentication required');
     }
+    const validatedInput = validateCreateCookbookInput(input);
+    if (!validatedInput.valid) {
+        throw validatedInput.error;
+    }
     const user = await User.findById(userId);
     if (!user) throw new Error('User not found');
     await assertResourceLimit({
@@ -150,7 +204,7 @@ export const createCookbook = withErrorHandling(async (_, { userId, input }, con
     });
     const cookbook = new Cookbook({
         user: userId,
-        ...input,
+        ...validatedInput.input,
     });
     await cookbook.save();
 

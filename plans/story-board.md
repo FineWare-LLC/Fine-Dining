@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0413 completed: guest meals scale boundary now mutates the existing guest collection directly without snapshot-copying it, while preserving rollback and canonical guest data.
 - story-0412 completed: guest meals operator feedback now exposes loading, empty, success, and error states with stable layout shells.
 - story-0411 completed: guest meals persistence consistency now returns canonical guest snapshots from the update response without eager guest traversal, while refresh reads stay canonical and the scale-boundary tests remain green.
 - story-0410 completed: guest meals failure path now rolls back failed populate writes and surfaces a typed persistence error while keeping temporary guests canonical.

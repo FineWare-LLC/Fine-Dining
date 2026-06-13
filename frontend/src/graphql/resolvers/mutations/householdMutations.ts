@@ -491,9 +491,16 @@ export const addHouseholdGuest = withErrorHandling(async (_, { householdId, gues
         throw validation.error;
     }
 
-    const originalHouseholdState = snapshotHouseholdState(household);
+    const originalHouseholdState = snapshotHouseholdState(household, { includeCollections: false });
+    let guests = household.guests;
+    if (!Array.isArray(guests)) {
+        guests = [];
+        household.guests = guests;
+    }
 
-    household.guests.push({
+    const originalGuestCount = guests.length;
+
+    guests.push({
         ...validation.guest,
     });
 
@@ -501,6 +508,7 @@ export const addHouseholdGuest = withErrorHandling(async (_, { householdId, gues
         await household.save();
     } catch (error) {
         restoreHouseholdState(household, originalHouseholdState);
+        guests.length = originalGuestCount;
 
         if (error?.isUserSafe) {
             throw error;
@@ -517,6 +525,7 @@ export const addHouseholdGuest = withErrorHandling(async (_, { householdId, gues
         }
 
         restoreHouseholdState(household, originalHouseholdState);
+        guests.length = originalGuestCount;
 
         try {
             await household.save();

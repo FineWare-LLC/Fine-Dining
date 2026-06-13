@@ -80,7 +80,8 @@ const normalizeCookbooks = (cookbooks) => {
             && cookbook.id.trim()
             && typeof cookbook.name === 'string'
             && cookbook.name.trim()
-            && typeof cookbook.isPublic === 'boolean'
+            // Legacy private cookbooks may not have an explicit visibility flag yet.
+            && (cookbook.isPublic === undefined || cookbook.isPublic === null || typeof cookbook.isPublic === 'boolean')
             && Array.isArray(cookbook.entries),
         )
     );

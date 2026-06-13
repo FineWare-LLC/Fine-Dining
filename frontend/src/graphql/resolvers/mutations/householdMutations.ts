@@ -53,10 +53,10 @@ const snapshotHouseholdState = (household) => ({
     type: household?.type,
     owner: household?.owner,
     members: Array.isArray(household?.members)
-        ? household.members.map((member) => ({ ...member }))
+        ? [...household.members]
         : household?.members,
     guests: Array.isArray(household?.guests)
-        ? household.guests.map((guest) => ({ ...guest }))
+        ? [...household.guests]
         : household?.guests,
     sharedCookbook: household?.sharedCookbook,
     planningDefaults: snapshotPlanningDefaults(household?.planningDefaults),

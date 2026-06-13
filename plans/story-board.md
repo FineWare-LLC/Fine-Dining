@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T08:05:16Z
+Generated: 2026-06-13T08:35:58Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0355 completed: recipe versioning now keeps the revised cookbook snapshot aligned with the refreshed query and waits for the post-save refresh before confirming success.
 - story-0352 completed: collection import now fails fast at the cookbook size boundary without mutating or saving a full collection.
 - story-0354 completed: recipe versioning now rolls back a failed revision save and keeps the prior entry state recoverable.
 - story-0351 completed: collection import now keeps cookbook feedback loading, empty, success, and error shells accessible across the recipes and cookbook flows.
@@ -59,6 +60,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0355: Recipe versioning persistence consistency is done.
 - story-0352: Collection import scale boundary is done.
 - story-0354: Recipe versioning failure path is done.
 - story-0351: Collection import operator feedback is done.

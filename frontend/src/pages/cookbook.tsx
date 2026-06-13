@@ -20,6 +20,7 @@ import MainLayout from '@/components/Layout/MainLayout';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import { buildCookbookSharingDisplayState } from '@/utils/cookbookSharing';
+import { updateCookbookEntryAndRefresh } from '@/utils/cookbookRevision';
 import {
     buildCookbookLibraryFeedbackContainerStyles,
     buildCookbookLibraryFeedbackState,
@@ -133,21 +134,22 @@ export default function CookbookPage() {
     const handleUpdateEntry = async () => {
         if (!editEntry) return;
         try {
-            await updateEntry({
-                variables: {
-                    cookbookId: editEntry.cookbookId, entryId: editEntry.id,
-                    entry: {
-                        recipeId: editEntry.recipe.id,
-                        desiredServings: editEntry.desiredServings,
-                        maxTimesPerWeek: editEntry.maxTimesPerWeek,
-                        minTimesPerWeek: editEntry.minTimesPerWeek,
-                        allowedMealTypes: editEntry.allowedMealTypes,
-                        preferenceScore: editEntry.preferenceScore,
-                    },
+            await updateCookbookEntryAndRefresh({
+                updateCookbookMutation: updateEntry,
+                refetchCookbooks: refetch,
+                cookbookId: editEntry.cookbookId,
+                entryId: editEntry.id,
+                entry: {
+                    recipeId: editEntry.recipe.id,
+                    desiredServings: editEntry.desiredServings,
+                    maxTimesPerWeek: editEntry.maxTimesPerWeek,
+                    minTimesPerWeek: editEntry.minTimesPerWeek,
+                    allowedMealTypes: editEntry.allowedMealTypes,
+                    preferenceScore: editEntry.preferenceScore,
                 },
             });
             setSnackbar({ open: true, message: 'Entry updated', severity: 'success' });
-            setEditEntry(null); refetch();
+            setEditEntry(null);
         } catch (err) { setSnackbar({ open: true, message: err.message, severity: 'error' }); }
     };
 

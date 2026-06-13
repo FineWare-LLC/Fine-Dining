@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0385 completed: per-member serving failures now roll back failed household member linkage and surface a recoverable household membership error.
 - story-0384 completed: per-member serving multipliers now fail fast with a typed user-safe error on malformed household member inputs while valid fractional values persist canonically.
 - story-0383 completed: shared plan editing now fails stale writes before walking a large household snapshot while keeping identical large refreshes deterministic.
 - story-0382 completed: shared plan editing operator feedback now exposes accessible loading, empty, success, and error states with stable layout shells.
@@ -89,6 +90,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0385: Per-member servings failure path is done.
 - story-0384: Per-member servings contract coverage is done.
 - story-0383: Shared plan editing scale boundary is done.
 - story-0382: Shared plan editing operator feedback is done.

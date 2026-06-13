@@ -291,15 +291,41 @@ export const addHouseholdMember = withErrorHandling(async (_, { householdId, mem
     const alreadyMember = household.members.some((m) => m.user.toString() === member.userId);
     if (alreadyMember) throw new Error('User is already a member');
 
+    const originalHouseholdState = snapshotHouseholdState(household);
+
     household.members.push({
         user: member.userId,
         role: member.role || 'MEMBER',
         servingMultiplier: normalizeHouseholdServingMultiplier(member.servingMultiplier),
         includeInPlanning: member.includeInPlanning !== false,
     });
-    await household.save();
 
-    await User.findByIdAndUpdate(member.userId, { activeHousehold: household._id });
+    try {
+        await household.save();
+    } catch (error) {
+        restoreHouseholdState(household, originalHouseholdState);
+
+        if (error?.isUserSafe) {
+            throw error;
+        }
+
+        throw new HouseholdInvitePersistenceError('save', error);
+    }
+
+    try {
+        await User.findByIdAndUpdate(member.userId, { activeHousehold: household._id });
+    } catch (error) {
+        restoreHouseholdState(household, originalHouseholdState);
+        await household.save().catch((rollbackError) => {
+            console.error('Household member rollback failed:', rollbackError);
+        });
+
+        if (error?.isUserSafe) {
+            throw error;
+        }
+
+        throw new HouseholdInvitePersistenceError('linkUser', error);
+    }
 
     return household.populate('owner members.user sharedCookbook');
 });

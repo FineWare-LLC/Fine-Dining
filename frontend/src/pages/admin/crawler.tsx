@@ -23,7 +23,11 @@ import { useRouter } from 'next/router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { getCrawlerApiBaseUrl } from '@/utils/crawlerApi';
-import { validateRestaurantCrawlerRunRequest } from '@/utils/restaurantCrawlerRun';
+import {
+    RestaurantCrawlerRunResponseError,
+    readRestaurantCrawlerRunResponse,
+    validateRestaurantCrawlerRunRequest,
+} from '@/utils/restaurantCrawlerRun';
 import storage from '@/utils/storage';
 
 function authHeaders() {
@@ -203,8 +207,7 @@ export default function CrawlerAdmin() {
                 headers: authHeaders(),
                 body: JSON.stringify(requestValidation.payload),
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data?.detail || 'Restaurant crawler failed.');
+            const data = await readRestaurantCrawlerRunResponse(res);
             setRestaurantResult(data);
             setMessage(
                 dryRun
@@ -213,7 +216,11 @@ export default function CrawlerAdmin() {
             );
             fetchAll();
         } catch (error) {
-            setMessage(error.message || 'Restaurant crawler failed.');
+            setMessage(
+                error instanceof RestaurantCrawlerRunResponseError
+                    ? error.message
+                    : 'Restaurant crawler failed. Please refresh.',
+            );
         } finally {
             setActing(false);
         }

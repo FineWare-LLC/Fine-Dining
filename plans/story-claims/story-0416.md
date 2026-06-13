@@ -1,0 +1,27 @@
+# Story Claim
+
+- storyId: story-0416
+- title: Catalog review queue: failure path
+- owner: fine-dining-monitor
+- claimedAt: 2026-06-13T22:14:47Z
+- completedAt: 2026-06-13T22:19:56Z
+- branch: codex/story-0416-catalog-review-queue-failure-path
+- intendedTestPlan: `npm --prefix frontend run test:unit` focused on `frontend/src/tests/unit/admin-operations.catalog-review-queue.failure-path.test.ts`, then `npm --prefix frontend run typecheck`
+- filesExpectedToChange:
+  - frontend/src/pages/admin/crawler.tsx
+  - frontend/src/utils/restaurantCrawlerRun.ts
+  - frontend/src/tests/unit/admin-operations.catalog-review-queue.failure-path.test.ts
+- outcome: done
+- verification:
+  - `NODE_OPTIONS=--import=./src/utils/serverOptimizerAliasRegister.mjs npm exec -- tsx --test src/tests/unit/admin-operations.catalog-review-queue.failure-path.test.ts`
+  - `NODE_OPTIONS=--import=./src/utils/serverOptimizerAliasRegister.mjs npm exec -- tsx --test src/tests/unit/admin-operations.catalog-review-queue.contract-coverage.test.ts src/tests/unit/admin-operations.catalog-review-queue.failure-path.test.ts`
+  - `npm --prefix frontend run typecheck`
+  - `npm --prefix frontend run test:unit` failed on pre-existing `frontend/src/tests/unit/household-planning.preference-conflicts.failure-path.test.ts`
+  - `npm --prefix frontend run test:playwright` failed because of root-owned report dirs and a baseline webserver startup issue
+- changedFiles:
+  - frontend/src/pages/admin/crawler.tsx
+  - frontend/src/tests/unit/admin-operations.catalog-review-queue.failure-path.test.ts
+  - frontend/src/utils/restaurantCrawlerRun.ts
+  - plans/story-board.jsonl
+  - plans/story-board.md
+- followUpStoriesAdded: none

@@ -2,9 +2,11 @@
 
 const RESTAURANT_CRAWLER_RUN_LIMIT_MIN = 1;
 const RESTAURANT_CRAWLER_RUN_LIMIT_MAX = 200;
+const RESTAURANT_CRAWLER_RUN_FALLBACK_ERROR_MESSAGE = 'Restaurant crawler failed. Please refresh.';
 
 const RESTAURANT_CRAWLER_RUN_ERROR_MESSAGES = {
     invalidPayload: 'Restaurant crawler run request is invalid. Please refresh.',
+    invalidResponse: RESTAURANT_CRAWLER_RUN_FALLBACK_ERROR_MESSAGE,
 };
 
 export class RestaurantCrawlerRunValidationError extends Error {
@@ -29,6 +31,31 @@ function createRestaurantCrawlerRunValidationError(code) {
     return new RestaurantCrawlerRunValidationError(
         code,
         RESTAURANT_CRAWLER_RUN_ERROR_MESSAGES[code] || RESTAURANT_CRAWLER_RUN_ERROR_MESSAGES.invalidPayload,
+    );
+}
+
+export class RestaurantCrawlerRunResponseError extends Error {
+    constructor(code, message = RESTAURANT_CRAWLER_RUN_FALLBACK_ERROR_MESSAGE) {
+        super(message);
+        this.name = 'RestaurantCrawlerRunResponseError';
+        this.code = code;
+        this.isUserSafe = true;
+    }
+
+    toJSON() {
+        return {
+            name: this.name,
+            code: this.code,
+            message: this.message,
+            isUserSafe: this.isUserSafe,
+        };
+    }
+}
+
+function createRestaurantCrawlerRunResponseError(code, message) {
+    return new RestaurantCrawlerRunResponseError(
+        code,
+        message || RESTAURANT_CRAWLER_RUN_ERROR_MESSAGES[code] || RESTAURANT_CRAWLER_RUN_FALLBACK_ERROR_MESSAGE,
     );
 }
 
@@ -110,4 +137,44 @@ export function validateRestaurantCrawlerRunRequest(payload = {}) {
             include_aggregators: payload.includeAggregators,
         },
     };
+}
+
+function normalizeRestaurantCrawlerRunFailureDetail(detail) {
+    if (typeof detail !== 'string') {
+        return RESTAURANT_CRAWLER_RUN_FALLBACK_ERROR_MESSAGE;
+    }
+
+    const trimmedDetail = detail.trim();
+    return trimmedDetail || RESTAURANT_CRAWLER_RUN_FALLBACK_ERROR_MESSAGE;
+}
+
+async function readRestaurantCrawlerRunResponseBody(response) {
+    if (!response || typeof response.json !== 'function') {
+        return null;
+    }
+
+    try {
+        return await response.json();
+    } catch {
+        return null;
+    }
+}
+
+export async function readRestaurantCrawlerRunResponse(response) {
+    if (!response || typeof response !== 'object') {
+        throw createRestaurantCrawlerRunResponseError('invalidResponse');
+    }
+
+    const body = await readRestaurantCrawlerRunResponseBody(response);
+
+    if (!response.ok) {
+        const detail = normalizeRestaurantCrawlerRunFailureDetail(body?.detail ?? body?.message);
+        throw createRestaurantCrawlerRunResponseError('invalidResponse', detail);
+    }
+
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+        throw createRestaurantCrawlerRunResponseError('invalidResponse');
+    }
+
+    return body;
 }

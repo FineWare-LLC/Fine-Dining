@@ -1,12 +1,13 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T22:09:47Z
+Generated: 2026-06-13T22:19:56Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
 - story-0415 completed: catalog review queue contract coverage now validates restaurant crawler run payloads locally, keeps empty source selections explicit, and rejects out-of-range limits with a typed user-safe error before the fetch.
+- story-0416 completed: catalog review queue failure path now reads restaurant crawler responses through a typed user-safe parser, keeps malformed responses from leaking raw parse errors, and falls back to a safe retry message on dependency failures.
 - story-0414 completed: household deletion contract coverage now rejects malformed household ids with a typed user-safe error and clears active household ownership before deleting the household.
 - story-0986 completed: domain cleanup contract coverage now strips legacy ASVAB metadata before persistence while still rejecting malformed payloads with a typed user-safe error.
 - story-0413 completed: guest meals scale boundary now mutates the existing guest collection directly without snapshot-copying it, while preserving rollback and canonical guest data.
@@ -121,6 +122,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0416 completed: catalog review queue failure path now reads restaurant crawler responses through a typed user-safe parser, keeps malformed responses from leaking raw parse errors, and falls back to a safe retry message on dependency failures.
 - story-0414 completed: household deletion contract coverage now rejects malformed household ids with a typed user-safe error and clears active household ownership before deleting the household.
 - story-0401 completed: shopping ownership persistence consistency now keeps assignedAt canonical across update and refresh reads while preserving the canonical household snapshot.
 - story-0396: Plan approval persistence consistency is done.

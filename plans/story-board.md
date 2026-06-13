@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T15:27:19Z
+Generated: 2026-06-13T16:27:50Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0383 completed: shared plan editing now fails stale writes before walking a large household snapshot while keeping identical large refreshes deterministic.
 - story-0382 completed: shared plan editing operator feedback now exposes accessible loading, empty, success, and error states with stable layout shells.
 - story-0381 completed: shared plan editing now uses the same per-path household populate sequence on save and refresh, keeping the canonical snapshot aligned.
 - story-0380 completed: shared plan editing now rolls back a failed populated save and surfaces a user-safe persistence error.
@@ -87,6 +88,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0383: Shared plan editing scale boundary is done.
 - story-0382: Shared plan editing operator feedback is done.
 - story-0381: Shared plan editing persistence consistency is done.
 - story-0380: Shared plan editing failure path is done.

@@ -225,8 +225,8 @@ export const updateHousehold = withErrorHandling(async (_, { id, input }, contex
     }
 
     const { planningDefaults, expectedUpdatedAt, ...updateFields } = input;
-    const originalHouseholdState = snapshotHouseholdState(household);
     assertMatchingHouseholdRevision(expectedUpdatedAt, household.updatedAt);
+    const originalHouseholdState = snapshotHouseholdState(household);
     const normalizedPlanningDefaults = normalizePlanningDefaultsInput(planningDefaults);
 
     Object.assign(household, updateFields);

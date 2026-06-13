@@ -21,12 +21,20 @@ function pluralize(count, singular, plural) {
     return count === 1 ? singular : plural;
 }
 
-function normalizeSources(sources = []) {
+function countReviewQueueSources(sources = []) {
     if (!Array.isArray(sources)) {
-        return [];
+        return 0;
     }
 
-    return sources.filter(source => source && typeof source === 'object');
+    let count = 0;
+    for (let index = 0, length = sources.length; index < length; index += 1) {
+        const source = sources[index];
+        if (source && typeof source === 'object') {
+            count += 1;
+        }
+    }
+
+    return count;
 }
 
 export function buildCatalogReviewQueueFeedbackState({
@@ -34,8 +42,7 @@ export function buildCatalogReviewQueueFeedbackState({
     sources = [],
     errorMessage = '',
 } = {}) {
-    const normalizedSources = normalizeSources(sources);
-    const sourceCount = normalizedSources.length;
+    const sourceCount = countReviewQueueSources(sources);
 
     if (isLoading) {
         return {

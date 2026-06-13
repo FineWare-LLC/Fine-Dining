@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0410 completed: guest meals failure path now rolls back failed populate writes and surfaces a typed persistence error while keeping temporary guests canonical.
 - story-0409 completed: guest meals contract coverage now canonicalizes temporary guest payloads on add and read paths while rejecting malformed guest constraints with a typed user-safe error.
 - story-0408 completed: notification preferences scale boundary now caches the household members collection during normalization so large households stay deterministic without rereading the members getter.
 - story-0407 completed: notification preferences operator feedback now exposes accessible loading, empty, success, and error states with stable layout shells.

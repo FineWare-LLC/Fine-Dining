@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T18:48:30Z
+Generated: 2026-06-13T18:56:59Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0397 completed: plan approval operator feedback now exposes loading, empty, draft, success, and error states with stable shells and layout-safe feedback styling.
 - story-0396 completed: plan approval persistence consistency now normalizes legacy approval snapshots on household refresh reads and keeps the canonical approval shape aligned.
 - story-0395 completed: plan approval failure path now rolls back a failed approval populate path and keeps the household canonical.
 - story-0394 completed: plan approval contract coverage now validates canonical draft and approved household plan snapshots with explicit approval timestamps.

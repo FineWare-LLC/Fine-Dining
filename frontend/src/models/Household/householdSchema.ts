@@ -2,6 +2,7 @@
 import mongoose from 'mongoose';
 import { validateHouseholdPlanningPreferences } from '../../utils/householdPlanningPreferences';
 import { validateHouseholdPlanApproval } from '../../utils/householdPlanApproval';
+import { validateHouseholdShoppingOwnership } from '../../utils/householdShoppingOwnership';
 
 const { Schema } = mongoose;
 
@@ -77,6 +78,21 @@ const guestSchema = new Schema(
     { _id: true },
 );
 
+const shoppingOwnershipSchema = new Schema(
+    {
+        userId: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+        },
+        assignedAt: {
+            type: Date,
+            default: Date.now,
+        },
+    },
+    { _id: false },
+);
+
 /**
  * @class Household
  * @classdesc Represents a household, family, or organization that shares meal planning.
@@ -140,6 +156,12 @@ const householdSchema = new Schema(
             },
         },
 
+        /** Assignment metadata for the household member owning shopping tasks */
+        shoppingOwnership: {
+            type: shoppingOwnershipSchema,
+            default: null,
+        },
+
         /** Total headcount — auto-computed from effective member and guest servings for the LP solver */
         headcount: {
             type: Number,
@@ -199,6 +221,16 @@ householdSchema.pre('save', function (next) {
         }
 
         this.planApproval = planApprovalValidation.planApproval;
+    }
+
+    if (this.shoppingOwnership !== undefined) {
+        const shoppingOwnershipValidation = validateHouseholdShoppingOwnership(this.shoppingOwnership);
+        if (!shoppingOwnershipValidation.valid) {
+            next(shoppingOwnershipValidation.error);
+            return;
+        }
+
+        this.shoppingOwnership = shoppingOwnershipValidation.shoppingOwnership;
     }
 
     this.headcount = computeHouseholdHeadcount(this.members, this.guests);

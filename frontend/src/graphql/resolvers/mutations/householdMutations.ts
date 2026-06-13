@@ -10,6 +10,10 @@ import {
 import { validateHouseholdPlanningPreferences } from '@/utils/householdPlanningPreferences';
 import { normalizeHouseholdServingMultiplier } from '@/utils/householdMemberServings';
 import {
+    normalizeHouseholdShoppingOwnership,
+    validateHouseholdShoppingOwnership,
+} from '@/utils/householdShoppingOwnership';
+import {
     HouseholdInvitePersistenceError,
     normalizeHouseholdInviteCode,
 } from '../householdInvite';
@@ -73,6 +77,7 @@ const snapshotHouseholdState = (household, { includeCollections = true } = {}) =
     sharedCookbook: household?.sharedCookbook,
     planningDefaults: snapshotPlanningDefaults(household?.planningDefaults),
     planApproval: snapshotPlanApproval(household?.planApproval),
+    shoppingOwnership: normalizeHouseholdShoppingOwnership(household?.shoppingOwnership),
     headcount: household?.headcount,
     inviteCode: household?.inviteCode,
     updatedAt: household?.updatedAt,
@@ -115,6 +120,19 @@ const normalizePlanApprovalInput = (planApproval) => {
     }
 
     return validation.planApproval;
+};
+
+const normalizeShoppingOwnershipInput = (shoppingOwnership) => {
+    if (shoppingOwnership === undefined) {
+        return undefined;
+    }
+
+    const validation = validateHouseholdShoppingOwnership(shoppingOwnership);
+    if (!validation.valid) {
+        throw validation.error;
+    }
+
+    return validation.shoppingOwnership;
 };
 
 const HOUSEHOLD_REVISION_ERROR_MESSAGES = {
@@ -251,11 +269,18 @@ export const updateHousehold = withErrorHandling(async (_, { id, input }, contex
         throw new Error('Household not found or unauthorized');
     }
 
-    const { planningDefaults, planApproval, expectedUpdatedAt, ...updateFields } = input;
+    const {
+        planningDefaults,
+        planApproval,
+        shoppingOwnership,
+        expectedUpdatedAt,
+        ...updateFields
+    } = input;
     assertMatchingHouseholdRevision(expectedUpdatedAt, household.updatedAt);
     const originalHouseholdState = snapshotHouseholdState(household, { includeCollections: false });
     const normalizedPlanningDefaults = normalizePlanningDefaultsInput(planningDefaults);
     const normalizedPlanApproval = normalizePlanApprovalInput(planApproval);
+    const normalizedShoppingOwnership = normalizeShoppingOwnershipInput(shoppingOwnership);
 
     Object.assign(household, updateFields);
     if (normalizedPlanningDefaults !== undefined) {
@@ -263,6 +288,9 @@ export const updateHousehold = withErrorHandling(async (_, { id, input }, contex
     }
     if (normalizedPlanApproval !== undefined) {
         household.planApproval = normalizedPlanApproval;
+    }
+    if (normalizedShoppingOwnership !== undefined) {
+        household.shoppingOwnership = normalizedShoppingOwnership;
     }
 
     try {

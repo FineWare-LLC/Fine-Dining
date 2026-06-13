@@ -3,6 +3,29 @@ export type RecipeSwiperCard = {
     [key: string]: unknown;
 };
 
+const RECIPE_SWIPER_WINDOW_ERROR_MESSAGE = 'We could not read this recipe swipe state. Please refresh the recipes page.';
+
+export class RecipeSwiperWindowValidationError extends Error {
+    code: string;
+    isUserSafe: boolean;
+
+    constructor(code: string, message = RECIPE_SWIPER_WINDOW_ERROR_MESSAGE) {
+        super(message);
+        this.name = 'RecipeSwiperWindowValidationError';
+        this.code = code;
+        this.isUserSafe = true;
+    }
+
+    toJSON() {
+        return {
+            name: this.name,
+            code: this.code,
+            message: this.message,
+            isUserSafe: this.isUserSafe,
+        };
+    }
+}
+
 export type ResolveRecipeSwiperWindowArgs = {
     recipes?: RecipeSwiperCard[];
     currentIndex?: number;
@@ -12,17 +35,120 @@ export type ResolveRecipeSwiperWindowArgs = {
     windowSize?: number;
 };
 
-export function resolveRecipeSwiperWindow({
-    recipes = [],
-    currentIndex = 0,
-    swipedRecipeIds = new Set<string>(),
-    windowSize = 3,
-}: ResolveRecipeSwiperWindowArgs = {}) {
-    const recipeList = Array.isArray(recipes) ? recipes : [];
-    const startIndex = Number.isFinite(currentIndex) && currentIndex > 0 ? Math.floor(currentIndex) : 0;
-    const visibleWindowSize = Number.isFinite(windowSize) && windowSize > 0 ? Math.floor(windowSize) : 3;
-    const hasSwipedRecipe = swipedRecipeIds != null && typeof swipedRecipeIds.has === 'function'
-        ? (recipeId: string) => swipedRecipeIds.has(recipeId)
+export type RecipeSwiperWindowValidationInput = {
+    recipes: RecipeSwiperCard[];
+    currentIndex: number;
+    swipedRecipeIds: {
+        has: (recipeId: string) => boolean;
+    } | Set<string>;
+    windowSize: number;
+};
+
+export type RecipeSwiperWindowValidationSuccess = {
+    valid: true;
+    input: RecipeSwiperWindowValidationInput;
+    error: null;
+};
+
+export type RecipeSwiperWindowValidationFailure = {
+    valid: false;
+    input: null;
+    error: RecipeSwiperWindowValidationError;
+};
+
+export type RecipeSwiperWindowValidationResult = (
+    RecipeSwiperWindowValidationSuccess
+    | RecipeSwiperWindowValidationFailure
+);
+
+const createRecipeSwiperWindowValidationError = (code: string = 'invalidPayload') => (
+    new RecipeSwiperWindowValidationError(code, RECIPE_SWIPER_WINDOW_ERROR_MESSAGE)
+);
+
+export function validateRecipeSwiperWindowInput(
+    input: ResolveRecipeSwiperWindowArgs | null | undefined = {},
+): RecipeSwiperWindowValidationResult {
+    const {
+        recipes = [],
+        currentIndex = 0,
+        swipedRecipeIds = new Set<string>(),
+        windowSize = 3,
+    } = input ?? {};
+
+    if (!Array.isArray(recipes)) {
+        return {
+            valid: false,
+            input: null,
+            error: createRecipeSwiperWindowValidationError(),
+        };
+    }
+
+    if (!Number.isFinite(currentIndex) || currentIndex < 0) {
+        return {
+            valid: false,
+            input: null,
+            error: createRecipeSwiperWindowValidationError(),
+        };
+    }
+
+    if (!Number.isFinite(windowSize) || windowSize < 1) {
+        return {
+            valid: false,
+            input: null,
+            error: createRecipeSwiperWindowValidationError(),
+        };
+    }
+
+    if (swipedRecipeIds != null && typeof swipedRecipeIds.has !== 'function') {
+        return {
+            valid: false,
+            input: null,
+            error: createRecipeSwiperWindowValidationError(),
+        };
+    }
+
+    return {
+        valid: true,
+        input: {
+            recipes,
+            currentIndex: Math.floor(currentIndex),
+            swipedRecipeIds,
+            windowSize: Math.floor(windowSize),
+        },
+        error: null,
+    };
+}
+
+export function resolveRecipeSwiperWindow(
+    input: ResolveRecipeSwiperWindowArgs | null | undefined = {},
+) {
+    const {
+        recipes = [],
+        currentIndex = 0,
+        swipedRecipeIds = new Set<string>(),
+        windowSize = 3,
+    } = input ?? {};
+
+    const validation = validateRecipeSwiperWindowInput({
+        recipes,
+        currentIndex,
+        swipedRecipeIds,
+        windowSize,
+    });
+
+    if (!validation.valid) {
+        return [];
+    }
+
+    const {
+        recipes: recipeList,
+        currentIndex: startIndex,
+        swipedRecipeIds: validatedSwipedRecipeIds,
+        windowSize: visibleWindowSize,
+    } = validation.input;
+
+    const hasSwipedRecipe = validatedSwipedRecipeIds != null && typeof validatedSwipedRecipeIds.has === 'function'
+        ? (recipeId: string) => validatedSwipedRecipeIds.has(recipeId)
         : () => false;
 
     const visibleRecipes: RecipeSwiperCard[] = [];

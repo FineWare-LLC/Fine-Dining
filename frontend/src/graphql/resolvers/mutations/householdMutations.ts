@@ -247,7 +247,9 @@ export const updateHousehold = withErrorHandling(async (_, { id, input }, contex
     }
 
     try {
-        return await household.populate('owner members.user sharedCookbook');
+        await household.populate('owner');
+        await household.populate('members.user');
+        return await household.populate('sharedCookbook');
     } catch (error) {
         restoreHouseholdState(household, originalHouseholdState);
 

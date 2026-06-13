@@ -75,7 +75,11 @@ const buildHouseholdFixture = (updatedAt) => {
         },
         async populate(paths) {
             this.populateCalls.push(paths);
-            throw new Error('database unavailable while loading the populated shared plan');
+            if (paths === 'sharedCookbook') {
+                throw new Error('database unavailable while loading the populated shared plan');
+            }
+
+            return this;
         },
     };
 
@@ -137,7 +141,7 @@ test('updateHousehold rolls back a failed populated save and keeps the stored ho
 
         assert.equal(findByIdMock.mock.callCount(), 1);
         assert.equal(household.saveCalls, 2);
-        assert.deepEqual(household.populateCalls, ['owner members.user sharedCookbook']);
+        assert.deepEqual(household.populateCalls, ['owner', 'members.user', 'sharedCookbook']);
         assert.deepEqual(household.saveSnapshots, [
             {
                 name: 'Updated River House',

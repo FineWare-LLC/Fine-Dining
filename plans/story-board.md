@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0381 completed: shared plan editing now uses the same per-path household populate sequence on save and refresh, keeping the canonical snapshot aligned.
 - story-0380 completed: shared plan editing now rolls back a failed populated save and surfaces a user-safe persistence error.
 - story-0379 completed: shared plan editing contract coverage now requires a matching `expectedUpdatedAt` token before household saves proceed.
 - story-0378 completed: preference conflicts scale boundary now proves a large conflicting meal-slots payload fails fast without touching the tail entry.
@@ -85,6 +86,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0381: Shared plan editing persistence consistency is done.
 - story-0380: Shared plan editing failure path is done.
 - story-0379: Shared plan editing contract coverage is done.
 - story-0378: Preference conflicts scale boundary is done.

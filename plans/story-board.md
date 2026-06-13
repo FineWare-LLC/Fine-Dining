@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T15:07:39Z
+Generated: 2026-06-13T15:27:19Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0377 completed: household planning preferences operator feedback now keeps loading, empty, success, and error states accessible with stable height.
 - story-0375 completed: household planning preference conflicts now fail before mutating a household, while households without planning defaults still save cleanly.
 - story-0376 completed: household planning preferences now keep canonical planning defaults stable across refresh even when the source payload mutates.
 - story-0374 completed: household planning preferences now reject conflicting daily and weekly budgets with a typed user-safe validation error before household saves.
@@ -81,6 +82,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0377: Preference conflicts operator feedback is done.
 - story-0375: Preference conflicts failure path is done.
 - story-0376: Preference conflicts persistence consistency is done.
 - story-0374: Preference conflicts contract coverage is done.

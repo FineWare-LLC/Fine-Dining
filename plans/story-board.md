@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T13:45:56Z
+Generated: 2026-06-13T13:59:09Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0368 completed: recipe library pagination now uses a sorted query and paginates deterministically at the admin list boundary.
 - story-0367 completed: a large private cookbook fixture now stays private by default and remains deterministic at the scale boundary.
 - story-0366 completed: private collections operator feedback now names private cookbooks in the loading state while keeping the shared resolved announcement and stable feedback shells.
 - story-0364 completed: private cookbook creation now fails shut with a user-safe recovery error when the save step fails after defaulting visibility to private.

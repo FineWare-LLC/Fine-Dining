@@ -27,7 +27,11 @@ export const getRecipe = withErrorHandling(async (_parent, { id }, context) => {
  * @returns {Promise<Object[]>} An array of recipe documents.
  */
 export const getRecipes = withErrorHandling(async (_parent, { page, limit }, context) => {
-    return paginateQuery(RecipeModel, page, limit);
+    return paginateQuery(
+        RecipeModel.find().sort({ createdAt: -1, _id: -1 }),
+        page,
+        limit,
+    );
 });
 
 /**

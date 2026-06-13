@@ -1,5 +1,6 @@
 // @ts-nocheck
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 import { withErrorHandling } from './baseImports';
 import Household from '@/models/Household/householdSchema';
 import User from '@/models/User';
@@ -178,6 +179,9 @@ const HOUSEHOLD_REVISION_ERROR_MESSAGES = {
     staleHouseholdRevision: 'This household was updated by someone else. Please refresh and try again.',
 };
 
+const HOUSEHOLD_DELETION_ERROR_MESSAGE =
+    'We could not read the household to delete. Please refresh the planner.';
+
 const HOUSEHOLD_PLAN_PERSISTENCE_ERROR_MESSAGE =
     'We could not save your household plan. Please try again.';
 
@@ -188,6 +192,24 @@ export class HouseholdRevisionValidationError extends Error {
     constructor(code, message = HOUSEHOLD_REVISION_ERROR_MESSAGES.invalidPayload) {
         super(message);
         this.name = 'HouseholdRevisionValidationError';
+        this.code = code;
+        this.isUserSafe = true;
+    }
+
+    toJSON() {
+        return {
+            name: this.name,
+            code: this.code,
+            message: this.message,
+            isUserSafe: this.isUserSafe,
+        };
+    }
+}
+
+export class HouseholdDeletionValidationError extends Error {
+    constructor(code, message = HOUSEHOLD_DELETION_ERROR_MESSAGE) {
+        super(message);
+        this.name = 'HouseholdDeletionValidationError';
         this.code = code;
         this.isUserSafe = true;
     }
@@ -268,6 +290,13 @@ const createHouseholdRevisionValidationError = (code) => (
     )
 );
 
+const createHouseholdDeletionValidationError = (code) => (
+    new HouseholdDeletionValidationError(
+        code,
+        HOUSEHOLD_DELETION_ERROR_MESSAGE,
+    )
+);
+
 const normalizeHouseholdRevisionTimestamp = (value) => {
     if (value instanceof Date) {
         const timestamp = value.getTime();
@@ -293,6 +322,19 @@ const assertMatchingHouseholdRevision = (expectedUpdatedAt, currentUpdatedAt) =>
     if (normalizedExpectedUpdatedAt.getTime() !== normalizedCurrentUpdatedAt.getTime()) {
         throw createHouseholdRevisionValidationError('staleHouseholdRevision');
     }
+};
+
+const normalizeHouseholdDeletionId = (id) => {
+    if (typeof id !== 'string') {
+        throw createHouseholdDeletionValidationError('invalidPayload');
+    }
+
+    const normalizedId = id.trim();
+    if (!normalizedId || !mongoose.Types.ObjectId.isValid(normalizedId)) {
+        throw createHouseholdDeletionValidationError('invalidPayload');
+    }
+
+    return normalizedId;
 };
 
 export const createHousehold = withErrorHandling(async (_, { input }, context) => {
@@ -403,11 +445,13 @@ export const updateHousehold = withErrorHandling(async (_, { id, input }, contex
 
 export const deleteHousehold = withErrorHandling(async (_, { id }, context) => {
     if (!context.user?.userId) throw new Error('Authentication required');
-    const household = await Household.findById(id);
+    const normalizedId = normalizeHouseholdDeletionId(id);
+    const household = await Household.findById(normalizedId);
     if (!household || household.owner.toString() !== context.user.userId) {
         throw new Error('Household not found or unauthorized');
     }
-    await Household.findByIdAndDelete(id);
+    await User.updateMany({ activeHousehold: normalizedId }, { activeHousehold: null });
+    await Household.findByIdAndDelete(normalizedId);
     return true;
 });
 

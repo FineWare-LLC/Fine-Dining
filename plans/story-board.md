@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0414 completed: household deletion contract coverage now rejects malformed household ids with a typed user-safe error and clears active household ownership before deleting the household.
 - story-0413 completed: guest meals scale boundary now mutates the existing guest collection directly without snapshot-copying it, while preserving rollback and canonical guest data.
 - story-0412 completed: guest meals operator feedback now exposes loading, empty, success, and error states with stable layout shells.
 - story-0411 completed: guest meals persistence consistency now returns canonical guest snapshots from the update response without eager guest traversal, while refresh reads stay canonical and the scale-boundary tests remain green.
@@ -118,6 +119,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0414 completed: household deletion contract coverage now rejects malformed household ids with a typed user-safe error and clears active household ownership before deleting the household.
 - story-0401 completed: shopping ownership persistence consistency now keeps assignedAt canonical across update and refresh reads while preserving the canonical household snapshot.
 - story-0396: Plan approval persistence consistency is done.
 - story-0395: Plan approval failure path is done.

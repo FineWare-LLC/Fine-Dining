@@ -272,7 +272,24 @@ export const addRecipeToCookbook = withErrorHandling(async (_, { cookbookId, ent
 
         throw new CookbookImportPersistenceError('save', error);
     }
-    return cookbook.populate('entries.recipe meals recipes restaurants');
+
+    try {
+        return await cookbook.populate('entries.recipe meals recipes restaurants');
+    } catch (error) {
+        restoreCookbookEntries(cookbook, originalEntries);
+
+        try {
+            await cookbook.save();
+        } catch (rollbackError) {
+            console.error('Cookbook import rollback failed:', rollbackError);
+        }
+
+        if (error?.isUserSafe) {
+            throw error;
+        }
+
+        throw new CookbookImportPersistenceError('populate', error);
+    }
 });
 
 export const removeRecipeFromCookbook = withErrorHandling(async (_, { cookbookId, entryId }, context) => {

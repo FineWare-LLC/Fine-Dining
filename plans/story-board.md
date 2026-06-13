@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T10:30:55Z
+Generated: 2026-06-13T11:01:56Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0359 completed: personal notes now roll back failed post-save hydration and keep cookbook import errors recoverable.
 - story-0358 completed: personal notes now reject oversized cookbook notes before persistence and keep trimmed notes canonical.
 - story-0363 completed: private cookbook collections now default to private and reject malformed visibility payloads before persistence.
 - story-0357 completed: recipe versioning now keeps a large revised cookbook snapshot deterministic and aligned with the refreshed query at the scale boundary.
@@ -64,6 +65,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0359: Personal notes failure path is done.
 - story-0358: Personal notes contract coverage is done.
 - story-0363: Private cookbook collections are done.
 - story-0357: Recipe versioning scale boundary is done.

@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T22:19:56Z
+Generated: 2026-06-13T22:38:38Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0461 completed: plan gate definition contract coverage now fails shut on unknown usage limits with a typed user-safe error while preserving the tier-normalized usage increment flow.
 - story-0415 completed: catalog review queue contract coverage now validates restaurant crawler run payloads locally, keeps empty source selections explicit, and rejects out-of-range limits with a typed user-safe error before the fetch.
 - story-0416 completed: catalog review queue failure path now reads restaurant crawler responses through a typed user-safe parser, keeps malformed responses from leaking raw parse errors, and falls back to a safe retry message on dependency failures.
 - story-0414 completed: household deletion contract coverage now rejects malformed household ids with a typed user-safe error and clears active household ownership before deleting the household.

@@ -490,6 +490,10 @@ export const candidateMatchesDietaryPattern = (
             return tags.includes('diabetes-friendly') || tags.includes('low-sugar');
         case 'HEART_HEALTHY':
             return tags.includes('heart-healthy') || tags.includes('low-sodium');
+        case 'GLUTEN_FREE':
+            return tags.includes('gluten_free') || tags.includes('gluten-free');
+        case 'DAIRY_FREE':
+            return tags.includes('dairy_free') || tags.includes('dairy-free');
         default:
             return true;
     }

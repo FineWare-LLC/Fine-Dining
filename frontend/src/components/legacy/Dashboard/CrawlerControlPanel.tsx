@@ -34,6 +34,8 @@ import { getCrawlerApiBaseUrl } from '@/utils/crawlerApi';
 import {
     loadRestaurantCrawlerRunDraft,
     persistRestaurantCrawlerRunDraft,
+    RestaurantCrawlerRunResponseError,
+    readRestaurantCrawlerRunResponse,
     resolveRestaurantCrawlerRunDraft,
     validateRestaurantCrawlerRunRequest,
 } from '@/utils/restaurantCrawlerRun';
@@ -270,8 +272,7 @@ export default function CrawlerControlPanel() {
                 headers: authHeaders(),
                 body: JSON.stringify(requestValidation.payload),
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data?.detail || 'Restaurant crawler failed.');
+            const data = await readRestaurantCrawlerRunResponse(res);
             setRestaurantResult(data);
             setMessage(
                 dryRun
@@ -280,7 +281,11 @@ export default function CrawlerControlPanel() {
             );
             fetchAll();
         } catch (error) {
-            setMessage(error.message || 'Restaurant crawler failed.');
+            setMessage(
+                error instanceof RestaurantCrawlerRunResponseError
+                    ? error.message
+                    : 'Restaurant crawler failed. Please refresh.',
+            );
         } finally {
             setActing(false);
         }

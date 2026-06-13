@@ -342,7 +342,7 @@ export default function CookbookPage() {
             </Dialog>
 
             <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
-                <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+                <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>{snackbar.message}</Alert>
             </Snackbar>
             </MainLayout>
         </ProtectedRoute>

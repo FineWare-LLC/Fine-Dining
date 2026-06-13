@@ -6,6 +6,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completion
 
+- story-0346 completed: swipe decisions now expose accessible loading, empty, error, and resolved shells with a fixed-height swiper surface.
 - story-0345 completed: swipe decisions now canonicalize persisted swipe arrays after refresh and keep the swiper window stable.
 - story-0344 completed: swipe decisions now rollback optimistic state and surface a recoverable failure banner when save or reject mutations fail.
 - story-0343 completed: swipe decisions now validate canonical payloads, reject malformed state with a typed user-safe error, and fail shut on malformed swipe windows.
@@ -51,6 +52,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0346: Swipe decisions operator feedback is done.
 - story-0345: Swipe decisions persistence consistency is done.
 - story-0344: Swipe decisions failure path is done.
 - story-0343: Swipe decisions contract coverage is done.

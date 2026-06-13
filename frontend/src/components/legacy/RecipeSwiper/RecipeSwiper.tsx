@@ -7,11 +7,27 @@ import SwipeCard from './SwipeCard';
 import { SAVE_RECIPE_MUTATION, REJECT_RECIPE_MUTATION } from '@/graphql/mutations';
 import { GET_MEALS_WITH_FILTERS } from '@/graphql/queries';
 import {
-  applyRecipeSwiperDecision,
-  buildRecipeSwiperFailureMessage,
-  rollbackRecipeSwiperDecision,
-  resolveRecipeSwiperWindow,
+    applyRecipeSwiperDecision,
+    buildRecipeSwiperFailureMessage,
+    rollbackRecipeSwiperDecision,
+    resolveRecipeSwiperWindow,
 } from '@/utils/recipeSwiperState';
+import {
+  buildRecipeSwiperFeedbackState,
+  RECIPE_SWIPER_RESOLVED_MESSAGE,
+} from '@/utils/recipeSwiperFeedback';
+
+const srOnly = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
 
 const RecipeSwiper = ({ 
   initialFilters = {}, 
@@ -74,6 +90,24 @@ const RecipeSwiper = ({
       windowSize: 3,
     });
   }, [availableRecipes, swipeState.currentIndex, swipeState.swipedRecipeIds]);
+
+  const recipeSwiperFeedback = buildRecipeSwiperFeedbackState({
+    isLoading: loading && !data,
+    availableRecipeCount: availableRecipes.length,
+    visibleRecipeCount: visibleCards.length,
+    error,
+  });
+
+  const resolvedAnnouncement = recipeSwiperFeedback.state === 'resolved' ? (
+    <div
+      role={recipeSwiperFeedback.role}
+      aria-live={recipeSwiperFeedback.ariaLive}
+      aria-atomic="true"
+      style={srOnly}
+    >
+      {RECIPE_SWIPER_RESOLVED_MESSAGE}
+    </div>
+  ) : null;
 
   // Handle swipe actions
   const handleSwipe = useCallback(async (recipeId, action) => {
@@ -157,50 +191,69 @@ const RecipeSwiper = ({
     });
   }, []);
 
-  if (loading && !data) {
+  if (recipeSwiperFeedback.state === 'loading') {
     return (
-      <div className={`flex items-center justify-center h-96 ${className}`}>
+      <div
+        className={`flex items-center justify-center h-96 ${className}`}
+        role={recipeSwiperFeedback.role}
+        aria-live={recipeSwiperFeedback.ariaLive}
+        aria-atomic="true"
+        aria-busy={recipeSwiperFeedback.ariaBusy}
+      >
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-          <p className="text-gray-600">Finding delicious recipes for you...</p>
+          {recipeSwiperFeedback.showSpinner && (
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
+          )}
+          <p className="text-gray-600">{recipeSwiperFeedback.message}</p>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (recipeSwiperFeedback.state === 'error') {
     return (
-      <div className={`flex items-center justify-center h-96 ${className}`}>
+      <div
+        className={`flex items-center justify-center h-96 ${className}`}
+        role={recipeSwiperFeedback.role}
+        aria-live={recipeSwiperFeedback.ariaLive}
+        aria-atomic="true"
+      >
         <div className="text-center">
-          <p className="text-red-600 mb-4">Error loading recipes</p>
+          <p className="text-red-600 mb-2 text-lg font-semibold">{recipeSwiperFeedback.title}</p>
+          <p className="text-red-500 mb-4">{recipeSwiperFeedback.message}</p>
           <button
             onClick={handleRefresh}
             className="flex items-center gap-2 mx-auto px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
-            Try Again
+            {recipeSwiperFeedback.actionLabel}
           </button>
         </div>
       </div>
     );
   }
 
-  if (visibleCards.length === 0) {
+  if (recipeSwiperFeedback.state === 'empty') {
     return (
-      <div className={`flex items-center justify-center h-96 ${className}`}>
+      <div
+        className={`flex items-center justify-center h-96 ${className}`}
+        role={recipeSwiperFeedback.role}
+        aria-live={recipeSwiperFeedback.ariaLive}
+        aria-atomic="true"
+      >
         <div className="text-center">
-          <p className="text-gray-600 mb-4 text-lg">
-            No more recipes to explore!
+          <p className="text-gray-600 mb-4 text-lg font-semibold">
+            {recipeSwiperFeedback.title}
           </p>
           <p className="text-gray-500 mb-6">
-            You've seen all available recipes matching your preferences.
+            {recipeSwiperFeedback.message}
           </p>
           <button
             onClick={handleRefresh}
             className="flex items-center gap-2 mx-auto px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             <RefreshCw className="w-5 h-5" />
-            Start Over
+            {recipeSwiperFeedback.actionLabel}
           </button>
         </div>
       </div>
@@ -209,6 +262,8 @@ const RecipeSwiper = ({
 
   return (
     <div className={`relative h-96 ${className}`}>
+      {resolvedAnnouncement}
+
       {swipeError && (
         <div
           role="alert"
@@ -242,7 +297,12 @@ const RecipeSwiper = ({
 
       {/* Loading indicator for next batch */}
       {loading && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+        <div
+          className="absolute bottom-4 left-1/2 transform -translate-x-1/2"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           <div className="bg-white rounded-full px-4 py-2 shadow-lg flex items-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
             <span className="text-sm text-gray-600">Loading more...</span>

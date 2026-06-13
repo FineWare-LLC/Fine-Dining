@@ -1,11 +1,12 @@
 # Fine Dining Story Board
 
-Generated: 2026-06-13T17:46:05Z
+Generated: 2026-06-13T17:47:57Z
 
 This board coordinates recurring Codex runs for Fine Dining. The source of truth is `plans/story-board.jsonl`, with one detailed story per line.
 
 ## Recent Completion
 
+- story-0390 completed: child restrictions failure path now rethrows malformed child-restriction payloads from meal replacement lookups instead of silently collapsing to an empty suggestions list.
 - story-0389 completed: child restrictions contract coverage now separates hard restrictions from soft preferences, rejects malformed payloads, and filters meals with the new helper.
 - story-0388 completed: per-member servings scale boundary now keeps large household snapshots shallow so member edits stay within the scale budget.
 - story-0976 completed: ASVAB seed contract coverage now rejects malformed question payloads with a typed user-safe error before any Mongo session starts.
@@ -95,6 +96,7 @@ This board coordinates recurring Codex runs for Fine Dining. The source of truth
 
 ## Recent Completions
 
+- story-0390: Child restrictions failure path is done.
 - story-0388: Per-member servings scale boundary is done.
 - story-0976: ASVAB seed contract coverage is done.
 - story-0386: Per-member servings persistence consistency is done.

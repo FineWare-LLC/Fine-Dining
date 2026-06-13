@@ -449,6 +449,7 @@ export async function findSimilarMeals(
         
     } catch (error) {
         console.error('Error finding similar meals:', error);
+        // Child restriction validation needs to surface so callers can show an error state.
         if (error instanceof HouseholdChildRestrictionsValidationError) {
             throw error;
         }
